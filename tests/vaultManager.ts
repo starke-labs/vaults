@@ -1,31 +1,29 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 
-import { Vault } from "../target/types/vault";
+import { VaultManager } from "../target/types/vault_manager";
 import { confirmTransaction, requestAirdrop } from "./utils";
 
-describe("vault", () => {
+describe("VaultManager", () => {
   // configure the client to use the local cluster
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const vaultProgram = anchor.workspace.Vault as Program<Vault>;
+  const vaultManager = anchor.workspace.VaultManager as Program<VaultManager>;
   const depositToken = anchor.web3.Keypair.generate().publicKey;
 
-  const vault = anchor.web3.Keypair.generate();
-  const vaultOwner = anchor.web3.Keypair.generate();
+  const vaultManagerSigner = anchor.web3.Keypair.generate();
 
   before(async () => {
-    await requestAirdrop(vaultOwner.publicKey);
+    await requestAirdrop(vaultManagerSigner.publicKey);
   });
 
   it("is initialized", async () => {
-    const tx = await vaultProgram.methods
-      .initialize(depositToken)
+    const tx = await vaultManager.methods
+      .createVault(depositToken, "Vault 1")
       .accounts({
-        vault: vault.publicKey,
-        vaultOwner: vaultOwner.publicKey,
+        manager: vaultManagerSigner.publicKey,
       })
-      .signers([vault, vaultOwner])
+      .signers([vaultManagerSigner])
       .rpc();
     await confirmTransaction(tx);
   });
