@@ -1,7 +1,7 @@
 [package]
-name = "vault"
+name = "vault_manager"
 version = "0.1.0"
-description = "Created with Anchor"
+description = "vault manager program that can create and manage starke vaults"
 edition = "2021"
 
 [lib]
