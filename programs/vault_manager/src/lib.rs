@@ -17,6 +17,8 @@ pub mod vault_manager {
         let vault = &mut ctx.accounts.vault;
         // TODO: does the manager need to be whitelisted?
         vault.manager = *ctx.accounts.manager.key;
+        vault.bump = ctx.bumps.vault;
+        // TODO: does the deposit token need to be whitelisted?
         vault.deposit_token = deposit_token;
         vault.name = name;
 
@@ -25,6 +27,17 @@ pub mod vault_manager {
         msg!("Vault name: {}", vault.name);
         msg!("Vault manager: {}", vault.manager);
         msg!("Vault deposit token: {}", vault.deposit_token);
+
+        Ok(())
+    }
+
+    pub fn update_vault(
+        ctx: Context<UpdateVault>,
+        name: Option<String>,
+        deposit_token: Option<Pubkey>,
+    ) -> Result<()> {
+        ctx.accounts.vault.update(name, deposit_token)?;
+        msg!("Vault updated");
 
         Ok(())
     }
@@ -48,4 +61,12 @@ pub struct CreateVault<'info> {
     pub vault: Account<'info, Vault>,
 
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateVault<'info> {
+    pub manager: Signer<'info>,
+
+    #[account(mut, seeds = [b"vault", manager.key().as_ref()], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
 }

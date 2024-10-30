@@ -1,5 +1,5 @@
 [package]
-name = "vault_manager"
+name = "vault-manager"
 version = "0.1.0"
 description = "vault manager program that can create and manage starke vaults"
 edition = "2021"
