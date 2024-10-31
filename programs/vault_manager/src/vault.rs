@@ -8,19 +8,36 @@ pub struct Vault {
     pub bump: u8,
 }
 
-// TODO: add error handling
 impl Vault {
-    pub fn update(&mut self, name: Option<String>, deposit_token: Option<Pubkey>) -> Result<()> {
-        if let Some(name) = name {
-            self.name = name;
-            msg!("Vault name changed to: {}", self.name)
-        }
+    pub const MAX_SPACE: usize = 8  // discriminator
+        + 32 // manager pubkey
+        + 32 // deposit token pubkey
+        + 4  // name length
+        + 32 // name
+        + 1; // bump
 
-        // TODO: this should not be allowed
-        if let Some(deposit_token) = deposit_token {
-            self.deposit_token = deposit_token;
-            msg!("Vault deposit token changed to: {}", self.deposit_token);
-        }
+    pub fn initialize(
+        &mut self,
+        manager: Pubkey,
+        deposit_token: Pubkey,
+        name: String,
+        bump: u8,
+    ) -> Result<()> {
+        require!(name.len() <= 32, VaultError::NameTooLong);
+
+        self.manager = manager;
+        self.deposit_token = deposit_token;
+        self.name = name;
+        self.bump = bump;
+
         Ok(())
     }
+}
+
+#[error_code]
+pub enum VaultError {
+    #[msg("Invalid deposit token")]
+    InvalidDepositToken,
+    #[msg("Name must be 32 characters or less")]
+    NameTooLong,
 }

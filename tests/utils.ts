@@ -16,7 +16,7 @@ export async function confirmTransaction(
 export async function requestAirdrop(publicKey: anchor.web3.PublicKey) {
   const tx = await connection.requestAirdrop(
     publicKey,
-    100 * anchor.web3.LAMPORTS_PER_SOL
+    10 * anchor.web3.LAMPORTS_PER_SOL
   );
   await confirmTransaction(tx);
 }
