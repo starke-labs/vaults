@@ -162,6 +162,9 @@ describe("VaultManager", () => {
       );
     });
 
+    // TODO: Error when running `anchor test`
+    //       `Error: Reached maximum depth for account resolution`
+    //       Need to fix this
     it("successfully deposits tokens from depositor1", async () => {
       const depositAmount = new anchor.BN(1000000); // 1 token with 6 decimals
 
@@ -181,6 +184,7 @@ describe("VaultManager", () => {
           .rpc()
       );
 
+      // TODO: Need to check if the following tests are working as expected
       // // Verify token transfer
       // const finalVaultBalance =
       //   await provider.connection.getTokenAccountBalance(vaultTokenAccount);
