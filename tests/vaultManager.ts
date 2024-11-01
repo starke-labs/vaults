@@ -377,4 +377,173 @@ describe("VaultManager", () => {
       expect(derivedBump).to.equal(depositor1Bump);
     });
   });
+
+  describe("withdraw", () => {
+    const initialDeposit = toTokenAmount(10);
+
+    beforeEach(async () => {
+      // Make initial deposit to test withdrawals
+      await confirmTransaction(
+        await program.methods
+          .deposit(initialDeposit)
+          .accounts({
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc()
+      );
+    });
+
+    it("successfully withdraws tokens", async () => {
+      const withdrawAmount = toTokenAmount(3);
+
+      const initialUserBalance =
+        await provider.connection.getTokenAccountBalance(
+          depositor1TokenAccount
+        );
+
+      await confirmTransaction(
+        await program.methods
+          .withdraw(withdrawAmount)
+          .accounts({
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc()
+      );
+
+      // Verify token transfer
+      const finalUserBalance = await provider.connection.getTokenAccountBalance(
+        depositor1TokenAccount
+      );
+      expect(
+        Number(finalUserBalance.value.amount) -
+          Number(initialUserBalance.value.amount)
+      ).to.equal(withdrawAmount.toNumber());
+
+      // Verify vault balance update
+      const vaultBalance = await program.account.vaultBalance.fetch(
+        depositor1Account
+      );
+      expect(vaultBalance.amount.toNumber()).to.equal(
+        initialDeposit.sub(withdrawAmount).toNumber()
+      );
+    });
+
+    it("deletes vault balance account when fully withdrawn", async () => {
+      // Withdraw full amount
+      await confirmTransaction(
+        await program.methods
+          .withdraw(initialDeposit)
+          .accounts({
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc()
+      );
+
+      // Verify account is deleted
+      const accountInfo = await provider.connection.getAccountInfo(
+        depositor1Account
+      );
+      expect(accountInfo).to.be.null;
+    });
+
+    it("fails when trying to withdraw more than deposited", async () => {
+      const tooMuchAmount = initialDeposit.add(new anchor.BN(1));
+
+      try {
+        await program.methods
+          .withdraw(tooMuchAmount)
+          .accounts({
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc();
+        expect.fail("Should have failed with insufficient funds");
+      } catch (error) {
+        expect(error.toString()).to.include("InsufficientFunds");
+      }
+    });
+
+    it("emits a withdraw event with correct data", async () => {
+      const withdrawAmount = toTokenAmount(2);
+
+      const eventPromise = new Promise<any>((resolve) => {
+        const listener = program.addEventListener("withdrawMade", (event) => {
+          resolve(event);
+        });
+
+        setTimeout(() => {
+          program.removeEventListener(listener);
+        }, 5000);
+      });
+
+      await confirmTransaction(
+        await program.methods
+          .withdraw(withdrawAmount)
+          .accounts({
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc()
+      );
+
+      const event = await eventPromise;
+      expect(event.vault.toString()).to.equal(vault.toString());
+      expect(event.user.toString()).to.equal(depositor1.publicKey.toString());
+      expect(event.amount.toString()).to.equal(withdrawAmount.toString());
+      expect(event.remainingBalance.toString()).to.equal(
+        initialDeposit.sub(withdrawAmount).toString()
+      );
+    });
+
+    it("fails when trying to withdraw with wrong token account", async () => {
+      const wrongToken = await createMint(
+        provider.connection,
+        manager,
+        manager.publicKey,
+        null,
+        6
+      );
+
+      const wrongTokenAccount = await createAccount(
+        provider.connection,
+        depositor1,
+        wrongToken,
+        depositor1.publicKey
+      );
+
+      try {
+        await program.methods
+          .withdraw(toTokenAmount(1))
+          .accounts({
+            user: depositor1.publicKey,
+            userTokenAccount: wrongTokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc();
+        expect.fail("Should have failed with invalid token account");
+      } catch (error) {
+        expect(error.toString()).to.include("ConstraintRaw");
+      }
+    });
+  });
 });
