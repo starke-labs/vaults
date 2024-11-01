@@ -1,16 +1,20 @@
+// TODO: Add imports sorter plugin for prettier
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  createMint,
-  createAccount,
-  mintTo,
-} from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
+import { createMint, createAccount, mintTo } from "@solana/spl-token";
 import { expect } from "chai";
 
 import { VaultManager } from "../target/types/vault_manager";
 import { requestAirdrop, confirmTransaction } from "./utils";
+
+// Add these constants at the top after imports
+const DECIMALS = 6;
+const TOKEN_FACTOR = Math.pow(10, DECIMALS);
+
+// TODO: Move to utils
+// Helper function to convert tokens to raw amount
+const toTokenAmount = (tokens: number) => new anchor.BN(tokens * TOKEN_FACTOR);
 
 describe("VaultManager", () => {
   const provider = anchor.AnchorProvider.env();
@@ -69,7 +73,7 @@ describe("VaultManager", () => {
         depositToken,
         depositor1TokenAccount,
         manager.publicKey,
-        1000000000
+        1000 * TOKEN_FACTOR // 1000 tokens instead of 1000000000
       )
     );
 
@@ -80,7 +84,7 @@ describe("VaultManager", () => {
         depositToken,
         depositor2TokenAccount,
         manager.publicKey,
-        1000000000
+        1000 * TOKEN_FACTOR // 1000 tokens instead of 1000000000
       )
     );
 
@@ -162,11 +166,8 @@ describe("VaultManager", () => {
       );
     });
 
-    // TODO: Error when running `anchor test`
-    //       `Error: Reached maximum depth for account resolution`
-    //       Need to fix this
     it("successfully deposits tokens from depositor1", async () => {
-      const depositAmount = new anchor.BN(1000000); // 1 token with 6 decimals
+      const depositAmount = toTokenAmount(1); // 1 token instead of 1000000
 
       const initialVaultBalance =
         await provider.connection.getTokenAccountBalance(vaultTokenAccount);
@@ -177,135 +178,207 @@ describe("VaultManager", () => {
           .accounts({
             depositor: depositor1.publicKey,
             depositorTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
             vaultTokenAccount,
-            depositToken,
           })
           .signers([depositor1])
           .rpc()
       );
 
-      // TODO: Need to check if the following tests are working as expected
-      // // Verify token transfer
-      // const finalVaultBalance =
-      //   await provider.connection.getTokenAccountBalance(vaultTokenAccount);
-      // expect(
-      //   Number(finalVaultBalance.value.amount) -
-      //     Number(initialVaultBalance.value.amount)
-      // ).to.equal(depositAmount.toNumber());
+      // Verify token transfer
+      const finalVaultBalance =
+        await provider.connection.getTokenAccountBalance(vaultTokenAccount);
+      expect(
+        Number(finalVaultBalance.value.amount) -
+          Number(initialVaultBalance.value.amount)
+      ).to.equal(depositAmount.toNumber());
 
-      // // Verify depositor account state
-      // const depositorAccount = await program.account.depositor.fetch(
-      //   depositor1Account
-      // );
-      // expect(depositorAccount.vault).to.eql(vault);
-      // expect(depositorAccount.depositor).to.eql(depositor1.publicKey);
-      // expect(depositorAccount.amount.toNumber()).to.equal(
-      //   depositAmount.toNumber()
-      // );
+      // Verify depositor account state
+      const depositorAccount = await program.account.depositor.fetch(
+        depositor1Account
+      );
+      expect(depositorAccount.vault).to.eql(vault);
+      expect(depositorAccount.depositor).to.eql(depositor1.publicKey);
+      expect(depositorAccount.amount.toNumber()).to.equal(
+        depositAmount.toNumber()
+      );
     });
 
-    // it("successfully makes multiple deposits from same depositor", async () => {
-    //   const depositAmount = new anchor.BN(500000); // 0.5 tokens
+    it("successfully makes multiple deposits from same depositor", async () => {
+      const depositAmount = toTokenAmount(0.5); // 0.5 tokens instead of 500000
 
-    //   // First deposit
-    //   await program.methods
-    //     .deposit(depositAmount)
-    //     .accounts({
-    //       depositor: depositor2.publicKey,
-    //       depositorTokenAccount: depositor2TokenAccount,
-    //       vaultTokenAccount,
-    //       depositorTokenAccount: depositor2Account,
-    //       depositToken,
-    //       systemProgram: SystemProgram.programId,
-    //       clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-    //     })
-    //     .signers([depositor2])
-    //     .rpc();
+      // First deposit
+      await confirmTransaction(
+        await program.methods
+          .deposit(depositAmount)
+          .accounts({
+            depositor: depositor2.publicKey,
+            depositorTokenAccount: depositor2TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor2])
+          .rpc()
+      );
 
-    //   // Second deposit
-    //   await program.methods
-    //     .deposit(depositAmount)
-    //     .accounts({
-    //       depositor: depositor2.publicKey,
-    //       depositorTokenAccount: depositor2TokenAccount,
-    //       vaultTokenAccount,
-    //       depositorTokenAccount: depositor2Account,
-    //       depositToken,
-    //       systemProgram: SystemProgram.programId,
-    //       clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-    //     })
-    //     .signers([depositor2])
-    //     .rpc();
+      // Second deposit
+      await confirmTransaction(
+        await program.methods
+          .deposit(depositAmount)
+          .accounts({
+            depositor: depositor2.publicKey,
+            depositorTokenAccount: depositor2TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor2])
+          .rpc()
+      );
 
-    //   // Verify total deposits
-    //   const depositorAccount = await program.account.depositor.fetch(
-    //     depositor2Account
-    //   );
-    //   expect(depositorAccount.amount.toNumber()).to.equal(
-    //     depositAmount.toNumber() * 2
-    //   );
-    // });
+      // Verify total deposits
+      const depositorAccount = await program.account.depositor.fetch(
+        depositor2Account
+      );
+      expect(depositorAccount.amount.toNumber()).to.equal(
+        depositAmount.toNumber() * 2
+      );
+    });
 
-    // it("fails when trying to deposit with wrong token mint", async () => {
-    //   // Create a different token mint
-    //   const wrongToken = await createMint(
-    //     provider.connection,
-    //     manager,
-    //     manager.publicKey,
-    //     null,
-    //     6
-    //   );
+    it("fails when trying to deposit with wrong token mint", async () => {
+      // Create a different token mint
+      const wrongToken = await createMint(
+        provider.connection,
+        manager,
+        manager.publicKey,
+        null,
+        6
+      );
 
-    //   const wrongTokenAccount = await createAccount(
-    //     provider.connection,
-    //     depositor1,
-    //     wrongToken,
-    //     depositor1.publicKey
-    //   );
+      const wrongTokenAccount = await createAccount(
+        provider.connection,
+        depositor1,
+        wrongToken,
+        depositor1.publicKey
+      );
 
-    //   try {
-    //     await program.methods
-    //       .deposit(new anchor.BN(1000000))
-    //       .accounts({
-    //         depositor: depositor1.publicKey,
-    //         depositorTokenAccount: wrongTokenAccount,
-    //         vault,
-    //         vaultTokenAccount,
-    //         depositorAccount: depositor1Account,
-    //         tokenProgram: TOKEN_PROGRAM_ID,
-    //         systemProgram: SystemProgram.programId,
-    //         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-    //       })
-    //       .signers([depositor1])
-    //       .rpc();
-    //     expect.fail("Should have failed with invalid deposit token");
-    //   } catch (error) {
-    //     expect(error.toString()).to.include("InvalidDepositToken");
-    //   }
-    // });
+      try {
+        await program.methods
+          .deposit(toTokenAmount(1))
+          .accounts({
+            depositor: depositor1.publicKey,
+            depositorTokenAccount: wrongTokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc();
+        expect.fail("Should have failed with invalid deposit token");
+      } catch (error) {
+        expect(error.toString()).to.include("ConstraintRaw");
+      }
+    });
 
-    // it("fails when trying to deposit with insufficient funds", async () => {
-    //   const tooMuchAmount = new anchor.BN(2000000000); // More than minted
+    it("fails when trying to deposit with insufficient funds", async () => {
+      const tooMuchAmount = toTokenAmount(2000); // 2000 tokens instead of 2000000000
 
-    //   try {
-    //     await program.methods
-    //       .deposit(tooMuchAmount)
-    //       .accounts({
-    //         depositor: depositor1.publicKey,
-    //         depositorTokenAccount: depositor1TokenAccount,
-    //         vault,
-    //         vaultTokenAccount,
-    //         depositorAccount: depositor1Account,
-    //         tokenProgram: TOKEN_PROGRAM_ID,
-    //         systemProgram: SystemProgram.programId,
-    //         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-    //       })
-    //       .signers([depositor1])
-    //       .rpc();
-    //     expect.fail("Should have failed with insufficient funds");
-    //   } catch (error) {
-    //     expect(error.toString()).to.include("insufficient funds");
-    //   }
-    // });
+      try {
+        await program.methods
+          .deposit(tooMuchAmount)
+          .accounts({
+            depositor: depositor1.publicKey,
+            depositorTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc();
+        expect.fail("Should have failed with insufficient funds");
+      } catch (error) {
+        expect(error.toString()).to.include("insufficient funds");
+      }
+    });
+
+    it("emits a deposit event with correct data", async () => {
+      const depositAmount = toTokenAmount(1);
+
+      // Create a promise that will resolve when the event is received
+      const eventPromise = new Promise<any>((resolve) => {
+        const listener = program.addEventListener("depositMade", (event) => {
+          resolve(event);
+        });
+
+        // Clean up listener after we're done
+        setTimeout(() => {
+          program.removeEventListener(listener);
+        }, 5000);
+      });
+
+      // Execute the deposit transaction
+      await confirmTransaction(
+        await program.methods
+          .deposit(depositAmount)
+          .accounts({
+            depositor: depositor1.publicKey,
+            depositorTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc()
+      );
+
+      // Wait for and verify the event
+      const event = await eventPromise;
+      expect(event.vault.toString()).to.equal(vault.toString());
+      expect(event.depositor.toString()).to.equal(
+        depositor1.publicKey.toString()
+      );
+      expect(event.amount.toString()).to.equal(depositAmount.toString());
+      expect(event.totalDeposited.toString()).to.equal(
+        depositAmount.mul(new anchor.BN(2)).toString()
+      );
+    });
+
+    it("creates depositor account with correct bump and data", async () => {
+      const depositAmount = toTokenAmount(0.1);
+
+      await confirmTransaction(
+        await program.methods
+          .deposit(depositAmount)
+          .accounts({
+            depositor: depositor1.publicKey,
+            depositorTokenAccount: depositor1TokenAccount,
+            manager: manager.publicKey,
+            vaultTokenAccount,
+          })
+          .signers([depositor1])
+          .rpc()
+      );
+
+      // Fetch and verify depositor account
+      const depositorAccount = await program.account.depositor.fetch(
+        depositor1Account
+      );
+
+      // Verify account data
+      expect(depositorAccount.vault.toString()).to.equal(vault.toString());
+      expect(depositorAccount.depositor.toString()).to.equal(
+        depositor1.publicKey.toString()
+      );
+      expect(depositorAccount.bump).to.equal(depositor1Bump);
+
+      // Verify PDA derivation matches
+      const [derivedPDA, derivedBump] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("depositor"),
+          vault.toBuffer(),
+          depositor1.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      expect(derivedPDA.toString()).to.equal(depositor1Account.toString());
+      expect(derivedBump).to.equal(depositor1Bump);
+    });
   });
 });

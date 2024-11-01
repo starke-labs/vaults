@@ -35,13 +35,8 @@ pub mod vault_manager {
     }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        // Check if deposit token is valid
-        if ctx.accounts.vault.deposit_token != ctx.accounts.deposit_token.key() {
-            return err!(VaultError::InvalidDepositToken);
-        }
-
         // Transfer tokens from depositor to vault
-        let cpi_program = ctx.accounts.deposit_token.to_account_info();
+        let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_accounts = Transfer {
             from: ctx.accounts.depositor_token_account.to_account_info(),
             to: ctx.accounts.vault_token_account.to_account_info(),
@@ -81,6 +76,8 @@ pub struct CreateVault<'info> {
 
     // Vault (PDA)
     // Currently seeded by manager pubkey, which means that the manager can only create one vault
+    // This also means when users want to deposit, they need to send manager's pubkey in accounts
+    // Do we want this? Or should we avoid PDA here and store vault pubkeys instead?
     // TODO: Find a way to allow multiple vaults per manager for v1
     #[account(
         init,
@@ -112,18 +109,24 @@ pub struct Deposit<'info> {
     )]
     pub depositor_token_account: Account<'info, TokenAccount>,
 
+    // Manager
+    /// CHECK: We don't need to check the manager's key
+    pub manager: UncheckedAccount<'info>,
+
     // Vault
+    // `vault.manager.key().as_ref()` throws "Error: Reached maximum depth for account resolution"
+    // `manager.key().as_ref()` works
     #[account(
         mut,
-        seeds = [b"vault", vault.manager.as_ref()],
-        bump = vault.bump
+        seeds = [b"vault", manager.key().as_ref()],
+        bump
     )]
     pub vault: Account<'info, Vault>,
 
     // Vault's token account
     #[account(
         mut,
-        constraint = vault_token_account.owner == vault.manager,
+        constraint = vault_token_account.owner == manager.key(),
         constraint = vault_token_account.mint == vault.deposit_token,
     )]
     pub vault_token_account: Account<'info, TokenAccount>,
@@ -140,7 +143,8 @@ pub struct Deposit<'info> {
     )]
     pub depositor_account: Account<'info, Depositor>,
 
-    pub deposit_token: Account<'info, Mint>,
+    // Token program is required for `transfer_checked`
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub clock: Sysvar<'info, Clock>,
 }
