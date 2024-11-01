@@ -73,7 +73,7 @@ describe("VaultManager", () => {
         depositToken,
         depositor1TokenAccount,
         manager.publicKey,
-        1000 * TOKEN_FACTOR // 1000 tokens instead of 1000000000
+        1000 * TOKEN_FACTOR
       )
     );
 
@@ -84,7 +84,7 @@ describe("VaultManager", () => {
         depositToken,
         depositor2TokenAccount,
         manager.publicKey,
-        1000 * TOKEN_FACTOR // 1000 tokens instead of 1000000000
+        1000 * TOKEN_FACTOR
       )
     );
 
@@ -141,7 +141,7 @@ describe("VaultManager", () => {
       // Derive depositor PDAs
       [depositor1Account, depositor1Bump] = PublicKey.findProgramAddressSync(
         [
-          Buffer.from("depositor"),
+          Buffer.from("vault_balance"),
           vault.toBuffer(),
           depositor1.publicKey.toBuffer(),
         ],
@@ -150,7 +150,7 @@ describe("VaultManager", () => {
 
       [depositor2Account, depositor2Bump] = PublicKey.findProgramAddressSync(
         [
-          Buffer.from("depositor"),
+          Buffer.from("vault_balance"),
           vault.toBuffer(),
           depositor2.publicKey.toBuffer(),
         ],
@@ -167,7 +167,7 @@ describe("VaultManager", () => {
     });
 
     it("successfully deposits tokens from depositor1", async () => {
-      const depositAmount = toTokenAmount(1); // 1 token instead of 1000000
+      const depositAmount = toTokenAmount(1);
 
       const initialVaultBalance =
         await provider.connection.getTokenAccountBalance(vaultTokenAccount);
@@ -176,8 +176,8 @@ describe("VaultManager", () => {
         await program.methods
           .deposit(depositAmount)
           .accounts({
-            depositor: depositor1.publicKey,
-            depositorTokenAccount: depositor1TokenAccount,
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
             manager: manager.publicKey,
             vaultTokenAccount,
           })
@@ -194,26 +194,24 @@ describe("VaultManager", () => {
       ).to.equal(depositAmount.toNumber());
 
       // Verify depositor account state
-      const depositorAccount = await program.account.depositor.fetch(
+      const vaultBalance = await program.account.vaultBalance.fetch(
         depositor1Account
       );
-      expect(depositorAccount.vault).to.eql(vault);
-      expect(depositorAccount.depositor).to.eql(depositor1.publicKey);
-      expect(depositorAccount.amount.toNumber()).to.equal(
-        depositAmount.toNumber()
-      );
+      expect(vaultBalance.vault).to.eql(vault);
+      expect(vaultBalance.user).to.eql(depositor1.publicKey);
+      expect(vaultBalance.amount.toNumber()).to.equal(depositAmount.toNumber());
     });
 
     it("successfully makes multiple deposits from same depositor", async () => {
-      const depositAmount = toTokenAmount(0.5); // 0.5 tokens instead of 500000
+      const depositAmount = toTokenAmount(0.5);
 
       // First deposit
       await confirmTransaction(
         await program.methods
           .deposit(depositAmount)
           .accounts({
-            depositor: depositor2.publicKey,
-            depositorTokenAccount: depositor2TokenAccount,
+            user: depositor2.publicKey,
+            userTokenAccount: depositor2TokenAccount,
             manager: manager.publicKey,
             vaultTokenAccount,
           })
@@ -226,8 +224,8 @@ describe("VaultManager", () => {
         await program.methods
           .deposit(depositAmount)
           .accounts({
-            depositor: depositor2.publicKey,
-            depositorTokenAccount: depositor2TokenAccount,
+            user: depositor2.publicKey,
+            userTokenAccount: depositor2TokenAccount,
             manager: manager.publicKey,
             vaultTokenAccount,
           })
@@ -236,10 +234,10 @@ describe("VaultManager", () => {
       );
 
       // Verify total deposits
-      const depositorAccount = await program.account.depositor.fetch(
+      const vaultBalance = await program.account.vaultBalance.fetch(
         depositor2Account
       );
-      expect(depositorAccount.amount.toNumber()).to.equal(
+      expect(vaultBalance.amount.toNumber()).to.equal(
         depositAmount.toNumber() * 2
       );
     });
@@ -265,8 +263,8 @@ describe("VaultManager", () => {
         await program.methods
           .deposit(toTokenAmount(1))
           .accounts({
-            depositor: depositor1.publicKey,
-            depositorTokenAccount: wrongTokenAccount,
+            user: depositor1.publicKey,
+            userTokenAccount: wrongTokenAccount,
             manager: manager.publicKey,
             vaultTokenAccount,
           })
@@ -279,14 +277,14 @@ describe("VaultManager", () => {
     });
 
     it("fails when trying to deposit with insufficient funds", async () => {
-      const tooMuchAmount = toTokenAmount(2000); // 2000 tokens instead of 2000000000
+      const tooMuchAmount = toTokenAmount(2000);
 
       try {
         await program.methods
           .deposit(tooMuchAmount)
           .accounts({
-            depositor: depositor1.publicKey,
-            depositorTokenAccount: depositor1TokenAccount,
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
             manager: manager.publicKey,
             vaultTokenAccount,
           })
@@ -318,8 +316,8 @@ describe("VaultManager", () => {
         await program.methods
           .deposit(depositAmount)
           .accounts({
-            depositor: depositor1.publicKey,
-            depositorTokenAccount: depositor1TokenAccount,
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
             manager: manager.publicKey,
             vaultTokenAccount,
           })
@@ -330,9 +328,7 @@ describe("VaultManager", () => {
       // Wait for and verify the event
       const event = await eventPromise;
       expect(event.vault.toString()).to.equal(vault.toString());
-      expect(event.depositor.toString()).to.equal(
-        depositor1.publicKey.toString()
-      );
+      expect(event.user.toString()).to.equal(depositor1.publicKey.toString());
       expect(event.amount.toString()).to.equal(depositAmount.toString());
       expect(event.totalDeposited.toString()).to.equal(
         depositAmount.mul(new anchor.BN(2)).toString()
@@ -346,8 +342,8 @@ describe("VaultManager", () => {
         await program.methods
           .deposit(depositAmount)
           .accounts({
-            depositor: depositor1.publicKey,
-            depositorTokenAccount: depositor1TokenAccount,
+            user: depositor1.publicKey,
+            userTokenAccount: depositor1TokenAccount,
             manager: manager.publicKey,
             vaultTokenAccount,
           })
@@ -356,21 +352,21 @@ describe("VaultManager", () => {
       );
 
       // Fetch and verify depositor account
-      const depositorAccount = await program.account.depositor.fetch(
+      const vaultBalance = await program.account.vaultBalance.fetch(
         depositor1Account
       );
 
       // Verify account data
-      expect(depositorAccount.vault.toString()).to.equal(vault.toString());
-      expect(depositorAccount.depositor.toString()).to.equal(
+      expect(vaultBalance.vault.toString()).to.equal(vault.toString());
+      expect(vaultBalance.user.toString()).to.equal(
         depositor1.publicKey.toString()
       );
-      expect(depositorAccount.bump).to.equal(depositor1Bump);
+      expect(vaultBalance.bump).to.equal(depositor1Bump);
 
       // Verify PDA derivation matches
       const [derivedPDA, derivedBump] = PublicKey.findProgramAddressSync(
         [
-          Buffer.from("depositor"),
+          Buffer.from("vault_balance"),
           vault.toBuffer(),
           depositor1.publicKey.toBuffer(),
         ],
