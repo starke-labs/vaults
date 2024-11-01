@@ -1,15 +1,15 @@
-mod depositor;
 mod event;
 mod vault;
+mod vault_balance;
 
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 
-use depositor::*;
 use event::*;
 use vault::*;
+use vault_balance::*;
 
-declare_id!("BvaZoX158jbctxEe5jKanBCQngEUkzz8KSAVTD4mvkTF");
+declare_id!("5bZpuR8pbHpndAcJ99Hc3fNYT65fagRCptFvCwqPw3Te");
 
 #[program]
 pub mod vault_manager {
@@ -34,33 +34,73 @@ pub mod vault_manager {
         Ok(())
     }
 
-    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+    pub fn deposit(ctx: Context<DepositOrWithdraw>, amount: u64) -> Result<()> {
         // Transfer tokens from depositor to vault
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_accounts = Transfer {
-            from: ctx.accounts.depositor_token_account.to_account_info(),
+            from: ctx.accounts.user_token_account.to_account_info(),
             to: ctx.accounts.vault_token_account.to_account_info(),
-            authority: ctx.accounts.depositor.to_account_info(),
+            authority: ctx.accounts.user.to_account_info(),
         };
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         transfer(cpi_ctx, amount)?;
 
         // Update depositor account
-        let depositor_account = &mut ctx.accounts.depositor_account;
-        if depositor_account.amount == 0 {
-            depositor_account.initialize(
+        let vault_balance = &mut ctx.accounts.vault_balance;
+        if vault_balance.amount == 0 {
+            vault_balance.initialize(
                 ctx.accounts.vault.key(),
-                ctx.accounts.depositor.key(),
-                ctx.bumps.depositor_account,
+                ctx.accounts.user.key(),
+                ctx.bumps.vault_balance,
             );
         }
-        depositor_account.deposit(amount)?;
+        vault_balance.deposit(amount)?;
 
         emit!(DepositMade {
             vault: ctx.accounts.vault.key(),
-            depositor: ctx.accounts.depositor.key(),
+            user: ctx.accounts.user.key(),
             amount,
-            total_deposited: depositor_account.amount,
+            total_deposited: vault_balance.amount,
+            timestamp: ctx.accounts.clock.unix_timestamp,
+        });
+
+        Ok(())
+    }
+
+    pub fn withdraw(ctx: Context<DepositOrWithdraw>, amount: u64) -> Result<()> {
+        // TODO: Think of better naming for the accounts and Depositor struct
+        //       Depositor is actually withdrawer here
+
+        // Transfer tokens from vault to depositor
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.vault_token_account.to_account_info(),
+            to: ctx.accounts.user_token_account.to_account_info(),
+            authority: ctx.accounts.manager.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        transfer(cpi_ctx, amount)?;
+
+        // Update depositor account
+        let vault_balance = &mut ctx.accounts.vault_balance;
+        vault_balance.withdraw(amount)?;
+
+        // Close the depositor account if balance is 0 and return rent to depositor
+        if vault_balance.amount == 0 {
+            let vault_balance_lamports = vault_balance.to_account_info().lamports();
+            let dest_starting_lamports = ctx.accounts.user.lamports();
+
+            **vault_balance.to_account_info().try_borrow_mut_lamports()? = 0;
+            **ctx.accounts.user.try_borrow_mut_lamports()? = dest_starting_lamports
+                .checked_add(vault_balance_lamports)
+                .ok_or(VaultBalanceError::NumericOverflow)?;
+        }
+
+        emit!(WithdrawMade {
+            vault: ctx.accounts.vault.key(),
+            user: ctx.accounts.user.key(),
+            amount,
+            remaining_balance: vault_balance.amount,
             timestamp: ctx.accounts.clock.unix_timestamp,
         });
 
@@ -93,21 +133,19 @@ pub struct CreateVault<'info> {
     pub clock: Sysvar<'info, Clock>,
 }
 
-// TODO: Error when running `anchor test`
-//       `Error: Reached maximum depth for account resolution`
 #[derive(Accounts)]
-pub struct Deposit<'info> {
+pub struct DepositOrWithdraw<'info> {
     // Depositor
     #[account(mut)]
-    pub depositor: Signer<'info>,
+    pub user: Signer<'info>,
 
     // Depositor's token account
     #[account(
         mut,
-        constraint = depositor_token_account.owner == depositor.key(),
-        constraint = depositor_token_account.mint == vault.deposit_token,
+        constraint = user_token_account.owner == user.key(),
+        constraint = user_token_account.mint == vault.deposit_token,
     )]
-    pub depositor_token_account: Account<'info, TokenAccount>,
+    pub user_token_account: Account<'info, TokenAccount>,
 
     // Manager
     /// CHECK: We don't need to check the manager's key
@@ -136,12 +174,12 @@ pub struct Deposit<'info> {
     // TODO: For v1, we should allow only one depositor per vault
     #[account(
         init_if_needed,
-        payer = depositor,
-        space = Depositor::MAX_SPACE,
-        seeds = [b"depositor", vault.key().as_ref(), depositor.key().as_ref()],
+        payer = user,
+        space = VaultBalance::MAX_SPACE,
+        seeds = [b"vault_balance", vault.key().as_ref(), user.key().as_ref()],
         bump
     )]
-    pub depositor_account: Account<'info, Depositor>,
+    pub vault_balance: Account<'info, VaultBalance>,
 
     // Token program is required for `transfer_checked`
     pub token_program: Program<'info, Token>,

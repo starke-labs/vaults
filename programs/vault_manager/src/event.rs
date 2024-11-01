@@ -20,8 +20,17 @@ pub struct VaultUpdated {
 #[event]
 pub struct DepositMade {
     pub vault: Pubkey,
-    pub depositor: Pubkey,
+    pub user: Pubkey,
     pub amount: u64,
     pub total_deposited: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct WithdrawMade {
+    pub vault: Pubkey,
+    pub user: Pubkey,
+    pub amount: u64,
+    pub remaining_balance: u64,
     pub timestamp: i64,
 }
