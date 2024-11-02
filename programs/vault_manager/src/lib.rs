@@ -68,9 +68,6 @@ pub mod vault_manager {
     }
 
     pub fn withdraw(ctx: Context<DepositOrWithdraw>, amount: u64) -> Result<()> {
-        // TODO: Think of better naming for the accounts and Depositor struct
-        //       Depositor is actually withdrawer here
-
         // Transfer tokens from vault to depositor
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_accounts = Transfer {
@@ -161,6 +158,7 @@ pub struct DepositOrWithdraw<'info> {
     )]
     pub vault: Account<'info, Vault>,
 
+    // TODO: We should get it from the vault account
     // Vault's token account
     #[account(
         mut,
