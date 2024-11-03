@@ -134,7 +134,7 @@ describe("VaultManager", () => {
     ).address;
   });
 
-  describe("create_vault", () => {
+  describe("create vault", () => {
     it("successfully creates a vault", async () => {
       await confirmTransaction(
         await program.methods
