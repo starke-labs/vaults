@@ -2,7 +2,12 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { createMint, createAccount, mintTo } from "@solana/spl-token";
+import {
+  createMint,
+  createAccount,
+  mintTo,
+  getOrCreateAssociatedTokenAccount,
+} from "@solana/spl-token";
 import { expect } from "chai";
 
 import { VaultManager } from "../target/types/vault_manager";
@@ -34,6 +39,10 @@ describe("VaultManager", () => {
   let vaultTokenAccount: PublicKey;
   let vault: PublicKey;
   let vaultBump: number;
+  let depositor1Account: PublicKey;
+  let depositor2Account: PublicKey;
+  let depositor1Bump: number;
+  let depositor2Bump: number;
 
   before(async () => {
     // Airdrop SOL to accounts
@@ -93,6 +102,36 @@ describe("VaultManager", () => {
       [Buffer.from("vault"), manager.publicKey.toBuffer()],
       program.programId
     );
+
+    // Derive depositor PDAs
+    [depositor1Account, depositor1Bump] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("vault_balance"),
+        vault.toBuffer(),
+        depositor1.publicKey.toBuffer(),
+      ],
+      program.programId
+    );
+
+    [depositor2Account, depositor2Bump] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("vault_balance"),
+        vault.toBuffer(),
+        depositor2.publicKey.toBuffer(),
+      ],
+      program.programId
+    );
+
+    // Create vault token account if not exists
+    vaultTokenAccount = (
+      await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        manager,
+        depositToken,
+        vault,
+        true
+      )
+    ).address;
   });
 
   describe("create_vault", () => {
@@ -132,40 +171,6 @@ describe("VaultManager", () => {
   });
 
   describe("deposit", () => {
-    let depositor1Account: PublicKey;
-    let depositor2Account: PublicKey;
-    let depositor1Bump: number;
-    let depositor2Bump: number;
-
-    before(async () => {
-      // Derive depositor PDAs
-      [depositor1Account, depositor1Bump] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("vault_balance"),
-          vault.toBuffer(),
-          depositor1.publicKey.toBuffer(),
-        ],
-        program.programId
-      );
-
-      [depositor2Account, depositor2Bump] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("vault_balance"),
-          vault.toBuffer(),
-          depositor2.publicKey.toBuffer(),
-        ],
-        program.programId
-      );
-
-      // Create vault token account if not exists
-      vaultTokenAccount = await createAccount(
-        provider.connection,
-        manager,
-        depositToken,
-        manager.publicKey
-      );
-    });
-
     it("successfully deposits tokens from depositor1", async () => {
       const depositAmount = toTokenAmount(1);
 
@@ -379,13 +384,13 @@ describe("VaultManager", () => {
   });
 
   describe("withdraw", () => {
-    const initialDeposit = toTokenAmount(10);
+    let vaultBalance: anchor.BN;
 
     beforeEach(async () => {
       // Make initial deposit to test withdrawals
       await confirmTransaction(
         await program.methods
-          .deposit(initialDeposit)
+          .deposit(toTokenAmount(10))
           .accounts({
             user: depositor1.publicKey,
             userTokenAccount: depositor1TokenAccount,
@@ -395,6 +400,10 @@ describe("VaultManager", () => {
           .signers([depositor1])
           .rpc()
       );
+
+      vaultBalance = (
+        await program.account.vaultBalance.fetch(depositor1Account)
+      ).amount;
     });
 
     it("successfully withdraws tokens", async () => {
@@ -428,11 +437,11 @@ describe("VaultManager", () => {
       ).to.equal(withdrawAmount.toNumber());
 
       // Verify vault balance update
-      const vaultBalance = await program.account.vaultBalance.fetch(
+      const finalVaultBalance = await program.account.vaultBalance.fetch(
         depositor1Account
       );
-      expect(vaultBalance.amount.toNumber()).to.equal(
-        initialDeposit.sub(withdrawAmount).toNumber()
+      expect(finalVaultBalance.amount.toNumber()).to.equal(
+        vaultBalance.sub(withdrawAmount).toNumber()
       );
     });
 
@@ -440,7 +449,7 @@ describe("VaultManager", () => {
       // Withdraw full amount
       await confirmTransaction(
         await program.methods
-          .withdraw(initialDeposit)
+          .withdraw(vaultBalance)
           .accounts({
             user: depositor1.publicKey,
             userTokenAccount: depositor1TokenAccount,
@@ -459,7 +468,7 @@ describe("VaultManager", () => {
     });
 
     it("fails when trying to withdraw more than deposited", async () => {
-      const tooMuchAmount = initialDeposit.add(new anchor.BN(1));
+      const tooMuchAmount = vaultBalance.add(new anchor.BN(1));
 
       try {
         await program.methods
@@ -509,7 +518,7 @@ describe("VaultManager", () => {
       expect(event.user.toString()).to.equal(depositor1.publicKey.toString());
       expect(event.amount.toString()).to.equal(withdrawAmount.toString());
       expect(event.remainingBalance.toString()).to.equal(
-        initialDeposit.sub(withdrawAmount).toString()
+        vaultBalance.sub(withdrawAmount).toString()
       );
     });
 

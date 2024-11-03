@@ -68,14 +68,17 @@ pub mod vault_manager {
     }
 
     pub fn withdraw(ctx: Context<DepositOrWithdraw>, amount: u64) -> Result<()> {
-        // Transfer tokens from vault to depositor
+        // Transfer tokens from vault to depositor using PDA signer
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_accounts = Transfer {
             from: ctx.accounts.vault_token_account.to_account_info(),
             to: ctx.accounts.user_token_account.to_account_info(),
-            authority: ctx.accounts.manager.to_account_info(),
+            authority: ctx.accounts.vault.to_account_info(),
         };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let manager_key = ctx.accounts.manager.key();
+        let seeds = &[b"vault", manager_key.as_ref(), &[ctx.accounts.vault.bump]];
+        let signer_seeds = &[&seeds[..]];
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
         transfer(cpi_ctx, amount)?;
 
         // Update depositor account
@@ -162,7 +165,7 @@ pub struct DepositOrWithdraw<'info> {
     // Vault's token account
     #[account(
         mut,
-        constraint = vault_token_account.owner == manager.key(),
+        constraint = vault_token_account.owner == vault.key(),
         constraint = vault_token_account.mint == vault.deposit_token,
     )]
     pub vault_token_account: Account<'info, TokenAccount>,
