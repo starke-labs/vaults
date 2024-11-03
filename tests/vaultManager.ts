@@ -1,17 +1,16 @@
-// TODO: Add imports sorter plugin for prettier
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
 import {
-  createMint,
   createAccount,
-  mintTo,
+  createMint,
   getOrCreateAssociatedTokenAccount,
+  mintTo,
 } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 
 import { VaultManager } from "../target/types/vault_manager";
-import { requestAirdrop, confirmTransaction } from "./utils";
+import { confirmTransaction, requestAirdrop } from "./utils";
 
 // Add these constants at the top after imports
 const DECIMALS = 6;
