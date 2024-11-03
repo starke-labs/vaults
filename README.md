@@ -35,9 +35,8 @@ $ anchor test
 - `programs/vault_manager/src/event.rs`: Program event definitions
 - `tests/`: TypeScript tests
 
-## Development Notes
+## Development Notes and Todos
 
-- The program uses PDAs (Program Derived Addresses) for vault and balance accounts
 - Currently, each manager can only create one vault
-- Token accounts must match the vault's deposit token mint
-- Account rent is returned to users when balance accounts are closed
+- We can not let the manager have authority over the vault token account because it would allow the manager to steal funds from the vault
+  - The owner of the vault token account should be the program itself?
