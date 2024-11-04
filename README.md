@@ -38,4 +38,4 @@ $ anchor test
 ## Development Notes and Todos
 
 - Currently, each manager can only create one vault
-- Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (verify and confirm this!)
+- Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
