@@ -38,5 +38,4 @@ $ anchor test
 ## Development Notes and Todos
 
 - Currently, each manager can only create one vault
-- We can not let the manager have authority over the vault token account because it would allow the manager to steal funds from the vault
-  - The owner of the vault token account should be the program itself?
+- Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (verify and confirm this!)
