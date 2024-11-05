@@ -17,7 +17,10 @@ A Solana program for managing token vaults. Users can create vaults, deposit tok
 ```bash
 $ git clone https://github.com/starke-labs/vault.git
 $ cd vault
+$ cp env.example .env
 ```
+
+2. Set the `PROGRAM_AUTHORITY_SECRET_KEY` in the `.env` file to the secret key of the program authority and also update the `PROGRAM_AUTHORITY` in the `programs/vault_manager/src/lib.rs` file to the new program authority.
 
 ## Testing
 
@@ -39,6 +42,11 @@ $ anchor test
 
 - Currently, each manager can only create one vault
 - Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
+- Maximum number of tokens is currently set to 100
+- Should we different whitelist for deposit tokens?
+- TODO: Throw an error when trying to initialize whitelist twice
+- TODO: Check if a different whitelist can be used for deposits and withdrawals
+- TODO: Add vault.is_initialized() and whitelist.is_initialized() to throw the right error messages
 
 ## Fund Management Strategy
 

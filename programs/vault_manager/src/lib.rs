@@ -1,6 +1,7 @@
 mod event;
 mod vault;
 mod vault_balance;
+mod whitelist;
 
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
@@ -8,12 +9,36 @@ use anchor_spl::token::*;
 use event::*;
 use vault::*;
 use vault_balance::*;
+use whitelist::*;
 
 declare_id!("5bZpuR8pbHpndAcJ99Hc3fNYT65fagRCptFvCwqPw3Te");
+
+// TODO: What happens when we need to redeploy the program?
+pub const PROGRAM_AUTHORITY: Pubkey = pubkey!("26jdGTuEWEP5PaZa9PqJ4Q1i1Zj9ct51T8bBqhcN2ZTf");
+pub const TOKEN_WHITELIST_SEED: &[u8] = b"STARKE_TOKEN_WHITELIST";
 
 #[program]
 pub mod vault_manager {
     use super::*;
+
+    pub fn initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
+        ctx.accounts.whitelist.initialize(
+            ctx.accounts.authority.key(),
+            PROGRAM_AUTHORITY,
+            ctx.bumps.whitelist,
+        )
+    }
+
+    pub fn add_token(ctx: Context<ModifyWhitelist>, token: Pubkey) -> Result<()> {
+        ctx.accounts.whitelist.add_token(token)?;
+
+        emit!(TokenWhitelisted {
+            token,
+            timestamp: ctx.accounts.clock.unix_timestamp,
+        });
+
+        Ok(())
+    }
 
     pub fn create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
         ctx.accounts.vault.initialize(
@@ -76,7 +101,11 @@ pub mod vault_manager {
             authority: ctx.accounts.vault.to_account_info(),
         };
         let manager_key = ctx.accounts.manager.key();
-        let seeds = &[b"vault", manager_key.as_ref(), &[ctx.accounts.vault.bump]];
+        let seeds = &[
+            Vault::SEED,
+            manager_key.as_ref(),
+            &[ctx.accounts.vault.bump],
+        ];
         let signer_seeds = &[&seeds[..]];
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
         transfer(cpi_ctx, amount)?;
@@ -109,6 +138,43 @@ pub mod vault_manager {
 }
 
 #[derive(Accounts)]
+pub struct InitializeWhitelist<'info> {
+    #[account(
+        mut,
+        address = PROGRAM_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+    )]
+    pub authority: Signer<'info>,
+
+    #[account(
+        init_if_needed,
+        payer = authority,
+        space = TokenWhitelist::MAX_SPACE,
+        seeds = [TOKEN_WHITELIST_SEED],
+        bump,
+    )]
+    pub whitelist: Account<'info, TokenWhitelist>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ModifyWhitelist<'info> {
+    #[account(
+        address = PROGRAM_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+    )]
+    pub authority: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [TOKEN_WHITELIST_SEED],
+        bump = whitelist.bump,
+    )]
+    pub whitelist: Account<'info, TokenWhitelist>,
+
+    pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
 pub struct CreateVault<'info> {
     // Vault manager
     #[account(mut)]
@@ -123,12 +189,22 @@ pub struct CreateVault<'info> {
         init,
         payer = manager,
         space = Vault::MAX_SPACE,
-        seeds = [b"vault", manager.key().as_ref()],
+        seeds = [Vault::SEED, manager.key().as_ref()],
         bump
     )]
     pub vault: Account<'info, Vault>,
 
+    #[account(
+        seeds = [TOKEN_WHITELIST_SEED],
+        bump = whitelist.bump,
+    )]
+    pub whitelist: Account<'info, TokenWhitelist>,
+
+    #[account(
+        constraint = whitelist.is_whitelisted(&deposit_token.key()) @ WhitelistError::TokenNotWhitelisted,
+    )]
     pub deposit_token: Account<'info, Mint>,
+
     pub system_program: Program<'info, System>,
     pub clock: Sysvar<'info, Clock>,
 }
@@ -156,7 +232,7 @@ pub struct DepositOrWithdraw<'info> {
     // `manager.key().as_ref()` works
     #[account(
         mut,
-        seeds = [b"vault", manager.key().as_ref()],
+        seeds = [Vault::SEED, manager.key().as_ref()],
         bump
     )]
     pub vault: Account<'info, Vault>,
@@ -177,7 +253,7 @@ pub struct DepositOrWithdraw<'info> {
         init_if_needed,
         payer = user,
         space = VaultBalance::MAX_SPACE,
-        seeds = [b"vault_balance", vault.key().as_ref(), user.key().as_ref()],
+        seeds = [VaultBalance::SEED, vault.key().as_ref(), user.key().as_ref()],
         bump
     )]
     pub vault_balance: Account<'info, VaultBalance>,

@@ -15,6 +15,8 @@ impl VaultBalance {
         + 8  // amount (u64)
         + 1; // bump
 
+    pub const SEED: &'static [u8] = b"STARKE_VAULT_BALANCE";
+
     pub fn initialize(&mut self, vault: Pubkey, user: Pubkey, bump: u8) {
         self.vault = vault;
         self.user = user;
