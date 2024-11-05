@@ -34,3 +34,9 @@ pub struct WithdrawMade {
     pub remaining_balance: u64,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct TokenWhitelisted {
+    pub token: Pubkey,
+    pub timestamp: i64,
+}

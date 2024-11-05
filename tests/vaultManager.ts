@@ -8,6 +8,7 @@ import {
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
+import "dotenv/config";
 
 import { VaultManager } from "../target/types/vault_manager";
 import { confirmTransaction, requestAirdrop } from "./utils";
@@ -15,6 +16,9 @@ import { confirmTransaction, requestAirdrop } from "./utils";
 // Add these constants at the top after imports
 const DECIMALS = 6;
 const TOKEN_FACTOR = Math.pow(10, DECIMALS);
+const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
+const VAULT_SEED = "STARKE_VAULT";
+const VAULT_BALANCE_SEED = "STARKE_VAULT_BALANCE";
 
 // TODO: Move to utils
 // Helper function to convert tokens to raw amount
@@ -27,6 +31,13 @@ describe("VaultManager", () => {
   const program = anchor.workspace.VaultManager as Program<VaultManager>;
 
   // Test accounts
+  const programAuthority = anchor.web3.Keypair.fromSecretKey(
+    new Uint8Array(
+      process.env
+        .PROGRAM_AUTHORITY_SECRET_KEY!.split(",")
+        .map((num) => parseInt(num))
+    )
+  );
   const manager = anchor.web3.Keypair.generate();
   const depositor1 = anchor.web3.Keypair.generate();
   const depositor2 = anchor.web3.Keypair.generate();
@@ -42,6 +53,8 @@ describe("VaultManager", () => {
   let depositor2Account: PublicKey;
   let depositor1Bump: number;
   let depositor2Bump: number;
+  let whitelist: PublicKey;
+  let whitelistBump: number;
 
   before(async () => {
     // Airdrop SOL to accounts
@@ -98,14 +111,14 @@ describe("VaultManager", () => {
 
     // Derive vault PDA
     [vault, vaultBump] = PublicKey.findProgramAddressSync(
-      [Buffer.from("vault"), manager.publicKey.toBuffer()],
+      [Buffer.from(VAULT_SEED), manager.publicKey.toBuffer()],
       program.programId
     );
 
     // Derive depositor PDAs
     [depositor1Account, depositor1Bump] = PublicKey.findProgramAddressSync(
       [
-        Buffer.from("vault_balance"),
+        Buffer.from(VAULT_BALANCE_SEED),
         vault.toBuffer(),
         depositor1.publicKey.toBuffer(),
       ],
@@ -114,7 +127,7 @@ describe("VaultManager", () => {
 
     [depositor2Account, depositor2Bump] = PublicKey.findProgramAddressSync(
       [
-        Buffer.from("vault_balance"),
+        Buffer.from(VAULT_BALANCE_SEED),
         vault.toBuffer(),
         depositor2.publicKey.toBuffer(),
       ],
@@ -131,6 +144,82 @@ describe("VaultManager", () => {
         true
       )
     ).address;
+
+    // Get whitelist PDA
+    [whitelist, whitelistBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from(WHITELIST_SEED)],
+      program.programId
+    );
+  });
+
+  describe("whitelist", () => {
+    it("successfully initializes whitelist", async () => {
+      await confirmTransaction(
+        await program.methods
+          .initializeWhitelist()
+          .accounts({ authority: programAuthority.publicKey })
+          .signers([programAuthority])
+          .rpc()
+      );
+
+      const whitelistAccount = await program.account.tokenWhitelist.fetch(
+        whitelist
+      );
+      expect(whitelistAccount.authority.toString()).to.equal(
+        programAuthority.publicKey.toString()
+      );
+      expect(whitelistAccount.tokens).to.have.length(0);
+    });
+
+    it("successfully adds token to whitelist", async () => {
+      await confirmTransaction(
+        await program.methods
+          .addToken(depositToken)
+          .accounts({
+            authority: programAuthority.publicKey,
+          })
+          .signers([programAuthority])
+          .rpc()
+      );
+
+      const whitelistAccount = await program.account.tokenWhitelist.fetch(
+        whitelist
+      );
+      expect(whitelistAccount.tokens).to.have.length(1);
+      expect(whitelistAccount.tokens[0].toString()).to.equal(
+        depositToken.toString()
+      );
+    });
+
+    it("fails to add same token twice", async () => {
+      try {
+        await program.methods
+          .addToken(depositToken)
+          .accounts({
+            authority: programAuthority.publicKey,
+          })
+          .signers([programAuthority])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (err) {
+        expect(err.toString()).to.include("TokenAlreadyWhitelisted");
+      }
+    });
+
+    it("fails when non-program authority tries to add token", async () => {
+      try {
+        await program.methods
+          .addToken(depositToken)
+          .accounts({
+            authority: manager.publicKey,
+          })
+          .signers([manager])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (err) {
+        expect(err.toString()).to.include("UnauthorizedAccess");
+      }
+    });
   });
 
   describe("create vault", () => {
@@ -164,7 +253,43 @@ describe("VaultManager", () => {
           .rpc();
         expect.fail("Should have failed");
       } catch (error) {
-        expect(error).to.be.instanceOf(Error);
+        // 0x0 means you're attempting to initialize an already initialized account
+        expect(error.toString()).to.include("0x0");
+      }
+    });
+
+    it("fails to create vault with non-whitelisted token", async () => {
+      const newManager = anchor.web3.Keypair.generate();
+      await requestAirdrop(newManager.publicKey);
+
+      const nonWhitelistedToken = await createMint(
+        provider.connection,
+        newManager,
+        newManager.publicKey,
+        null,
+        6
+      );
+
+      const whitelistAccount = await program.account.tokenWhitelist.fetch(
+        whitelist
+      );
+      expect(whitelistAccount.tokens).to.have.length(1);
+      expect(whitelistAccount.tokens[0].toString()).to.equal(
+        depositToken.toString()
+      );
+
+      try {
+        await program.methods
+          .createVault("Test Vault")
+          .accounts({
+            manager: newManager.publicKey,
+            depositToken: nonWhitelistedToken,
+          })
+          .signers([newManager])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (error) {
+        expect(error.toString()).to.include("TokenNotWhitelisted");
       }
     });
   });
@@ -370,7 +495,7 @@ describe("VaultManager", () => {
       // Verify PDA derivation matches
       const [derivedPDA, derivedBump] = PublicKey.findProgramAddressSync(
         [
-          Buffer.from("vault_balance"),
+          Buffer.from(VAULT_BALANCE_SEED),
           vault.toBuffer(),
           depositor1.publicKey.toBuffer(),
         ],

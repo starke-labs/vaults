@@ -16,6 +16,8 @@ impl Vault {
         + 32 // name
         + 1; // bump
 
+    pub const SEED: &'static [u8] = b"STARKE_VAULT";
+
     pub fn initialize(
         &mut self,
         manager: Pubkey,
