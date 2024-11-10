@@ -15,7 +15,7 @@ A Solana program for managing token vaults. Users can create vaults, deposit tok
 1. Clone the repository:
 
 ```bash
-$         git clone https://github.com/starke-labs/vault.git
+$ git clone https://github.com/starke-labs/vault.git
 $ cd vault
 $ cp env.example .env
 ```
