@@ -96,23 +96,6 @@ pub mod vault_manager {
     }
 
     pub fn withdraw(ctx: Context<DepositOrWithdraw>, amount: u64) -> Result<()> {
-        // Transfer tokens from vault to depositor using PDA signer
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.vault_token_account.to_account_info(),
-            to: ctx.accounts.user_token_account.to_account_info(),
-            authority: ctx.accounts.vault.to_account_info(),
-        };
-        let manager_key = ctx.accounts.manager.key();
-        let seeds = &[
-            Vault::SEED,
-            manager_key.as_ref(),
-            &[ctx.accounts.vault.bump],
-        ];
-        let signer_seeds = &[&seeds[..]];
-        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-        transfer(cpi_ctx, amount)?;
-
         // Update vault total deposits
         ctx.accounts.vault.withdraw(amount)?;
 
@@ -130,6 +113,23 @@ pub mod vault_manager {
                 .checked_add(vault_balance_lamports)
                 .ok_or(VaultBalanceError::NumericOverflow)?;
         }
+
+        // Transfer tokens from vault to depositor using PDA signer
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.vault_token_account.to_account_info(),
+            to: ctx.accounts.user_token_account.to_account_info(),
+            authority: ctx.accounts.vault.to_account_info(),
+        };
+        let manager_key = ctx.accounts.manager.key();
+        let seeds = &[
+            Vault::SEED,
+            manager_key.as_ref(),
+            &[ctx.accounts.vault.bump],
+        ];
+        let signer_seeds = &[&seeds[..]];
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        transfer(cpi_ctx, amount)?;
 
         emit!(WithdrawMade {
             vault: ctx.accounts.vault.key(),

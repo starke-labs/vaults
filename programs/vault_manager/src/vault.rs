@@ -47,6 +47,8 @@ impl Vault {
     }
 
     pub fn withdraw(&mut self, amount: u64) -> Result<()> {
+        require!(self.total_deposits >= amount, VaultError::InsufficientFunds);
+
         self.total_deposits = self
             .total_deposits
             .checked_sub(amount)
@@ -63,4 +65,6 @@ pub enum VaultError {
     NameTooLong,
     #[msg("Numeric overflow")]
     NumericOverflow,
+    #[msg("Insufficient funds for withdrawal")]
+    InsufficientFunds,
 }
