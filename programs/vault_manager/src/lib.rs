@@ -70,6 +70,9 @@ pub mod vault_manager {
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         transfer(cpi_ctx, amount)?;
 
+        // Update vault total deposits
+        ctx.accounts.vault.deposit(amount)?;
+
         // Update depositor account
         let vault_balance = &mut ctx.accounts.vault_balance;
         if vault_balance.amount == 0 {
@@ -109,6 +112,9 @@ pub mod vault_manager {
         let signer_seeds = &[&seeds[..]];
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
         transfer(cpi_ctx, amount)?;
+
+        // Update vault total deposits
+        ctx.accounts.vault.withdraw(amount)?;
 
         // Update depositor account
         let vault_balance = &mut ctx.accounts.vault_balance;

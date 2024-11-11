@@ -5,6 +5,7 @@ pub struct Vault {
     pub manager: Pubkey,
     pub deposit_token: Pubkey,
     pub name: String,
+    pub total_deposits: u64,
     pub bump: u8,
 }
 
@@ -14,6 +15,7 @@ impl Vault {
         + 32 // deposit token pubkey
         + 4  // name length
         + 32 // name
+        + 8  // total_deposits
         + 1; // bump
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
@@ -30,8 +32,25 @@ impl Vault {
         self.manager = manager;
         self.deposit_token = deposit_token;
         self.name = name;
+        self.total_deposits = 0;
         self.bump = bump;
 
+        Ok(())
+    }
+
+    pub fn deposit(&mut self, amount: u64) -> Result<()> {
+        self.total_deposits = self
+            .total_deposits
+            .checked_add(amount)
+            .ok_or(VaultError::NumericOverflow)?;
+        Ok(())
+    }
+
+    pub fn withdraw(&mut self, amount: u64) -> Result<()> {
+        self.total_deposits = self
+            .total_deposits
+            .checked_sub(amount)
+            .ok_or(VaultError::NumericOverflow)?;
         Ok(())
     }
 }
@@ -42,4 +61,6 @@ pub enum VaultError {
     InvalidDepositToken,
     #[msg("Name must be 32 characters or less")]
     NameTooLong,
+    #[msg("Numeric overflow")]
+    NumericOverflow,
 }
