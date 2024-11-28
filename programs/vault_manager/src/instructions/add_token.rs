@@ -23,7 +23,7 @@ pub struct ModifyWhitelist<'info> {
 
     #[account(
         mut,
-        seeds = [TOKEN_WHITELIST_SEED],
+        seeds = [TokenWhitelist::SEED],
         bump = whitelist.bump,
     )]
     pub whitelist: Account<'info, TokenWhitelist>,
