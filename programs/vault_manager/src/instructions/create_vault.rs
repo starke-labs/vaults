@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 
-use crate::constants::*;
 use crate::state::*;
 
 pub fn _create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
@@ -71,7 +70,7 @@ pub struct CreateVault<'info> {
     pub vault_token_mint: Account<'info, Mint>,
 
     #[account(
-        seeds = [TOKEN_WHITELIST_SEED],
+        seeds = [TokenWhitelist::SEED],
         bump = whitelist.bump,
     )]
     pub whitelist: Account<'info, TokenWhitelist>,

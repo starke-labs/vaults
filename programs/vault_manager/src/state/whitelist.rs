@@ -17,6 +17,8 @@ impl TokenWhitelist {
         (32 * Self::MAX_TOKENS) + // tokens (100 max)
         1; // bump
 
+    pub const SEED: &'static [u8] = b"STARKE_TOKEN_WHITELIST";
+
     pub fn initialize(
         &mut self,
         authority: Pubkey,
