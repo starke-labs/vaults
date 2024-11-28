@@ -4,6 +4,7 @@ use anchor_lang::prelude::*;
 pub struct Vault {
     pub manager: Pubkey,
     pub deposit_token: Pubkey,
+    pub vault_token_mint: Pubkey,
     pub name: String,
     pub total_deposits: u64,
     pub bump: u8,
@@ -13,17 +14,20 @@ impl Vault {
     pub const MAX_SPACE: usize = 8  // discriminator
         + 32 // manager pubkey
         + 32 // deposit token pubkey
-        + 4  // name length
-        + 32 // name
+        + 32 // vault token mint pubkey
+        + 4  // name length (u32)
+        + 32 // name (max 32 bytes)
         + 8  // total_deposits
         + 1; // bump
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
+    pub const VAULT_TOKEN_MINT_SEED: &'static [u8] = b"STARKE_VAULT_TOKEN_MINT";
 
     pub fn initialize(
         &mut self,
         manager: Pubkey,
         deposit_token: Pubkey,
+        vault_token_mint: Pubkey,
         name: String,
         bump: u8,
     ) -> Result<()> {
@@ -31,6 +35,7 @@ impl Vault {
 
         self.manager = manager;
         self.deposit_token = deposit_token;
+        self.vault_token_mint = vault_token_mint;
         self.name = name;
         self.total_deposits = 0;
         self.bump = bump;
