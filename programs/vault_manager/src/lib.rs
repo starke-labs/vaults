@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
 
 pub mod constants;
-pub mod instructions;
+pub mod controllers;
+mod instructions;
 pub mod state;
 
 use instructions::*;

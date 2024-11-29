@@ -6,7 +6,6 @@ pub struct Vault {
     pub deposit_token: Pubkey,
     pub vault_token_mint: Pubkey,
     pub name: String,
-    pub total_deposits: u64,
     pub bump: u8,
 }
 
@@ -17,7 +16,6 @@ impl Vault {
         + 32 // vault token mint pubkey
         + 4  // name length (u32)
         + 32 // name (max 32 bytes)
-        + 8  // total_deposits
         + 1; // bump
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
@@ -37,27 +35,8 @@ impl Vault {
         self.deposit_token = deposit_token;
         self.vault_token_mint = vault_token_mint;
         self.name = name;
-        self.total_deposits = 0;
         self.bump = bump;
 
-        Ok(())
-    }
-
-    pub fn deposit(&mut self, amount: u64) -> Result<()> {
-        self.total_deposits = self
-            .total_deposits
-            .checked_add(amount)
-            .ok_or(VaultError::NumericOverflow)?;
-        Ok(())
-    }
-
-    pub fn withdraw(&mut self, amount: u64) -> Result<()> {
-        require!(self.total_deposits >= amount, VaultError::InsufficientFunds);
-
-        self.total_deposits = self
-            .total_deposits
-            .checked_sub(amount)
-            .ok_or(VaultError::NumericOverflow)?;
         Ok(())
     }
 }
