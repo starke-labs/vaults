@@ -1,12 +1,12 @@
 [package]
-name = "vault-manager"
+name = "vaults"
 version = "0.1.0"
-description = "vault manager program that can create and manage starke vaults"
+description = "Vaults program that can create and manage Starke vaults on Solana."
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "vault_manager"
+name = "vaults"
 
 [features]
 default = []

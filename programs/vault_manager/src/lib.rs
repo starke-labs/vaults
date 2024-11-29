@@ -7,10 +7,10 @@ pub mod state;
 
 use instructions::*;
 
-declare_id!("5bZpuR8pbHpndAcJ99Hc3fNYT65fagRCptFvCwqPw3Te");
+declare_id!("STRK2VEGPAKstk6S6k5Cpin6uGtSDQkvanTaXUeaTNj");
 
 #[program]
-pub mod vault_manager {
+pub mod vaults {
     use super::*;
 
     pub fn initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
