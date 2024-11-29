@@ -10,17 +10,16 @@ A Solana program for managing token vaults. Users can create vaults, deposit tok
 - [Node.js](https://nodejs.org/) (v16 or later)
 - [Yarn](https://yarnpkg.com/getting-started/install)
 
-## Installation
-
-1. Clone the repository:
+## Installation & Setup
 
 ```bash
-$ git clone https://github.com/starke-labs/vault.git
-$ cd vault
-$ cp env.example .env
+$ git clone https://github.com/starke-labs/vaults.git
+$ cd vaults
+$ mkdir deploy
+$ cp <path-to-deploy-authority-keypair> deploy/authority.json
+$ cp <path-to-vaults-keypair> target/deploy/vaults-keypair.json
+$ anchor build
 ```
-
-2. Set the `PROGRAM_AUTHORITY_SECRET_KEY` in the `.env` file to the secret key of the program authority and also update the `PROGRAM_AUTHORITY` in the `programs/vault_manager/src/lib.rs` file to the new program authority.
 
 ## Testing
 
