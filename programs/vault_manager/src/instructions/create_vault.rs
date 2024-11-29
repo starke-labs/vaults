@@ -29,6 +29,7 @@ pub fn _create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
         vault: ctx.accounts.vault.key(),
         manager: *ctx.accounts.manager.key,
         deposit_token: ctx.accounts.deposit_token.key(),
+        vault_token_mint: ctx.accounts.vault_token_mint.key(),
         name: ctx.accounts.vault.name.to_string(),
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
@@ -58,11 +59,14 @@ pub struct CreateVault<'info> {
 
     // Vault's SPL token mint account (PDA)
     #[account(
+        // Initialize the mint
+        // TODO: Test what happens if we try to create the same vault twice!
         init,
         payer = manager,
         seeds = [Vault::VAULT_TOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
         // NOTE: We can not change the deposit token after initializing the vault (which also initializes the mint)
+        // TODO: How do we set the token metadata?
         mint::decimals = deposit_token.decimals,
         mint::authority = vault,
         mint::freeze_authority = vault,

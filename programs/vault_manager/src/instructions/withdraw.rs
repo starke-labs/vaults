@@ -1,39 +1,37 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 
+use crate::controllers::*;
 use crate::state::*;
 
 pub fn _withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     // Burn vault tokens from depositor
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    let burn_accounts = Burn {
-        mint: ctx.accounts.vault_token_mint.to_account_info(),
-        from: ctx.accounts.user_vault_token_account.to_account_info(),
-        authority: ctx.accounts.user.to_account_info(),
-    };
-    let cpi_ctx = CpiContext::new(cpi_program.clone(), burn_accounts);
-    burn(cpi_ctx, amount)?;
+    burn_vault_token(
+        ctx.accounts.vault.clone(),
+        ctx.accounts.vault_token_mint.clone(),
+        ctx.accounts.user_vault_token_account.clone(),
+        amount,
+        ctx.accounts.token_program.clone(),
+    )?;
 
     // Transfer deposit tokens from vault to depositor
+    // TODO: Create a wrapper function for this in utils
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
-    let signer = &[&vault_seeds[..]];
-    let transfer_accounts = Transfer {
-        from: ctx.accounts.vault_deposit_token_account.to_account_info(),
-        to: ctx.accounts.user_token_account.to_account_info(),
-        authority: ctx.accounts.vault.to_account_info(),
-    };
-    let cpi_ctx = CpiContext::new_with_signer(cpi_program, transfer_accounts, signer);
-    transfer(cpi_ctx, amount)?;
-
-    // Update vault total deposits
-    ctx.accounts.vault.withdraw(amount)?;
+    let signer_seeds = &[&vault_seeds[..]];
+    transfer_token_with_signer(
+        ctx.accounts.vault_deposit_token_account.clone(),
+        ctx.accounts.user_token_account.clone(),
+        amount,
+        ctx.accounts.vault.to_account_info(),
+        signer_seeds,
+        ctx.accounts.token_program.clone(),
+    )?;
 
     emit!(WithdrawMade {
         vault: ctx.accounts.vault.key(),
         user: ctx.accounts.user.key(),
         amount,
-        remaining_balance: ctx.accounts.vault.total_deposits,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 
