@@ -31,4 +31,8 @@ pub mod vault_manager {
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         _withdraw(ctx, amount)
     }
+
+    pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, amount: u64) -> Result<()> {
+        _swap_on_jupiter(ctx, amount)
+    }
 }
