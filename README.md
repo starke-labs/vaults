@@ -46,3 +46,5 @@ $ anchor test
 - TODO: Throw an error when trying to initialize whitelist twice
 - TODO: Check if a different whitelist can be used for deposits and withdrawals
 - TODO: Add vault.is_initialized() and whitelist.is_initialized() to throw the right error messages
+- TODO: Add program metadata
+- TODO: Add vault token mint metadata
