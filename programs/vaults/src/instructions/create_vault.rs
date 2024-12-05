@@ -6,29 +6,17 @@ use crate::state::*;
 pub fn _create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
     ctx.accounts.vault.initialize(
         *ctx.accounts.manager.key,
-        ctx.accounts.deposit_token.key(),
-        ctx.accounts.vault_token_mint.key(),
+        ctx.accounts.deposit_token_mint.key(),
         name,
         ctx.bumps.vault,
+        ctx.accounts.vault_token_mint.key(),
+        ctx.bumps.vault_token_mint,
     )?;
-
-    // TODO: Remove this as we are initializing the mint in accounts
-    // let cpi_accounts = InitializeMint {
-    //     mint: ctx.accounts.vault_token_mint.to_account_info(),
-    //     rent: ctx.accounts.rent.to_account_info(),
-    // };
-    // let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts);
-    // initialize_mint(
-    //     cpi_ctx,
-    //     6,
-    //     &ctx.accounts.vault.key(),
-    //     Some(&ctx.accounts.vault.key()),
-    // )?;
 
     emit!(VaultCreated {
         vault: ctx.accounts.vault.key(),
         manager: *ctx.accounts.manager.key,
-        deposit_token: ctx.accounts.deposit_token.key(),
+        deposit_token: ctx.accounts.deposit_token_mint.key(),
         vault_token_mint: ctx.accounts.vault_token_mint.key(),
         name: ctx.accounts.vault.name.to_string(),
         timestamp: ctx.accounts.clock.unix_timestamp,
@@ -57,35 +45,32 @@ pub struct CreateVault<'info> {
     )]
     pub vault: Account<'info, Vault>,
 
-    // Vault's SPL token mint account (PDA)
+    // Vault token mint
     #[account(
-        // Initialize the mint
-        // TODO: Test what happens if we try to create the same vault twice!
         init,
         payer = manager,
         seeds = [Vault::VAULT_TOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
-        // NOTE: We can not change the deposit token after initializing the vault (which also initializes the mint)
-        // TODO: How do we set the token metadata?
-        mint::decimals = deposit_token.decimals,
+        mint::decimals = deposit_token_mint.decimals,
         mint::authority = vault,
         mint::freeze_authority = vault,
     )]
     pub vault_token_mint: Account<'info, Mint>,
 
+    // Whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
         bump = whitelist.bump,
     )]
     pub whitelist: Account<'info, TokenWhitelist>,
 
+    // Deposit token mint
     #[account(
-        constraint = whitelist.is_whitelisted(&deposit_token.key()) @ WhitelistError::TokenNotWhitelisted,
+        constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
     )]
-    pub deposit_token: Account<'info, Mint>,
+    pub deposit_token_mint: Account<'info, Mint>,
 
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
-    pub rent: Sysvar<'info, Rent>,
     pub clock: Sysvar<'info, Clock>,
 }
