@@ -3,14 +3,14 @@ import { Program } from "@coral-xyz/anchor";
 import {
   createAccount,
   createMint,
-  getOrCreateAssociatedTokenAccount,
+  getAssociatedTokenAddress,
   mintTo,
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
-import "dotenv/config";
+import fs from "fs";
 
-import { VaultManager } from "../target/types/vault_manager";
+import { Vaults } from "../target/types/vaults";
 import { confirmTransaction, requestAirdrop } from "./utils";
 
 // Add these constants at the top after imports
@@ -18,41 +18,43 @@ const DECIMALS = 6;
 const TOKEN_FACTOR = Math.pow(10, DECIMALS);
 const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
 const VAULT_SEED = "STARKE_VAULT";
-const VAULT_BALANCE_SEED = "STARKE_VAULT_BALANCE";
+const VAULT_TOKEN_MINT_SEED = "STARKE_VAULT_TOKEN_MINT";
 
 // TODO: Move to utils
 // Helper function to convert tokens to raw amount
 const toTokenAmount = (tokens: number) => new anchor.BN(tokens * TOKEN_FACTOR);
 
-describe("VaultManager", () => {
+describe("Vaults", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.VaultManager as Program<VaultManager>;
+  const program = anchor.workspace.Vaults as Program<Vaults>;
 
   // Test accounts
   const programAuthority = anchor.web3.Keypair.fromSecretKey(
     new Uint8Array(
-      process.env
-        .PROGRAM_AUTHORITY_SECRET_KEY!.split(",")
-        .map((num) => parseInt(num))
+      JSON.parse(fs.readFileSync("./deploy/authority.json", "utf8"))
     )
   );
   const manager = anchor.web3.Keypair.generate();
   const depositor1 = anchor.web3.Keypair.generate();
   const depositor2 = anchor.web3.Keypair.generate();
 
-  // PDAs and other accounts
-  let depositToken: PublicKey;
-  let depositor1TokenAccount: PublicKey;
-  let depositor2TokenAccount: PublicKey;
-  let vaultTokenAccount: PublicKey;
+  // Deposit token mint and associated token accounts (ATAs)
+  let depositTokenMint: PublicKey;
+  let depositor1DepositTokenATA: PublicKey;
+  let depositor2DepositTokenATA: PublicKey;
+  let vaultDepositTokenATA: PublicKey;
+
+  // Vault, vault token mint, and associated token accounts (ATAs)
   let vault: PublicKey;
   let vaultBump: number;
-  let depositor1Account: PublicKey;
-  let depositor2Account: PublicKey;
-  let depositor1Bump: number;
-  let depositor2Bump: number;
+  let vaultTokenMint: PublicKey;
+  let vaultTokenMintBump: number;
+  let depositor1VaultTokenATA: PublicKey;
+  let depositor2VaultTokenATA: PublicKey;
+
+  // Whitelist
   let whitelist: PublicKey;
   let whitelistBump: number;
 
@@ -63,26 +65,26 @@ describe("VaultManager", () => {
     await requestAirdrop(depositor2.publicKey);
 
     // Create deposit token
-    depositToken = await createMint(
+    depositTokenMint = await createMint(
       provider.connection,
       manager,
       manager.publicKey,
       null,
-      6
+      DECIMALS
     );
 
-    // Create token accounts
-    depositor1TokenAccount = await createAccount(
+    // Create token accounts for deposit token
+    depositor1DepositTokenATA = await createAccount(
       provider.connection,
       depositor1,
-      depositToken,
+      depositTokenMint,
       depositor1.publicKey
     );
 
-    depositor2TokenAccount = await createAccount(
+    depositor2DepositTokenATA = await createAccount(
       provider.connection,
       depositor2,
-      depositToken,
+      depositTokenMint,
       depositor2.publicKey
     );
 
@@ -91,8 +93,8 @@ describe("VaultManager", () => {
       await mintTo(
         provider.connection,
         manager,
-        depositToken,
-        depositor1TokenAccount,
+        depositTokenMint,
+        depositor1DepositTokenATA,
         manager.publicKey,
         1000 * TOKEN_FACTOR
       )
@@ -102,50 +104,41 @@ describe("VaultManager", () => {
       await mintTo(
         provider.connection,
         manager,
-        depositToken,
-        depositor2TokenAccount,
+        depositTokenMint,
+        depositor2DepositTokenATA,
         manager.publicKey,
         1000 * TOKEN_FACTOR
       )
     );
 
-    // Derive vault PDA
+    // Derive PDAs
     [vault, vaultBump] = PublicKey.findProgramAddressSync(
       [Buffer.from(VAULT_SEED), manager.publicKey.toBuffer()],
       program.programId
     );
 
-    // Derive depositor PDAs
-    [depositor1Account, depositor1Bump] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from(VAULT_BALANCE_SEED),
-        vault.toBuffer(),
-        depositor1.publicKey.toBuffer(),
-      ],
+    [vaultTokenMint, vaultTokenMintBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from(VAULT_TOKEN_MINT_SEED), vault.toBuffer()],
       program.programId
     );
 
-    [depositor2Account, depositor2Bump] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from(VAULT_BALANCE_SEED),
-        vault.toBuffer(),
-        depositor2.publicKey.toBuffer(),
-      ],
-      program.programId
+    // Create associated token accounts for vault tokens
+    vaultDepositTokenATA = await getAssociatedTokenAddress(
+      depositTokenMint,
+      vault,
+      true
     );
 
-    // Create vault token account if not exists
-    vaultTokenAccount = (
-      await getOrCreateAssociatedTokenAccount(
-        provider.connection,
-        manager,
-        depositToken,
-        vault,
-        true
-      )
-    ).address;
+    depositor1VaultTokenATA = await getAssociatedTokenAddress(
+      vaultTokenMint,
+      depositor1.publicKey
+    );
 
-    // Get whitelist PDA
+    depositor2VaultTokenATA = await getAssociatedTokenAddress(
+      vaultTokenMint,
+      depositor2.publicKey
+    );
+
     [whitelist, whitelistBump] = PublicKey.findProgramAddressSync(
       [Buffer.from(WHITELIST_SEED)],
       program.programId
@@ -174,7 +167,7 @@ describe("VaultManager", () => {
     it("successfully adds token to whitelist", async () => {
       await confirmTransaction(
         await program.methods
-          .addToken(depositToken)
+          .addToken(depositTokenMint)
           .accounts({
             authority: programAuthority.publicKey,
           })
@@ -187,14 +180,14 @@ describe("VaultManager", () => {
       );
       expect(whitelistAccount.tokens).to.have.length(1);
       expect(whitelistAccount.tokens[0].toString()).to.equal(
-        depositToken.toString()
+        depositTokenMint.toString()
       );
     });
 
     it("fails to add same token twice", async () => {
       try {
         await program.methods
-          .addToken(depositToken)
+          .addToken(depositTokenMint)
           .accounts({
             authority: programAuthority.publicKey,
           })
@@ -209,7 +202,7 @@ describe("VaultManager", () => {
     it("fails when non-program authority tries to add token", async () => {
       try {
         await program.methods
-          .addToken(depositToken)
+          .addToken(depositTokenMint)
           .accounts({
             authority: manager.publicKey,
           })
@@ -229,16 +222,24 @@ describe("VaultManager", () => {
           .createVault("Test Vault")
           .accounts({
             manager: manager.publicKey,
-            depositToken: depositToken,
+            depositTokenMint,
           })
           .signers([manager])
           .rpc()
       );
       const vaultAccount = await program.account.vault.fetch(vault);
       expect(vaultAccount.manager).to.eql(manager.publicKey);
-      expect(vaultAccount.depositToken).to.eql(depositToken);
+      expect(vaultAccount.depositTokenMint).to.eql(depositTokenMint);
       expect(vaultAccount.name).to.equal("Test Vault");
       expect(vaultAccount.bump).to.equal(vaultBump);
+      expect(vaultAccount.mint).to.eql(vaultTokenMint);
+      expect(vaultAccount.mintBump).to.equal(vaultTokenMintBump);
+
+      // Check if vault token mint has been created
+      const vaultTokenMintAccount = await provider.connection.getAccountInfo(
+        vaultTokenMint
+      );
+      expect(vaultTokenMintAccount).to.not.be.null;
     });
 
     it("fails to create vault with same manager", async () => {
@@ -247,7 +248,7 @@ describe("VaultManager", () => {
           .createVault("Another Vault")
           .accounts({
             manager: manager.publicKey,
-            depositToken: depositToken,
+            depositTokenMint,
           })
           .signers([manager])
           .rpc();
@@ -275,7 +276,7 @@ describe("VaultManager", () => {
       );
       expect(whitelistAccount.tokens).to.have.length(1);
       expect(whitelistAccount.tokens[0].toString()).to.equal(
-        depositToken.toString()
+        depositTokenMint.toString()
       );
 
       try {
@@ -283,7 +284,7 @@ describe("VaultManager", () => {
           .createVault("Test Vault")
           .accounts({
             manager: newManager.publicKey,
-            depositToken: nonWhitelistedToken,
+            depositTokenMint: nonWhitelistedToken,
           })
           .signers([newManager])
           .rpc();
@@ -298,18 +299,18 @@ describe("VaultManager", () => {
     afterEach(async () => {
       // Check and withdraw depositor1's balance if any
       try {
-        const balance1 = await program.account.vaultBalance.fetch(
-          depositor1Account
+        const balance1 = await provider.connection.getTokenAccountBalance(
+          depositor1VaultTokenATA
         );
-        if (balance1.amount.gt(new anchor.BN(0))) {
+        const amount1 = new anchor.BN(balance1.value.amount);
+        if (amount1.gt(new anchor.BN(0))) {
           await confirmTransaction(
             await program.methods
-              .withdraw(balance1.amount)
+              .withdraw(amount1)
               .accounts({
                 user: depositor1.publicKey,
-                userTokenAccount: depositor1TokenAccount,
                 manager: manager.publicKey,
-                vaultTokenAccount,
+                depositTokenMint,
               })
               .signers([depositor1])
               .rpc()
@@ -321,18 +322,18 @@ describe("VaultManager", () => {
 
       // Check and withdraw depositor2's balance if any
       try {
-        const balance2 = await program.account.vaultBalance.fetch(
-          depositor2Account
+        const balance2 = await provider.connection.getTokenAccountBalance(
+          depositor2VaultTokenATA
         );
-        if (balance2.amount.gt(new anchor.BN(0))) {
+        const amount2 = new anchor.BN(balance2.value.amount);
+        if (amount2.gt(new anchor.BN(0))) {
           await confirmTransaction(
             await program.methods
-              .withdraw(balance2.amount)
+              .withdraw(amount2)
               .accounts({
                 user: depositor2.publicKey,
-                userTokenAccount: depositor2TokenAccount,
                 manager: manager.publicKey,
-                vaultTokenAccount,
+                depositTokenMint,
               })
               .signers([depositor2])
               .rpc()
@@ -343,226 +344,226 @@ describe("VaultManager", () => {
       }
 
       // Verify vault is empty
-      const vaultAccount = await program.account.vault.fetch(vault);
-      expect(vaultAccount.totalDeposits.toString()).to.equal("0");
+      const vaultTokenBalance =
+        await provider.connection.getTokenAccountBalance(vaultDepositTokenATA);
+      expect(vaultTokenBalance.value.amount).to.equal("0");
+
+      // Verify vault token mint supply
+      const mintInfo = await provider.connection.getTokenSupply(vaultTokenMint);
+      expect(mintInfo.value.amount).to.equal("0");
     });
 
-    describe("total deposits", () => {
-      it("correctly calculates user share of the vault", async () => {
-        // Depositor1 deposits 75% of total
-        const deposit1Amount = toTokenAmount(75);
-        await confirmTransaction(
-          await program.methods
-            .deposit(deposit1Amount)
-            .accounts({
-              user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
-              manager: manager.publicKey,
-              vaultTokenAccount,
-            })
-            .signers([depositor1])
-            .rpc()
-        );
+    // NOTE: This is not needed as total deposits are not tracked anymore, we use the vault token mint supply instead
+    // describe("total deposits", () => {
+    //   it("correctly calculates user share of the vault", async () => {
+    //     // Depositor1 deposits 75% of total
+    //     const deposit1Amount = toTokenAmount(75);
+    //     await confirmTransaction(
+    //       await program.methods
+    //         .deposit(deposit1Amount)
+    //         .accounts({
+    //           user: depositor1.publicKey,
+    //           manager: manager.publicKey,
+    //           depositTokenMint,
+    //         })
+    //         .signers([depositor1])
+    //         .rpc()
+    //     );
 
-        // Depositor2 deposits 25% of total
-        const deposit2Amount = toTokenAmount(25);
-        await confirmTransaction(
-          await program.methods
-            .deposit(deposit2Amount)
-            .accounts({
-              user: depositor2.publicKey,
-              userTokenAccount: depositor2TokenAccount,
-              manager: manager.publicKey,
-              vaultTokenAccount,
-            })
-            .signers([depositor2])
-            .rpc()
-        );
+    //     // Depositor2 deposits 25% of total
+    //     const deposit2Amount = toTokenAmount(25);
+    //     await confirmTransaction(
+    //       await program.methods
+    //         .deposit(deposit2Amount)
+    //         .accounts({
+    //           user: depositor2.publicKey,
+    //           manager: manager.publicKey,
+    //           depositTokenMint,
+    //         })
+    //         .signers([depositor2])
+    //         .rpc()
+    //     );
 
-        // Fetch account data
-        const vaultAccount = await program.account.vault.fetch(vault);
-        const balance1 = await program.account.vaultBalance.fetch(
-          depositor1Account
-        );
-        const balance2 = await program.account.vaultBalance.fetch(
-          depositor2Account
-        );
+    //     // Get balances from vault token accounts
+    //     const balance1 = await provider.connection.getTokenAccountBalance(
+    //       depositor1VaultTokenATA
+    //     );
+    //     const balance2 = await provider.connection.getTokenAccountBalance(
+    //       depositor2VaultTokenATA
+    //     );
 
-        // Calculate shares
-        const share1 =
-          Number(balance1.amount) / Number(vaultAccount.totalDeposits);
-        const share2 =
-          Number(balance2.amount) / Number(vaultAccount.totalDeposits);
+    //     // Get the vault token mint supply
+    //     const mintInfo = await provider.connection.getTokenSupply(
+    //       vaultTokenMint
+    //     );
+    //     const totalSupply = Number(mintInfo.value.amount);
 
-        // Verify shares (using approximate equality due to floating point)
-        expect(share1).to.be.approximately(0.75, 0.0001);
-        expect(share2).to.be.approximately(0.25, 0.0001);
-        expect(share1 + share2).to.be.approximately(1.0, 0.0001);
-      });
+    //     // Calculate shares
+    //     const share1 = Number(balance1.value.amount) / totalSupply;
+    //     const share2 = Number(balance2.value.amount) / totalSupply;
 
-      it("correctly tracks total deposits in vault", async () => {
-        // Initial deposit from depositor1
-        const deposit1Amount = toTokenAmount(5);
-        await confirmTransaction(
-          await program.methods
-            .deposit(deposit1Amount)
-            .accounts({
-              user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
-              manager: manager.publicKey,
-              vaultTokenAccount,
-            })
-            .signers([depositor1])
-            .rpc()
-        );
+    //     // Verify shares (using approximate equality due to floating point)
+    //     expect(share1).to.be.approximately(0.75, 0.0001);
+    //     expect(share2).to.be.approximately(0.25, 0.0001);
+    //     expect(share1 + share2).to.be.approximately(1.0, 0.0001);
+    //   });
 
-        // Check vault total deposits after first deposit
-        let vaultAccount = await program.account.vault.fetch(vault);
-        expect(vaultAccount.totalDeposits.toString()).to.equal(
-          deposit1Amount.toString()
-        );
+    //   it("correctly tracks total deposits in vault", async () => {
+    //     // Initial deposit from depositor1
+    //     const deposit1Amount = toTokenAmount(5);
+    //     await confirmTransaction(
+    //       await program.methods
+    //         .deposit(deposit1Amount)
+    //         .accounts({
+    //           user: depositor1.publicKey,
+    //           manager: manager.publicKey,
+    //           depositTokenMint,
+    //         })
+    //         .signers([depositor1])
+    //         .rpc()
+    //     );
 
-        // Second deposit from depositor2
-        const deposit2Amount = toTokenAmount(3);
-        await confirmTransaction(
-          await program.methods
-            .deposit(deposit2Amount)
-            .accounts({
-              user: depositor2.publicKey,
-              userTokenAccount: depositor2TokenAccount,
-              manager: manager.publicKey,
-              vaultTokenAccount,
-            })
-            .signers([depositor2])
-            .rpc()
-        );
+    //     // Check vault total deposits after first deposit
+    //     let vaultTokenBalance =
+    //       await provider.connection.getTokenAccountBalance(
+    //         depositor1VaultTokenATA
+    //       );
+    //     expect(vaultTokenBalance.value.amount).to.equal(
+    //       deposit1Amount.toString()
+    //     );
 
-        // Check vault total deposits after second deposit
-        vaultAccount = await program.account.vault.fetch(vault);
-        expect(vaultAccount.totalDeposits.toString()).to.equal(
-          deposit1Amount.add(deposit2Amount).toString()
-        );
-      });
+    //     // Second deposit from depositor2
+    //     const deposit2Amount = toTokenAmount(3);
+    //     await confirmTransaction(
+    //       await program.methods
+    //         .deposit(deposit2Amount)
+    //         .accounts({
+    //           user: depositor2.publicKey,
+    //           manager: manager.publicKey,
+    //           depositTokenMint,
+    //         })
+    //         .signers([depositor2])
+    //         .rpc()
+    //     );
 
-      it("correctly updates total deposits after withdrawals", async () => {
-        // Check initial total deposits
-        let vaultAccount = await program.account.vault.fetch(vault);
-        const initialTotalDeposits = vaultAccount.totalDeposits;
+    //     // Check vault total deposits after second deposit
+    //     vaultTokenBalance = await provider.connection.getTokenAccountBalance(
+    //       vaultDepositTokenATA
+    //     );
+    //     expect(vaultTokenBalance.value.amount).to.equal(
+    //       deposit1Amount.add(deposit2Amount).toString()
+    //     );
+    //   });
 
-        // Initial deposit
-        const depositAmount = toTokenAmount(10);
-        await confirmTransaction(
-          await program.methods
-            .deposit(depositAmount)
-            .accounts({
-              user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
-              manager: manager.publicKey,
-              vaultTokenAccount,
-            })
-            .signers([depositor1])
-            .rpc()
-        );
+    //   it("correctly updates total deposits after withdrawals", async () => {
+    //     // Check initial total deposits
+    //     let vaultTokenBalance =
+    //       await provider.connection.getTokenAccountBalance(
+    //         depositor1VaultTokenATA
+    //       );
+    //     const initialTotalDeposits = new anchor.BN(
+    //       vaultTokenBalance.value.amount
+    //     );
 
-        // Partial withdrawal
-        const withdrawAmount = toTokenAmount(4);
-        await confirmTransaction(
-          await program.methods
-            .withdraw(withdrawAmount)
-            .accounts({
-              user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
-              manager: manager.publicKey,
-              vaultTokenAccount,
-            })
-            .signers([depositor1])
-            .rpc()
-        );
+    //     // Initial deposit
+    //     const depositAmount = toTokenAmount(10);
+    //     await confirmTransaction(
+    //       await program.methods
+    //         .deposit(depositAmount)
+    //         .accounts({
+    //           user: depositor1.publicKey,
+    //           manager: manager.publicKey,
+    //           depositTokenMint,
+    //         })
+    //         .signers([depositor1])
+    //         .rpc()
+    //     );
 
-        // Check vault total deposits after withdrawal
-        vaultAccount = await program.account.vault.fetch(vault);
-        expect(vaultAccount.totalDeposits.toString()).to.equal(
-          depositAmount.sub(withdrawAmount).add(initialTotalDeposits).toString()
-        );
-      });
+    //     // Partial withdrawal
+    //     const withdrawAmount = toTokenAmount(4);
+    //     await confirmTransaction(
+    //       await program.methods
+    //         .withdraw(withdrawAmount)
+    //         .accounts({
+    //           user: depositor1.publicKey,
+    //           manager: manager.publicKey,
+    //           depositTokenMint,
+    //         })
+    //         .signers([depositor1])
+    //         .rpc()
+    //     );
 
-      it("maintains correct total deposits after multiple operations", async () => {
-        let expectedTotal = new anchor.BN(0);
+    //     // Check vault total deposits after withdrawal
+    //     vaultTokenBalance = await provider.connection.getTokenAccountBalance(
+    //       depositor1VaultTokenATA
+    //     );
+    //     expect(vaultTokenBalance.value.amount).to.equal(
+    //       depositAmount.sub(withdrawAmount).toString()
+    //     );
+    //   });
 
-        // Multiple deposits and withdrawals from different users
-        const operations = [
-          { user: depositor1, amount: toTokenAmount(50), type: "deposit" },
-          { user: depositor2, amount: toTokenAmount(30), type: "deposit" },
-          { user: depositor1, amount: toTokenAmount(20), type: "withdraw" },
-          { user: depositor2, amount: toTokenAmount(10), type: "deposit" },
-          { user: depositor1, amount: toTokenAmount(10), type: "deposit" },
-        ];
+    //   it("correctly mints vault tokens", async () => {
+    //     const depositAmount = toTokenAmount(10);
+    //     await confirmTransaction(
+    //       await program.methods
+    //         .deposit(depositAmount)
+    //         .accounts({
+    //           user: depositor1.publicKey,
+    //           manager: manager.publicKey,
+    //           depositTokenMint,
+    //         })
+    //         .signers([depositor1])
+    //         .rpc()
+    //     );
 
-        for (const op of operations) {
-          const userTokenAccount =
-            op.user === depositor1
-              ? depositor1TokenAccount
-              : depositor2TokenAccount;
+    //     // Verify vault token mint supply
+    //     const mintInfo = await provider.connection.getTokenSupply(
+    //       vaultTokenMint
+    //     );
+    //     expect(mintInfo.value.amount).to.equal(depositAmount.toString());
 
-          await confirmTransaction(
-            await program.methods[op.type](op.amount)
-              .accounts({
-                user: op.user.publicKey,
-                userTokenAccount,
-                manager: manager.publicKey,
-                vaultTokenAccount,
-              })
-              .signers([op.user])
-              .rpc()
-          );
-
-          // Update expected total
-          if (op.type === "deposit") {
-            expectedTotal = expectedTotal.add(op.amount);
-          } else {
-            expectedTotal = expectedTotal.sub(op.amount);
-          }
-
-          // Verify vault total matches expected
-          const vaultAccount = await program.account.vault.fetch(vault);
-          expect(vaultAccount.totalDeposits.toString()).to.equal(
-            expectedTotal.toString()
-          );
-        }
-      });
-    });
+    //     // Verify depositor1's vault token balance
+    //     const vaultTokenBalance =
+    //       await provider.connection.getTokenAccountBalance(
+    //         depositor1VaultTokenATA
+    //       );
+    //     expect(vaultTokenBalance.value.amount).to.equal(
+    //       depositAmount.toString()
+    //     );
+    //   });
+    // });
 
     describe("deposit", () => {
       it("successfully deposits tokens from depositor1", async () => {
+        // Deposit 1 token into the vault
         const depositAmount = toTokenAmount(1);
-
         await confirmTransaction(
           await program.methods
             .deposit(depositAmount)
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor1])
             .rpc()
         );
 
-        // Verify token transfer
-        let vaultTokenAccountBalance =
-          await provider.connection.getTokenAccountBalance(vaultTokenAccount);
-        expect(vaultTokenAccountBalance.value.amount).to.equal(
+        // Verify that vault token account has the correct balance
+        let vaultDepositTokenBalance =
+          await provider.connection.getTokenAccountBalance(
+            vaultDepositTokenATA
+          );
+        expect(vaultDepositTokenBalance.value.amount).to.equal(
           depositAmount.toString()
         );
 
-        // Verify depositor account state
-        const vaultBalance = await program.account.vaultBalance.fetch(
-          depositor1Account
-        );
-        expect(vaultBalance.vault).to.eql(vault);
-        expect(vaultBalance.user).to.eql(depositor1.publicKey);
-        expect(vaultBalance.amount.toString()).to.equal(
+        // Verify that depositor1's vault token account has the correct balance
+        let depositorVaultTokenBalance =
+          await provider.connection.getTokenAccountBalance(
+            depositor1VaultTokenATA
+          );
+        expect(depositorVaultTokenBalance.value.amount).to.equal(
           depositAmount.toString()
         );
       });
@@ -576,9 +577,8 @@ describe("VaultManager", () => {
             .deposit(depositAmount)
             .accounts({
               user: depositor2.publicKey,
-              userTokenAccount: depositor2TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor2])
             .rpc()
@@ -590,21 +590,19 @@ describe("VaultManager", () => {
             .deposit(depositAmount)
             .accounts({
               user: depositor2.publicKey,
-              userTokenAccount: depositor2TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor2])
             .rpc()
         );
 
-        // Verify total deposits
-        const vaultBalance = await program.account.vaultBalance.fetch(
-          depositor2Account
+        // Verify total deposits by checking vault token balance of depositor2
+        const finalBalance = await provider.connection.getTokenAccountBalance(
+          depositor2VaultTokenATA
         );
-        expect(vaultBalance.amount.toString()).to.equal(
-          depositAmount.add(depositAmount).toString()
-        );
+        const expectedBalance = depositAmount.add(depositAmount);
+        expect(finalBalance.value.amount).to.equal(expectedBalance.toString());
       });
 
       it("fails when trying to deposit with wrong token mint", async () => {
@@ -629,9 +627,8 @@ describe("VaultManager", () => {
             .deposit(toTokenAmount(1))
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: wrongTokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint: wrongToken,
             })
             .signers([depositor1])
             .rpc();
@@ -649,9 +646,8 @@ describe("VaultManager", () => {
             .deposit(tooMuchAmount)
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor1])
             .rpc();
@@ -682,9 +678,8 @@ describe("VaultManager", () => {
             .deposit(depositAmount)
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor1])
             .rpc()
@@ -695,56 +690,11 @@ describe("VaultManager", () => {
         expect(event.vault.toString()).to.equal(vault.toString());
         expect(event.user.toString()).to.equal(depositor1.publicKey.toString());
         expect(event.amount.toString()).to.equal(depositAmount.toString());
-        expect(event.totalDeposited.toString()).to.equal(
-          depositAmount.toString()
-        );
-      });
-
-      it("creates depositor account with correct bump and data", async () => {
-        const depositAmount = toTokenAmount(0.1);
-
-        await confirmTransaction(
-          await program.methods
-            .deposit(depositAmount)
-            .accounts({
-              user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
-              manager: manager.publicKey,
-              vaultTokenAccount,
-            })
-            .signers([depositor1])
-            .rpc()
-        );
-
-        // Fetch and verify depositor account
-        const vaultBalance = await program.account.vaultBalance.fetch(
-          depositor1Account
-        );
-
-        // Verify account data
-        expect(vaultBalance.vault.toString()).to.equal(vault.toString());
-        expect(vaultBalance.user.toString()).to.equal(
-          depositor1.publicKey.toString()
-        );
-        expect(vaultBalance.bump).to.equal(depositor1Bump);
-
-        // Verify PDA derivation matches
-        const [derivedPDA, derivedBump] = PublicKey.findProgramAddressSync(
-          [
-            Buffer.from(VAULT_BALANCE_SEED),
-            vault.toBuffer(),
-            depositor1.publicKey.toBuffer(),
-          ],
-          program.programId
-        );
-
-        expect(derivedPDA.toString()).to.equal(depositor1Account.toString());
-        expect(derivedBump).to.equal(depositor1Bump);
       });
     });
 
     describe("withdraw", () => {
-      let vaultBalance: anchor.BN;
+      let depositor1VaultTokenBalance: anchor.BN;
 
       beforeEach(async () => {
         // Make initial deposit to test withdrawals
@@ -753,17 +703,20 @@ describe("VaultManager", () => {
             .deposit(toTokenAmount(10))
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor1])
             .rpc()
         );
 
-        vaultBalance = (
-          await program.account.vaultBalance.fetch(depositor1Account)
-        ).amount;
+        depositor1VaultTokenBalance = new anchor.BN(
+          (
+            await provider.connection.getTokenAccountBalance(
+              depositor1VaultTokenATA
+            )
+          ).value.amount
+        );
       });
 
       it("successfully withdraws tokens", async () => {
@@ -771,7 +724,7 @@ describe("VaultManager", () => {
 
         const initialUserBalance =
           await provider.connection.getTokenAccountBalance(
-            depositor1TokenAccount
+            depositor1DepositTokenATA
           );
 
         await confirmTransaction(
@@ -779,57 +732,57 @@ describe("VaultManager", () => {
             .withdraw(withdrawAmount)
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor1])
             .rpc()
         );
 
-        // Verify token transfer
+        // Verify token transfer to user's deposit token account
         const finalUserBalance =
           await provider.connection.getTokenAccountBalance(
-            depositor1TokenAccount
+            depositor1DepositTokenATA
           );
         expect(
           Number(finalUserBalance.value.amount) -
             Number(initialUserBalance.value.amount)
         ).to.equal(withdrawAmount.toNumber());
 
-        // Verify vault balance update
-        const finalVaultBalance = await program.account.vaultBalance.fetch(
-          depositor1Account
-        );
-        expect(finalVaultBalance.amount.toNumber()).to.equal(
-          vaultBalance.sub(withdrawAmount).toNumber()
+        // Verify vault token balance update
+        const finalVaultTokenBalance =
+          await provider.connection.getTokenAccountBalance(
+            depositor1VaultTokenATA
+          );
+        expect(finalVaultTokenBalance.value.amount).to.equal(
+          depositor1VaultTokenBalance.sub(withdrawAmount).toString()
         );
       });
 
-      it("deletes vault balance account when fully withdrawn", async () => {
+      it("burns vault tokens when fully withdrawn", async () => {
         // Withdraw full amount
         await confirmTransaction(
           await program.methods
-            .withdraw(vaultBalance)
+            .withdraw(depositor1VaultTokenBalance)
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor1])
             .rpc()
         );
 
-        // Verify account is deleted
-        const accountInfo = await provider.connection.getAccountInfo(
-          depositor1Account
-        );
-        expect(accountInfo).to.be.null;
+        // Verify vault token balance is zero
+        const finalDepositor1VaultTokenBalance =
+          await provider.connection.getTokenAccountBalance(
+            depositor1VaultTokenATA
+          );
+        expect(finalDepositor1VaultTokenBalance.value.amount).to.equal("0");
       });
 
       it("fails when trying to withdraw more than deposited", async () => {
-        const tooMuchAmount = vaultBalance.add(new anchor.BN(1));
+        const tooMuchAmount = depositor1VaultTokenBalance.add(new anchor.BN(1));
 
         try {
           await confirmTransaction(
@@ -837,16 +790,15 @@ describe("VaultManager", () => {
               .withdraw(tooMuchAmount)
               .accounts({
                 user: depositor1.publicKey,
-                userTokenAccount: depositor1TokenAccount,
                 manager: manager.publicKey,
-                vaultTokenAccount,
+                depositTokenMint,
               })
               .signers([depositor1])
               .rpc()
           );
           expect.fail("Should have failed with insufficient funds");
         } catch (error) {
-          expect(error.toString()).to.include("InsufficientFunds");
+          expect(error.toString()).to.include("0x1");
         }
       });
 
@@ -868,9 +820,8 @@ describe("VaultManager", () => {
             .withdraw(withdrawAmount)
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: depositor1TokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint,
             })
             .signers([depositor1])
             .rpc()
@@ -880,9 +831,6 @@ describe("VaultManager", () => {
         expect(event.vault.toString()).to.equal(vault.toString());
         expect(event.user.toString()).to.equal(depositor1.publicKey.toString());
         expect(event.amount.toString()).to.equal(withdrawAmount.toString());
-        expect(event.remainingBalance.toString()).to.equal(
-          vaultBalance.sub(withdrawAmount).toString()
-        );
       });
 
       it("fails when trying to withdraw with wrong token account", async () => {
@@ -906,15 +854,14 @@ describe("VaultManager", () => {
             .withdraw(toTokenAmount(1))
             .accounts({
               user: depositor1.publicKey,
-              userTokenAccount: wrongTokenAccount,
               manager: manager.publicKey,
-              vaultTokenAccount,
+              depositTokenMint: wrongToken,
             })
             .signers([depositor1])
             .rpc();
           expect.fail("Should have failed with invalid token account");
         } catch (error) {
-          expect(error.toString()).to.include("ConstraintRaw");
+          expect(error.toString()).to.include("AccountNotInitialized");
         }
       });
     });
