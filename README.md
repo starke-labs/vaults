@@ -1,4 +1,4 @@
-# Vault Manager
+# Vaults
 
 A Solana program for managing token vaults. Users can create vaults, deposit tokens, and withdraw them.
 
