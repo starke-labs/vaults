@@ -37,3 +37,16 @@ pub mod vaults {
         _swap_on_jupiter(ctx, amount)
     }
 }
+
+#[cfg(not(feature = "no-entrypoint"))]
+use solana_security_txt::security_txt;
+
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "Starke Finance",
+    project_url: "https://starke.finance",
+    contacts: "email:contact@starke.finance,discord:https://discord.gg/Kwvx8hcZBx",
+    policy: "https://github.com/starke-labs/vaults/blob/main/SECURITY.md",
+    preferred_languages: "en",
+    source_code: "https://github.com/starke-labs/vaults"
+}
