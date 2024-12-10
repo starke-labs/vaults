@@ -21,8 +21,13 @@ pub mod vaults {
         _add_token(ctx, token)
     }
 
-    pub fn create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
-        _create_vault(ctx, name)
+    pub fn create_vault(
+        ctx: Context<CreateVault>,
+        name: String,
+        entry_fee: u16,
+        exit_fee: u16,
+    ) -> Result<()> {
+        _create_vault(ctx, name, entry_fee, exit_fee)
     }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {

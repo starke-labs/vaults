@@ -3,7 +3,12 @@ use anchor_spl::token::*;
 
 use crate::state::*;
 
-pub fn _create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
+pub fn _create_vault(
+    ctx: Context<CreateVault>,
+    name: String,
+    entry_fee: u16,
+    exit_fee: u16,
+) -> Result<()> {
     ctx.accounts.vault.initialize(
         *ctx.accounts.manager.key,
         ctx.accounts.deposit_token_mint.key(),
@@ -11,6 +16,8 @@ pub fn _create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
         ctx.bumps.vault,
         ctx.accounts.vault_token_mint.key(),
         ctx.bumps.vault_token_mint,
+        entry_fee,
+        exit_fee,
     )?;
 
     emit!(VaultCreated {
@@ -20,6 +27,8 @@ pub fn _create_vault(ctx: Context<CreateVault>, name: String) -> Result<()> {
         vault_token_mint: ctx.accounts.vault_token_mint.key(),
         name: ctx.accounts.vault.name.to_string(),
         timestamp: ctx.accounts.clock.unix_timestamp,
+        entry_fee: ctx.accounts.vault.entry_fee,
+        exit_fee: ctx.accounts.vault.exit_fee,
     });
 
     Ok(())
