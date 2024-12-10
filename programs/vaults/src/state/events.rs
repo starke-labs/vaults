@@ -8,6 +8,8 @@ pub struct VaultCreated {
     pub vault_token_mint: Pubkey,
     pub name: String,
     pub timestamp: i64,
+    pub entry_fee: u16,
+    pub exit_fee: u16,
 }
 
 #[event]

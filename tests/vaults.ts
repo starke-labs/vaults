@@ -217,9 +217,12 @@ describe("Vaults", () => {
 
   describe("create vault", () => {
     it("successfully creates a vault", async () => {
+      const entryFee = 100; // 1%
+      const exitFee = 200; // 2%
+
       await confirmTransaction(
         await program.methods
-          .createVault("Test Vault")
+          .createVault("Test Vault", entryFee, exitFee)
           .accounts({
             manager: manager.publicKey,
             depositTokenMint,
@@ -227,6 +230,7 @@ describe("Vaults", () => {
           .signers([manager])
           .rpc()
       );
+
       const vaultAccount = await program.account.vault.fetch(vault);
       expect(vaultAccount.manager).to.eql(manager.publicKey);
       expect(vaultAccount.depositTokenMint).to.eql(depositTokenMint);
@@ -234,6 +238,8 @@ describe("Vaults", () => {
       expect(vaultAccount.bump).to.equal(vaultBump);
       expect(vaultAccount.mint).to.eql(vaultTokenMint);
       expect(vaultAccount.mintBump).to.equal(vaultTokenMintBump);
+      expect(vaultAccount.entryFee).to.equal(entryFee);
+      expect(vaultAccount.exitFee).to.equal(exitFee);
 
       // Check if vault token mint has been created
       const vaultTokenMintAccount = await provider.connection.getAccountInfo(
@@ -245,7 +251,7 @@ describe("Vaults", () => {
     it("fails to create vault with same manager", async () => {
       try {
         await program.methods
-          .createVault("Another Vault")
+          .createVault("Another Vault", 100, 100)
           .accounts({
             manager: manager.publicKey,
             depositTokenMint,
@@ -281,17 +287,140 @@ describe("Vaults", () => {
 
       try {
         await program.methods
-          .createVault("Test Vault")
+          .createVault("Test Vault", 100, 10001) // Exit fee > 100%
           .accounts({
             manager: newManager.publicKey,
-            depositTokenMint: nonWhitelistedToken,
+            depositTokenMint,
           })
           .signers([newManager])
           .rpc();
         expect.fail("Should have failed");
       } catch (error) {
-        expect(error.toString()).to.include("TokenNotWhitelisted");
+        expect(error.toString()).to.include("InvalidFee");
       }
+    });
+
+    it("fails to create vault with invalid fees", async () => {
+      const newManager = anchor.web3.Keypair.generate();
+      await requestAirdrop(newManager.publicKey);
+
+      try {
+        await program.methods
+          .createVault("Test Vault", 10001, 100) // Entry fee > 100%
+          .accounts({
+            manager: newManager.publicKey,
+            depositTokenMint,
+          })
+          .signers([newManager])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (error) {
+        expect(error.toString()).to.include("InvalidFee");
+      }
+
+      try {
+        await program.methods
+          .createVault("Test Vault", 100, 10001) // Exit fee > 100%
+          .accounts({
+            manager: newManager.publicKey,
+            depositTokenMint,
+          })
+          .signers([newManager])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (error) {
+        expect(error.toString()).to.include("InvalidFee");
+      }
+    });
+
+    it("emits correct vault creation event", async () => {
+      const newManager = anchor.web3.Keypair.generate();
+      await requestAirdrop(newManager.publicKey);
+
+      const entryFee = 150; // 1.5%
+      const exitFee = 250; // 2.5%
+      const vaultName = "Event Test Vault";
+
+      // Create a promise that will resolve when the event is received
+      const eventPromise = new Promise<any>((resolve) => {
+        const listener = program.addEventListener("vaultCreated", (event) => {
+          resolve(event);
+        });
+
+        // Clean up listener after we're done
+        setTimeout(() => {
+          program.removeEventListener(listener);
+        }, 5000);
+      });
+
+      // Create the vault
+      await confirmTransaction(
+        await program.methods
+          .createVault(vaultName, entryFee, exitFee)
+          .accounts({
+            manager: newManager.publicKey,
+            depositTokenMint,
+          })
+          .signers([newManager])
+          .rpc()
+      );
+
+      // Wait for and verify the event
+      const event = await eventPromise;
+      expect(event.manager.toString()).to.equal(
+        newManager.publicKey.toString()
+      );
+      expect(event.depositToken.toString()).to.equal(
+        depositTokenMint.toString()
+      );
+      expect(event.name).to.equal(vaultName);
+      expect(event.entryFee).to.equal(entryFee);
+      expect(event.exitFee).to.equal(exitFee);
+    });
+
+    it("emits correct vault creation event", async () => {
+      const newManager = anchor.web3.Keypair.generate();
+      await requestAirdrop(newManager.publicKey);
+
+      const entryFee = 150; // 1.5%
+      const exitFee = 250; // 2.5%
+      const vaultName = "Event Test Vault";
+
+      // Create a promise that will resolve when the event is received
+      const eventPromise = new Promise<any>((resolve) => {
+        const listener = program.addEventListener("vaultCreated", (event) => {
+          resolve(event);
+        });
+
+        // Clean up listener after we're done
+        setTimeout(() => {
+          program.removeEventListener(listener);
+        }, 5000);
+      });
+
+      // Create the vault
+      await confirmTransaction(
+        await program.methods
+          .createVault(vaultName, entryFee, exitFee)
+          .accounts({
+            manager: newManager.publicKey,
+            depositTokenMint,
+          })
+          .signers([newManager])
+          .rpc()
+      );
+
+      // Wait for and verify the event
+      const event = await eventPromise;
+      expect(event.manager.toString()).to.equal(
+        newManager.publicKey.toString()
+      );
+      expect(event.depositToken.toString()).to.equal(
+        depositTokenMint.toString()
+      );
+      expect(event.name).to.equal(vaultName);
+      expect(event.entryFee).to.equal(entryFee);
+      expect(event.exitFee).to.equal(exitFee);
     });
   });
 
