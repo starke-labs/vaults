@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::state::events::*;
+
 #[account]
 pub struct Vault {
     pub manager: Pubkey,
@@ -12,7 +14,7 @@ pub struct Vault {
     pub exit_fee: u16,  // percentage, 2 decimals, lowest is 1 (0.01%) and highest is 10000 (100%)
     pub pending_entry_fee: Option<u16>,
     pub pending_exit_fee: Option<u16>,
-    pub fee_update_timestamp: u64,
+    pub fee_update_timestamp: i64,
 }
 
 impl Vault {
@@ -28,12 +30,13 @@ impl Vault {
         + 2  // exit fee (u16)
         + 3  // pending_entry_fee (Option<u16>)
         + 3  // pending_exit_fee (Option<u16>)
-        + 8; // fee_update_timestamp (u64)
+        + 8; // fee_update_timestamp (i64)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VAULT_TOKEN_MINT_SEED: &'static [u8] = b"STARKE_VAULT_TOKEN_MINT";
 
-    pub const FEE_UPDATE_DELAY: u64 = 30 * 24 * 60 * 60; // 30 days in seconds
+    pub const FEE_UPDATE_DELAY: i64 = 30 * 24 * 60 * 60; // 30 days in seconds
+    pub const MAX_FEE: u16 = 10000;
 
     pub fn initialize(
         &mut self,
@@ -47,8 +50,8 @@ impl Vault {
         exit_fee: u16,
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
-        require!(entry_fee <= 10000, VaultError::InvalidFee);
-        require!(exit_fee <= 10000, VaultError::InvalidFee);
+        require!(entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
+        require!(exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
 
         self.manager = manager;
         self.deposit_token_mint = deposit_token_mint;
@@ -61,6 +64,7 @@ impl Vault {
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
         self.fee_update_timestamp = 0;
+
         Ok(())
     }
 
@@ -68,10 +72,18 @@ impl Vault {
         &mut self,
         new_entry_fee: u16,
         new_exit_fee: u16,
-        current_timestamp: u64,
+        current_timestamp: i64,
     ) -> Result<()> {
-        require!(new_entry_fee <= 10000, VaultError::InvalidFee);
-        require!(new_exit_fee <= 10000, VaultError::InvalidFee);
+        require!(new_entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
+        require!(new_exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
+
+        // Only check delay if there was a previous fee update
+        if self.fee_update_timestamp != 0 {
+            require!(
+                current_timestamp >= self.fee_update_timestamp + Self::FEE_UPDATE_DELAY,
+                VaultError::FeeUpdateDelayNotPassed
+            );
+        }
 
         self.pending_entry_fee = Some(new_entry_fee);
         self.pending_exit_fee = Some(new_exit_fee);
@@ -80,7 +92,7 @@ impl Vault {
         Ok(())
     }
 
-    pub fn get_fees(&mut self, current_timestamp: u64) -> (u16, u16) {
+    pub fn get_fees(&mut self, current_timestamp: i64, vault_key: Pubkey) -> Result<(u16, u16)> {
         if let (Some(pending_entry), Some(pending_exit)) =
             (self.pending_entry_fee, self.pending_exit_fee)
         {
@@ -91,9 +103,18 @@ impl Vault {
                 self.pending_entry_fee = None;
                 self.pending_exit_fee = None;
                 self.fee_update_timestamp = 0;
+
+                emit!(VaultFeesUpdated {
+                    vault: vault_key,
+                    manager: self.manager,
+                    new_entry_fee: pending_entry,
+                    new_exit_fee: pending_exit,
+                    timestamp: current_timestamp,
+                });
             }
         }
-        (self.entry_fee, self.exit_fee)
+
+        Ok((self.entry_fee, self.exit_fee))
     }
 }
 
@@ -109,4 +130,6 @@ pub enum VaultError {
     InsufficientFunds,
     #[msg("Invalid fee")]
     InvalidFee,
+    #[msg("Fee update delay not passed")]
+    FeeUpdateDelayNotPassed,
 }

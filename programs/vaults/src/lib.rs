@@ -30,6 +30,14 @@ pub mod vaults {
         _create_vault(ctx, name, entry_fee, exit_fee)
     }
 
+    pub fn update_vault_fees(
+        ctx: Context<UpdateVaultFees>,
+        new_entry_fee: u16,
+        new_exit_fee: u16,
+    ) -> Result<()> {
+        _update_vault_fees(ctx, new_entry_fee, new_exit_fee)
+    }
+
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         _deposit(ctx, amount)
     }

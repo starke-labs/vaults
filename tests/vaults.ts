@@ -995,4 +995,107 @@ describe("Vaults", () => {
       });
     });
   });
+
+  describe("update vault fees", () => {
+    // Note: In a real test environment, we would need to simulate time passing
+    // For now, we can verify that the pending fees are set correctly
+    // and assume the contract logic for applying them after the delay works
+
+    it("successfully updates vault fees and emits an event", async () => {
+      const newEntryFee = 300; // 3%
+      const newExitFee = 400; // 4%
+
+      const eventPromise = new Promise<any>((resolve) => {
+        const listener = program.addEventListener(
+          "vaultFeesUpdateRequested",
+          (event) => {
+            resolve(event);
+          }
+        );
+
+        setTimeout(() => {
+          program.removeEventListener(listener);
+        }, 5000);
+      });
+
+      await confirmTransaction(
+        await program.methods
+          .updateVaultFees(newEntryFee, newExitFee)
+          .accounts({
+            manager: manager.publicKey,
+          })
+          .signers([manager])
+          .rpc()
+      );
+
+      const vaultAccount = await program.account.vault.fetch(vault);
+      expect(vaultAccount.pendingEntryFee).to.equal(newEntryFee);
+      expect(vaultAccount.pendingExitFee).to.equal(newExitFee);
+      expect(vaultAccount.feeUpdateTimestamp.toNumber()).to.be.greaterThan(0);
+
+      // Wait for and verify the event
+      const event = await eventPromise;
+      expect(event.vault.toString()).to.equal(vault.toString());
+      expect(event.pendingEntryFee).to.equal(newEntryFee);
+      expect(event.pendingExitFee).to.equal(newExitFee);
+    });
+
+    it("fails when non-manager tries to update fees", async () => {
+      try {
+        await program.methods
+          .updateVaultFees(300, 400)
+          .accounts({
+            manager: depositor1.publicKey,
+          })
+          .signers([depositor1])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (error) {
+        expect(error.toString()).to.include("AccountNotInitialized");
+      }
+    });
+
+    it("fails when trying to set invalid fees", async () => {
+      try {
+        await program.methods
+          .updateVaultFees(10001, 100) // Entry fee > 100%
+          .accounts({
+            manager: manager.publicKey,
+          })
+          .signers([manager])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (error) {
+        expect(error.toString()).to.include("InvalidFee");
+      }
+
+      try {
+        await program.methods
+          .updateVaultFees(100, 10001) // Exit fee > 100%
+          .accounts({
+            manager: manager.publicKey,
+          })
+          .signers([manager])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (error) {
+        expect(error.toString()).to.include("InvalidFee");
+      }
+    });
+
+    it("fails to update fees before delay period", async () => {
+      try {
+        await program.methods
+          .updateVaultFees(300, 400)
+          .accounts({
+            manager: manager.publicKey,
+          })
+          .signers([manager])
+          .rpc();
+        expect.fail("Should have failed");
+      } catch (error) {
+        expect(error.toString()).to.include("FeeUpdateDelayNotPassed");
+      }
+    });
+  });
 });
