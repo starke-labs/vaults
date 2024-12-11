@@ -13,10 +13,20 @@ pub struct VaultCreated {
 }
 
 #[event]
-pub struct VaultUpdated {
+pub struct VaultFeesUpdateRequested {
     pub vault: Pubkey,
-    pub new_name: Option<String>,
-    pub new_deposit_token: Option<Pubkey>,
+    pub manager: Pubkey,
+    pub pending_entry_fee: u16,
+    pub pending_exit_fee: u16,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct VaultFeesUpdated {
+    pub vault: Pubkey,
+    pub manager: Pubkey,
+    pub new_entry_fee: u16,
+    pub new_exit_fee: u16,
     pub timestamp: i64,
 }
 
