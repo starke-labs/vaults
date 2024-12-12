@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::*;
+use anchor_spl::{
+    token::Token,
+    token_interface::{Mint, Token2022},
+};
 
+use crate::controllers::*;
 use crate::state::*;
 
 pub fn _create_vault(
@@ -12,7 +16,7 @@ pub fn _create_vault(
     ctx.accounts.vault.initialize(
         *ctx.accounts.manager.key,
         ctx.accounts.deposit_token_mint.key(),
-        name,
+        name.clone(),
         ctx.bumps.vault,
         ctx.accounts.vault_token_mint.key(),
         ctx.bumps.vault_token_mint,
@@ -20,6 +24,28 @@ pub fn _create_vault(
         exit_fee,
     )?;
 
+    let manager = ctx.accounts.manager.key();
+    let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
+    let signer_seeds = &[&vault_seeds[..]];
+    // TODO: Get name, symbol, uri from args
+    let symbol = "svSTARKE";
+    let uri = "https://starke.finance";
+    initialize_token_metadata(
+        ctx.accounts.vault_token_mint.clone(),
+        ctx.accounts.vault.clone(),
+        symbol.to_string(),
+        uri.to_string(),
+        signer_seeds,
+        ctx.accounts.token_2022_program.clone(),
+    )?;
+
+    update_account_lamports_to_minimum_balance(
+        ctx.accounts.vault_token_mint.to_account_info(),
+        ctx.accounts.manager.to_account_info(),
+        ctx.accounts.system_program.to_account_info(),
+    )?;
+
+    // TODO: Add mint pubkey, metadata pointer, symbol, uri, etc.
     emit!(VaultCreated {
         vault: ctx.accounts.vault.key(),
         manager: *ctx.accounts.manager.key,
@@ -60,11 +86,14 @@ pub struct CreateVault<'info> {
         payer = manager,
         seeds = [Vault::VAULT_TOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
+        mint::token_program = token_program,
         mint::decimals = deposit_token_mint.decimals,
         mint::authority = vault,
         mint::freeze_authority = vault,
+        extensions::metadata_pointer::metadata_address = vault_token_mint,
+        extensions::metadata_pointer::authority = vault,
     )]
-    pub vault_token_mint: Account<'info, Mint>,
+    pub vault_token_mint: InterfaceAccount<'info, Mint>,
 
     // Whitelist
     #[account(
@@ -77,9 +106,10 @@ pub struct CreateVault<'info> {
     #[account(
         constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
     )]
-    pub deposit_token_mint: Account<'info, Mint>,
+    pub deposit_token_mint: InterfaceAccount<'info, Mint>,
 
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+    pub token_2022_program: Program<'info, Token2022>,
     pub clock: Sysvar<'info, Clock>,
 }
