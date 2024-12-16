@@ -146,6 +146,9 @@ describe("Vaults", () => {
   });
 
   describe("whitelist", () => {
+    const priceFeedId =
+      "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
+
     it("successfully initializes whitelist", async () => {
       await confirmTransaction(
         await program.methods
@@ -167,7 +170,7 @@ describe("Vaults", () => {
     it("successfully adds token to whitelist", async () => {
       await confirmTransaction(
         await program.methods
-          .addToken(depositTokenMint)
+          .addToken(depositTokenMint, priceFeedId)
           .accounts({
             authority: programAuthority.publicKey,
           })
@@ -179,15 +182,16 @@ describe("Vaults", () => {
         whitelist
       );
       expect(whitelistAccount.tokens).to.have.length(1);
-      expect(whitelistAccount.tokens[0].toString()).to.equal(
+      expect(whitelistAccount.tokens[0].mint.toString()).to.equal(
         depositTokenMint.toString()
       );
+      expect(whitelistAccount.tokens[0].priceFeedId).to.equal(priceFeedId);
     });
 
     it("fails to add same token twice", async () => {
       try {
         await program.methods
-          .addToken(depositTokenMint)
+          .addToken(depositTokenMint, priceFeedId)
           .accounts({
             authority: programAuthority.publicKey,
           })
@@ -202,7 +206,7 @@ describe("Vaults", () => {
     it("fails when non-program authority tries to add token", async () => {
       try {
         await program.methods
-          .addToken(depositTokenMint)
+          .addToken(depositTokenMint, priceFeedId)
           .accounts({
             authority: manager.publicKey,
           })
@@ -281,7 +285,7 @@ describe("Vaults", () => {
         whitelist
       );
       expect(whitelistAccount.tokens).to.have.length(1);
-      expect(whitelistAccount.tokens[0].toString()).to.equal(
+      expect(whitelistAccount.tokens[0].mint.toString()).to.equal(
         depositTokenMint.toString()
       );
 
