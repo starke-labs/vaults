@@ -1,5 +1,7 @@
 mod token;
+mod token_price;
 mod vault_token;
 
 pub use token::*;
+pub use token_price::*;
 pub use vault_token::*;

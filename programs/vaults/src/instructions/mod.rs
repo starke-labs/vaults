@@ -12,6 +12,5 @@ pub use create_vault::*;
 pub use deposit::*;
 pub use initialize_whitelist::*;
 pub use swap_on_jupiter::*;
-pub use test_pyth_price_feed::*;
 pub use update_vault_fees::*;
 pub use withdraw::*;
