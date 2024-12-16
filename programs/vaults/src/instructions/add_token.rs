@@ -3,8 +3,12 @@ use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::state::*;
 
-pub fn _add_token(ctx: Context<ModifyWhitelist>, token: Pubkey) -> Result<()> {
-    ctx.accounts.whitelist.add_token(token)?;
+pub fn _add_token(
+    ctx: Context<ModifyWhitelist>,
+    token: Pubkey,
+    price_feed_id: String,
+) -> Result<()> {
+    ctx.accounts.whitelist.add_token(token, price_feed_id)?;
 
     emit!(TokenWhitelisted {
         token,

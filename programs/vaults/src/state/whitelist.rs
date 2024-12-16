@@ -4,8 +4,15 @@ use anchor_lang::prelude::*;
 pub struct TokenWhitelist {
     pub authority: Pubkey,
     pub program_authority: Pubkey,
-    pub tokens: Vec<Pubkey>,
+    pub tokens: Vec<TokenInfo>,
     pub bump: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct TokenInfo {
+    pub mint: Pubkey,
+    // Price feed id from https://www.pyth.network/developers/price-feed-ids#stable
+    pub price_feed_id: String,
 }
 
 impl TokenWhitelist {
@@ -14,7 +21,10 @@ impl TokenWhitelist {
         32 + // authority pubkey
         32 + // program authority pubkey
         4 + // vec length
-        (32 * Self::MAX_TOKENS) + // tokens (100 max)
+        // TokenInfo struct:
+        // - 32 for the mint pubkey
+        // - 66 for the price feed id (eg: 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43)
+        (32 + 66) * Self::MAX_TOKENS + // tokens (100 max)
         1; // bump
 
     pub const SEED: &'static [u8] = b"STARKE_TOKEN_WHITELIST";
@@ -37,9 +47,9 @@ impl TokenWhitelist {
         Ok(())
     }
 
-    pub fn add_token(&mut self, token: Pubkey) -> Result<()> {
+    pub fn add_token(&mut self, token_mint: Pubkey, price_feed_id: String) -> Result<()> {
         require!(
-            !self.tokens.contains(&token),
+            !self.tokens.iter().any(|t| t.mint == token_mint),
             WhitelistError::TokenAlreadyWhitelisted
         );
         require!(
@@ -47,12 +57,15 @@ impl TokenWhitelist {
             WhitelistError::WhitelistFull
         );
 
-        self.tokens.push(token);
+        self.tokens.push(TokenInfo {
+            mint: token_mint,
+            price_feed_id,
+        });
         Ok(())
     }
 
-    pub fn remove_token(&mut self, token: Pubkey) -> Result<()> {
-        if let Some(index) = self.tokens.iter().position(|x| x == &token) {
+    pub fn remove_token(&mut self, token_mint: Pubkey) -> Result<()> {
+        if let Some(index) = self.tokens.iter().position(|x| x.mint == token_mint) {
             self.tokens.remove(index);
             Ok(())
         } else {
@@ -60,8 +73,8 @@ impl TokenWhitelist {
         }
     }
 
-    pub fn is_whitelisted(&self, token: &Pubkey) -> bool {
-        self.tokens.contains(token)
+    pub fn is_whitelisted(&self, token_mint: &Pubkey) -> bool {
+        self.tokens.iter().any(|t| t.mint == *token_mint)
     }
 }
 
