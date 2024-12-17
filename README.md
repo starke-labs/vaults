@@ -45,3 +45,4 @@ $ anchor test
 - TODO: Throw an error when trying to initialize whitelist twice
 - TODO: Add vault.is_initialized() and whitelist.is_initialized() to throw the right error messages
 - TODO: Arguments in  the controllers should not have the type `Box<...>`
+- TODO: Use remaining accounts to send the token accounts during deposit and withdrawal to calculate the NAV
