@@ -14,6 +14,8 @@ pub fn _deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         ctx.accounts.token_program.clone(),
     )?;
 
+    // TODO: calculate the NAV so that we can mint the correct amount of vault tokens
+
     // Mint vault tokens to depositor
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];

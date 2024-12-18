@@ -4,6 +4,7 @@ mod deposit;
 mod initialize_whitelist;
 mod swap_on_jupiter;
 mod test_pyth_price_feed;
+mod test_remaining_accounts;
 mod update_vault_fees;
 mod withdraw;
 
@@ -12,5 +13,6 @@ pub use create_vault::*;
 pub use deposit::*;
 pub use initialize_whitelist::*;
 pub use swap_on_jupiter::*;
+pub use test_remaining_accounts::*;
 pub use update_vault_fees::*;
 pub use withdraw::*;
