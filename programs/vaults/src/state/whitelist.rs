@@ -76,6 +76,15 @@ impl TokenWhitelist {
     pub fn is_whitelisted(&self, token_mint: &Pubkey) -> bool {
         self.tokens.iter().any(|t| t.mint == *token_mint)
     }
+
+    pub fn get_price_feed_id(&self, token_mint: &Pubkey) -> Result<String> {
+        let token_info = self
+            .tokens
+            .iter()
+            .find(|t| t.mint == *token_mint)
+            .ok_or(WhitelistError::TokenNotWhitelisted)?;
+        Ok(token_info.price_feed_id.clone())
+    }
 }
 
 #[error_code]
