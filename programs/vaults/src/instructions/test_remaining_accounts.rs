@@ -12,14 +12,9 @@ pub fn _test_remaining_accounts<'info>(
     ctx.remaining_accounts
         .iter()
         .try_for_each(|a| -> Result<()> {
-            msg!("Remaining account: {}", a.key());
-            msg!("Remaining account is signer: {}", a.is_signer);
-            msg!("Remaining account is writable: {}", a.is_writable);
-            msg!("Remaining account owner: {:?}", a.owner);
-            msg!("Remaining account lamports: {:?}", a.lamports);
-
             let token_account: Account<'info, TokenAccount> = Account::try_from(a)?;
             msg!("Remaining account mint: {:?}", token_account.mint);
+            msg!("Remaining account balance: {:?}", token_account.amount);
 
             Ok(())
         })?;
