@@ -1,5 +1,9 @@
 import * as anchor from "@coral-xyz/anchor";
-import { createAccount, createMint, mintTo } from "@solana/spl-token";
+import {
+  createAssociatedTokenAccount,
+  createMint,
+  mintTo,
+} from "@solana/spl-token";
 import fs from "fs";
 
 import { Vaults } from "../target/types/vaults";
@@ -26,7 +30,16 @@ async function tokenSetup(
     DECIMALS
   );
 
-  const ata = await createAccount(connection, authority, mint, accountOwner);
+  const ata = await createAssociatedTokenAccount(
+    connection,
+    authority,
+    mint,
+    accountOwner,
+    undefined,
+    undefined,
+    undefined,
+    true
+  );
 
   await mintTo(
     connection,
@@ -54,6 +67,12 @@ describe("Remaining Accounts", () => {
   );
   const manager = anchor.web3.Keypair.generate();
 
+  // Vault
+  let vault: anchor.web3.PublicKey;
+
+  // Whitelist
+  let whitelist: anchor.web3.PublicKey;
+
   // Token mints
   let mintA: anchor.web3.PublicKey;
   let mintB: anchor.web3.PublicKey;
@@ -67,55 +86,126 @@ describe("Remaining Accounts", () => {
   before(async () => {
     await requestAirdrop(manager.publicKey);
 
+    [vault] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("STARKE_VAULT"), manager.publicKey.toBuffer()],
+      program.programId
+    );
+
+    [whitelist] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("STARKE_TOKEN_WHITELIST")],
+      program.programId
+    );
+
     ({ mint: mintA, ata: vaultATA_A } = await tokenSetup(
       provider.connection,
       manager,
-      manager.publicKey,
+      vault,
       1000
     ));
 
     ({ mint: mintB, ata: vaultATA_B } = await tokenSetup(
       provider.connection,
       manager,
-      manager.publicKey,
+      vault,
       1500
     ));
 
     ({ mint: mintC, ata: vaultATA_C } = await tokenSetup(
       provider.connection,
       manager,
-      manager.publicKey,
+      vault,
       2000
     ));
+  });
 
-    console.log(
-      "vaultATA_A",
-      await provider.connection.getTokenAccountBalance(vaultATA_A)
-    );
+  it("successfully creates a whitelist", async () => {
+    const signature = await program.methods
+      .initializeWhitelist()
+      .accounts({ authority: programAuthority.publicKey })
+      .signers([programAuthority])
+      .rpc();
 
-    console.log(
-      "vaultATA_B",
-      await provider.connection.getTokenAccountBalance(vaultATA_B)
-    );
+    await confirmTransaction(signature);
+  });
 
-    console.log(
-      "vaultATA_C",
-      await provider.connection.getTokenAccountBalance(vaultATA_C)
-    );
+  it("successfully whitelists the mints", async () => {
+    const signatureA = await program.methods
+      .addToken(mintA, "0xA")
+      .accounts({
+        authority: programAuthority.publicKey,
+        whitelist: whitelist,
+      })
+      .signers([programAuthority])
+      .rpc();
+
+    await confirmTransaction(signatureA);
+
+    const signatureB = await program.methods
+      .addToken(mintB, "0xB")
+      .accounts({
+        authority: programAuthority.publicKey,
+        whitelist: whitelist,
+      })
+      .signers([programAuthority])
+      .rpc();
+
+    await confirmTransaction(signatureB);
+
+    const signatureC = await program.methods
+      .addToken(mintC, "0xC")
+      .accounts({
+        authority: programAuthority.publicKey,
+        whitelist: whitelist,
+      })
+      .signers([programAuthority])
+      .rpc();
+
+    await confirmTransaction(signatureC);
+  });
+
+  it("successfully creates a vault", async () => {
+    const signature = await program.methods
+      .createVault("Test Vault", 100, 100)
+      .accounts({
+        manager: manager.publicKey,
+        depositTokenMint: mintA,
+      })
+      .signers([manager])
+      .rpc();
+
+    await confirmTransaction(signature);
   });
 
   it("successfully tests remaining accounts", async () => {
     const signature = await program.methods
       .testRemainingAccounts()
-      .accounts({ signer: manager.publicKey })
+      .accounts({
+        signer: manager.publicKey,
+        manager: manager.publicKey,
+      })
       .remainingAccounts([
+        {
+          pubkey: mintA,
+          isSigner: false,
+          isWritable: false,
+        },
         {
           pubkey: vaultATA_A,
           isSigner: false,
           isWritable: false,
         },
         {
+          pubkey: mintB,
+          isSigner: false,
+          isWritable: false,
+        },
+        {
           pubkey: vaultATA_B,
+          isSigner: false,
+          isWritable: false,
+        },
+        {
+          pubkey: mintC,
           isSigner: false,
           isWritable: false,
         },
