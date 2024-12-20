@@ -44,7 +44,7 @@ pub fn parse_vault_balances<'info>(
     Ok(vault_token_infos)
 }
 
-// TODO: consider using u128 for the value
+// TODO: Consider using u128 for the value
 pub fn compute_token_value_usd(token_balance: u64, token_decimals: u8, price: u64) -> Result<u64> {
     let token_balance_in_nav_decimals = token_balance
         .checked_mul(10u64.pow((NAV_DECIMALS - token_decimals) as u32))
