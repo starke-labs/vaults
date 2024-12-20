@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::*;
-use crate::state::*;
+use crate::constants::PROGRAM_AUTHORITY;
+use crate::state::{TokenWhitelist, WhitelistError};
 
 pub fn _initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
     ctx.accounts.whitelist.initialize(

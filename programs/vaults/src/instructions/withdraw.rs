@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::*, token::*};
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::controllers::*;
-use crate::state::*;
+use crate::controllers::{burn_vault_token, transfer_token_with_signer};
+use crate::state::{Vault, WithdrawMade};
 
 pub fn _withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     // TODO: Create a wrapper function for this in utils
