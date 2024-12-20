@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::*, token::*};
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::controllers::*;
-use crate::state::*;
+use crate::controllers::{mint_vault_token, transfer_token};
+use crate::state::{DepositMade, Vault};
 
 pub fn _deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     // TODO: Calculate the NAV and the deposit token value in USD so
@@ -77,7 +78,6 @@ pub struct Deposit<'info> {
     )]
     pub vault_token_account: Account<'info, TokenAccount>,
 
-    // TODO: Consider whether we should boxed accounts everywhere
     // Vault
     #[account(
         seeds = [Vault::SEED, manager.key().as_ref()],

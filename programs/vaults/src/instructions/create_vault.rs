@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::*;
+use anchor_spl::token::{Mint, Token};
 
-use crate::state::*;
+use crate::state::{TokenWhitelist, Vault, VaultCreated, WhitelistError};
 
 pub fn _create_vault(
     ctx: Context<CreateVault>,
