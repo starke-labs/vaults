@@ -1,6 +1,11 @@
 use anchor_lang::prelude::*;
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
-use crate::state::events::*;
+use super::{TokenWhitelist, VaultFeesUpdated};
+use crate::controllers::{
+    compute_token_value_usd, get_token_price_from_pyth_feed, parse_vault_balances,
+    transform_price_to_nav_decimals,
+};
 
 #[account]
 pub struct Vault {
@@ -10,6 +15,7 @@ pub struct Vault {
     pub bump: u8,
     pub mint: Pubkey, // vault token mint
     pub mint_bump: u8,
+    // Fees
     pub entry_fee: u16, // percentage, 2 decimals, lowest is 1 (0.01%) and highest is 10000 (100%)
     pub exit_fee: u16,  // percentage, 2 decimals, lowest is 1 (0.01%) and highest is 10000 (100%)
     pub pending_entry_fee: Option<u16>,
@@ -116,6 +122,28 @@ impl Vault {
 
         Ok((self.entry_fee, self.exit_fee))
     }
+
+    pub fn get_nav<'info>(
+        &self,
+        vault_token_accounts: &'info [AccountInfo<'info>],
+        whitelist: Account<'info, TokenWhitelist>,
+        vault_key: Pubkey,
+        price_update: Account<PriceUpdateV2>,
+    ) -> Result<u64> {
+        let vault_balances = parse_vault_balances(vault_token_accounts, whitelist, vault_key)?;
+        let nav = vault_balances
+            .iter()
+            .map(|b| {
+                let price = transform_price_to_nav_decimals(get_token_price_from_pyth_feed(
+                    b.price_feed_id.clone(),
+                    price_update.clone(),
+                )?)?;
+                compute_token_value_usd(b.token_balance, b.token_decimals, price)
+            })
+            .sum::<Result<u64>>()?;
+
+        Ok(nav)
+    }
 }
 
 #[error_code]
@@ -132,4 +160,8 @@ pub enum VaultError {
     InvalidFee,
     #[msg("Fee update delay not passed")]
     FeeUpdateDelayNotPassed,
+    #[msg("Mint and token account mismatch")]
+    MintAndTokenAccountMismatch,
+    #[msg("Vault and token account mismatch")]
+    VaultAndTokenAccountMismatch,
 }
