@@ -42,7 +42,10 @@ pub mod vaults {
         _update_vault_fees(ctx, new_entry_fee, new_exit_fee)
     }
 
-    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+    pub fn deposit<'info>(
+        ctx: Context<'_, '_, 'info, 'info, Deposit<'info>>,
+        amount: u64,
+    ) -> Result<()> {
         _deposit(ctx, amount)
     }
 
