@@ -126,9 +126,9 @@ impl Vault {
     pub fn get_nav<'info>(
         &self,
         vault_token_accounts: &'info [AccountInfo<'info>],
-        whitelist: Account<'info, TokenWhitelist>,
+        whitelist: Box<Account<'info, TokenWhitelist>>,
         vault_key: Pubkey,
-        price_update: Account<PriceUpdateV2>,
+        price_update: Box<Account<'info, PriceUpdateV2>>,
     ) -> Result<u64> {
         let vault_balances = parse_vault_balances(vault_token_accounts, whitelist, vault_key)?;
         let nav = vault_balances
