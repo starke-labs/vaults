@@ -23,5 +23,5 @@ pub struct TestPythPriceFeed<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub price_update: Account<'info, PriceUpdateV2>,
+    pub price_update: Box<Account<'info, PriceUpdateV2>>,
 }

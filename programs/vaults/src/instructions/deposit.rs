@@ -145,9 +145,9 @@ pub struct Deposit<'info> {
         seeds = [TokenWhitelist::SEED],
         bump = whitelist.bump,
     )]
-    pub whitelist: Account<'info, TokenWhitelist>,
+    pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
-    pub price_update: Account<'info, PriceUpdateV2>,
+    pub price_update: Box<Account<'info, PriceUpdateV2>>,
 
     pub clock: Sysvar<'info, Clock>,
     pub token_program: Program<'info, Token>,

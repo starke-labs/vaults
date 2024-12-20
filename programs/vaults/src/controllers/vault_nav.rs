@@ -14,7 +14,7 @@ pub struct VaultTokenInfo {
 
 pub fn parse_vault_balances<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
-    whitelist: Account<'info, TokenWhitelist>,
+    whitelist: Box<Account<'info, TokenWhitelist>>,
     vault_key: Pubkey,
 ) -> Result<Vec<VaultTokenInfo>> {
     let mut vault_token_infos = Vec::new();

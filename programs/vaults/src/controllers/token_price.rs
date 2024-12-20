@@ -4,9 +4,9 @@ use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, Price, PriceU
 use crate::constants::{NAV_DECIMALS, PYTH_PRICE_FEED_MAX_AGE_SECONDS};
 use crate::state::VaultError;
 
-pub fn get_token_price_from_pyth_feed(
+pub fn get_token_price_from_pyth_feed<'info>(
     price_feed_id: String,
-    price_update: Account<PriceUpdateV2>,
+    price_update: Box<Account<'info, PriceUpdateV2>>,
 ) -> Result<Price> {
     let feed_id: [u8; 32] = get_feed_id_from_hex(&price_feed_id)?;
     let price = price_update.get_price_no_older_than(
