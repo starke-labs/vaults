@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::*;
+use crate::state::Vault;
 
 pub fn _swap_on_jupiter(_ctx: Context<SwapOnJupiter>, _amount: u64) -> Result<()> {
     // TODO: Add swap logic here from:

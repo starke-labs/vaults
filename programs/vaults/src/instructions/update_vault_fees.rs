@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::*;
+use crate::state::{Vault, VaultFeesUpdateRequested};
 
 pub fn _update_vault_fees(
     ctx: Context<UpdateVaultFees>,

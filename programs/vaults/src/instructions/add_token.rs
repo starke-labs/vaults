@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::*;
-use crate::state::*;
+use crate::constants::PROGRAM_AUTHORITY;
+use crate::state::{TokenWhitelist, TokenWhitelisted, WhitelistError};
 
 pub fn _add_token(
     ctx: Context<ModifyWhitelist>,
