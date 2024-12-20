@@ -26,7 +26,7 @@ pub struct InitializeWhitelist<'info> {
         seeds = [TokenWhitelist::SEED],
         bump,
     )]
-    pub whitelist: Account<'info, TokenWhitelist>,
+    pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
     pub system_program: Program<'info, System>,
 }

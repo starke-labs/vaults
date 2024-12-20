@@ -3,8 +3,8 @@ use anchor_spl::token::*;
 
 // Wrapper function for the transfer token instruction
 pub fn transfer_token<'info>(
-    from: Account<'info, TokenAccount>,
-    to: Account<'info, TokenAccount>,
+    from: Box<Account<'info, TokenAccount>>,
+    to: Box<Account<'info, TokenAccount>>,
     amount: u64,
     authority: AccountInfo<'info>,
     token_program: Program<'info, Token>,
@@ -21,8 +21,8 @@ pub fn transfer_token<'info>(
 
 // Wrapper function for the transfer token instruction with signer seeds
 pub fn transfer_token_with_signer<'info>(
-    from: Account<'info, TokenAccount>,
-    to: Account<'info, TokenAccount>,
+    from: Box<Account<'info, TokenAccount>>,
+    to: Box<Account<'info, TokenAccount>>,
     amount: u64,
     authority: AccountInfo<'info>,
     signer_seeds: &[&[&[u8]]],

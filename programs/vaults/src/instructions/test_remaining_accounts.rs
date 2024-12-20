@@ -55,7 +55,7 @@ pub struct TestRemainingAccounts<'info> {
         seeds = [TokenWhitelist::SEED],
         bump = whitelist.bump,
     )]
-    pub whitelist: Account<'info, TokenWhitelist>,
+    pub whitelist: Box<Account<'info, TokenWhitelist>>,
 }
 
 #[error_code]
