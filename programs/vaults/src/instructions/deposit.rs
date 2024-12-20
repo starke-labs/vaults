@@ -5,6 +5,10 @@ use crate::controllers::*;
 use crate::state::*;
 
 pub fn _deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+    // TODO: Calculate the NAV and the deposit token value in USD so
+    //       that we can mint the correct amount of vault tokens.
+    //       We need to calculate the NAV before the transfer of the tokens.
+
     // Transfer deposit tokens from depositor to vault
     transfer_token(
         ctx.accounts.user_deposit_token_account.clone(),
@@ -13,8 +17,6 @@ pub fn _deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         ctx.accounts.user.to_account_info(),
         ctx.accounts.token_program.clone(),
     )?;
-
-    // TODO: calculate the NAV so that we can mint the correct amount of vault tokens
 
     // Mint vault tokens to depositor
     let manager = ctx.accounts.manager.key();

@@ -18,7 +18,7 @@ pub fn get_token_price_from_pyth_feed(
     Ok(price)
 }
 
-// TODO: check the calculation
+// TODO: Check the calculation
 pub fn transform_price_to_nav_decimals(price: Price) -> Result<u64> {
     Ok(price
         .price
