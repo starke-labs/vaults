@@ -57,7 +57,7 @@ pub struct Withdraw<'info> {
         associated_token::authority = vault,
         associated_token::mint = deposit_token_mint,
     )]
-    pub vault_deposit_token_account: Account<'info, TokenAccount>,
+    pub vault_deposit_token_account: Box<Account<'info, TokenAccount>>,
 
     // Depositor's deposit token account (to account)
     #[account(
@@ -66,7 +66,7 @@ pub struct Withdraw<'info> {
         associated_token::authority = user,
         associated_token::mint = deposit_token_mint,
     )]
-    pub user_deposit_token_account: Account<'info, TokenAccount>,
+    pub user_deposit_token_account: Box<Account<'info, TokenAccount>>,
 
     // Depositor's vault token account
     #[account(
@@ -74,7 +74,7 @@ pub struct Withdraw<'info> {
         associated_token::authority = user,
         associated_token::mint = vault_token_mint,
     )]
-    pub user_vault_token_account: Account<'info, TokenAccount>,
+    pub user_vault_token_account: Box<Account<'info, TokenAccount>>,
 
     // Vault
     #[account(

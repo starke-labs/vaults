@@ -6,7 +6,7 @@ use crate::state::Vault;
 pub fn mint_vault_token<'info>(
     vault: Box<Account<'info, Vault>>,
     mint: Box<Account<'info, Mint>>,
-    to: Account<'info, TokenAccount>,
+    to: Box<Account<'info, TokenAccount>>,
     amount: u64,
     signer_seeds: &[&[&[u8]]],
     token_program: Program<'info, Token>,
@@ -26,7 +26,7 @@ pub fn mint_vault_token<'info>(
 pub fn burn_vault_token<'info>(
     user: Signer<'info>,
     mint: Box<Account<'info, Mint>>,
-    from: Account<'info, TokenAccount>,
+    from: Box<Account<'info, TokenAccount>>,
     amount: u64,
     signer_seeds: &[&[&[u8]]],
     token_program: Program<'info, Token>,

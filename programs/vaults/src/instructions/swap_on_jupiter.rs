@@ -11,5 +11,5 @@ pub fn _swap_on_jupiter(_ctx: Context<SwapOnJupiter>, _amount: u64) -> Result<()
 #[derive(Accounts)]
 pub struct SwapOnJupiter<'info> {
     #[account(mut)]
-    pub vault: Account<'info, Vault>,
+    pub vault: Box<Account<'info, Vault>>,
 }

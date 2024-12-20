@@ -52,7 +52,7 @@ pub struct CreateVault<'info> {
         seeds = [Vault::SEED, manager.key().as_ref()],
         bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Box<Account<'info, Vault>>,
 
     // Vault token mint
     #[account(
@@ -64,20 +64,20 @@ pub struct CreateVault<'info> {
         mint::authority = vault,
         mint::freeze_authority = vault,
     )]
-    pub vault_token_mint: Account<'info, Mint>,
+    pub vault_token_mint: Box<Account<'info, Mint>>,
 
     // Whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
         bump = whitelist.bump,
     )]
-    pub whitelist: Account<'info, TokenWhitelist>,
+    pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
     // Deposit token mint
     #[account(
         constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
     )]
-    pub deposit_token_mint: Account<'info, Mint>,
+    pub deposit_token_mint: Box<Account<'info, Mint>>,
 
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
