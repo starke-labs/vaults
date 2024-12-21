@@ -4,10 +4,9 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::controllers::{
-    compute_token_value_usd, get_token_price_from_pyth_feed, mint_vault_token, transfer_token,
-    transform_price_to_nav_decimals,
+    calculate_deposit_token_value, calculate_vault_tokens_to_mint, mint_vault_token, transfer_token,
 };
-use crate::state::{DepositMade, TokenWhitelist, Vault, VaultError};
+use crate::state::{DepositMade, TokenWhitelist, Vault};
 
 pub fn _deposit<'info>(
     ctx: Context<'_, '_, 'info, 'info, Deposit<'info>>,
@@ -22,34 +21,20 @@ pub fn _deposit<'info>(
     )?;
 
     // Calculate the USD value of deposit tokens
-    let deposit_price_feed_id = ctx
-        .accounts
-        .whitelist
-        .get_price_feed_id(&ctx.accounts.deposit_token_mint.key())?;
-
-    let deposit_price =
-        get_token_price_from_pyth_feed(deposit_price_feed_id, ctx.accounts.price_update.clone())?;
-
-    let deposit_price_in_nav_decimals = transform_price_to_nav_decimals(deposit_price)?;
-    let deposit_value = compute_token_value_usd(
-        amount,
+    let deposit_value = calculate_deposit_token_value(
+        &ctx.accounts.whitelist,
+        &ctx.accounts.deposit_token_mint.key(),
         ctx.accounts.deposit_token_mint.decimals,
-        deposit_price_in_nav_decimals,
+        amount,
+        ctx.accounts.price_update.clone(),
     )?;
 
     // Calculate vault tokens to mint based on NAV
-    let vault_tokens_to_mint = if total_nav == 0 {
-        // Initial deposit - mint 1:1
-        amount
-    } else {
-        // Calculate proportional amount based on NAV
-        let supply = ctx.accounts.vault_token_mint.supply;
-        (deposit_value as u128)
-            .checked_mul(supply as u128)
-            .ok_or(error!(VaultError::NumericOverflow))?
-            .checked_div(total_nav as u128)
-            .ok_or(error!(VaultError::NumericOverflow))? as u64
-    };
+    let vault_tokens_to_mint = calculate_vault_tokens_to_mint(
+        total_nav,
+        deposit_value,
+        ctx.accounts.vault_token_mint.supply,
+    )?;
 
     // Transfer deposit tokens from depositor to vault
     transfer_token(
@@ -64,7 +49,6 @@ pub fn _deposit<'info>(
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
     let signer_seeds = &[&vault_seeds[..]];
-
     mint_vault_token(
         ctx.accounts.vault.clone(),
         ctx.accounts.vault_token_mint.clone(),
@@ -141,6 +125,7 @@ pub struct Deposit<'info> {
     )]
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 
+    // Token whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
         bump = whitelist.bump,
@@ -148,7 +133,6 @@ pub struct Deposit<'info> {
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
     pub price_update: Box<Account<'info, PriceUpdateV2>>,
-
     pub clock: Sysvar<'info, Clock>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,

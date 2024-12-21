@@ -1,11 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
-use crate::controllers::{burn_vault_token, transfer_token_with_signer};
-use crate::state::{Vault, WithdrawMade};
+use crate::controllers::{
+    burn_vault_token, calculate_tokens_to_withdraw, transfer_token_with_signer,
+};
+use crate::state::{TokenWhitelist, Vault, WithdrawMade};
 
-pub fn _withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+pub fn _withdraw<'info>(
+    ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
+    amount: u64,
+) -> Result<()> {
     // TODO: Create a wrapper function for this in utils
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
@@ -21,11 +27,23 @@ pub fn _withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         ctx.accounts.token_program.clone(),
     )?;
 
+    // First, calculate the total NAV (Net Asset Value) of the vault
+    let total_nav = ctx.accounts.vault.get_nav(
+        ctx.remaining_accounts,
+        ctx.accounts.whitelist.clone(),
+        ctx.accounts.vault.key(),
+        ctx.accounts.price_update.clone(),
+    )?;
+
+    // Calculate how many tokens to withdraw based on:
+    let tokens_to_withdraw =
+        calculate_tokens_to_withdraw(total_nav, amount, ctx.accounts.vault_token_mint.supply)?;
+
     // Transfer deposit tokens from vault to depositor
     transfer_token_with_signer(
         ctx.accounts.vault_deposit_token_account.clone(),
         ctx.accounts.user_deposit_token_account.clone(),
-        amount,
+        tokens_to_withdraw,
         ctx.accounts.vault.to_account_info(),
         signer_seeds,
         ctx.accounts.token_program.clone(),
@@ -34,7 +52,7 @@ pub fn _withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     emit!(WithdrawMade {
         vault: ctx.accounts.vault.key(),
         user: ctx.accounts.user.key(),
-        amount,
+        amount: tokens_to_withdraw,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 
@@ -97,6 +115,10 @@ pub struct Withdraw<'info> {
     )]
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 
+    // Token whitelist
+    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+
+    pub price_update: Box<Account<'info, PriceUpdateV2>>,
     pub clock: Sysvar<'info, Clock>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,

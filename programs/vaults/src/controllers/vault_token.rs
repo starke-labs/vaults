@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::*;
+use anchor_spl::token::{burn, mint_to, Burn, Mint, MintTo, Token, TokenAccount};
 
-use crate::state::Vault;
+use crate::state::{Vault, VaultError};
 
 pub fn mint_vault_token<'info>(
     vault: Box<Account<'info, Vault>>,
@@ -41,4 +41,36 @@ pub fn burn_vault_token<'info>(
     burn(cpi_ctx, amount)?;
 
     Ok(())
+}
+
+pub fn calculate_vault_tokens_to_mint(
+    total_nav: u64,
+    deposit_value: u64,
+    vault_token_supply: u64,
+) -> Result<u64> {
+    if total_nav == 0 {
+        // Initial deposit - mint 1:1
+        Ok(deposit_value)
+    } else {
+        // Calculate proportional amount based on NAV
+        (deposit_value as u128)
+            .checked_mul(vault_token_supply as u128)
+            .ok_or(error!(VaultError::NumericOverflow))?
+            .checked_div(total_nav as u128)
+            .ok_or(error!(VaultError::NumericOverflow))
+            .map(|result| result as u64)
+    }
+}
+
+pub fn calculate_tokens_to_withdraw(
+    total_nav: u64,
+    vault_tokens_to_burn: u64,
+    vault_token_supply: u64,
+) -> Result<u64> {
+    (vault_tokens_to_burn as u128)
+        .checked_mul(total_nav as u128)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div(vault_token_supply as u128)
+        .ok_or(error!(VaultError::NumericOverflow))
+        .map(|result| result as u64)
 }
