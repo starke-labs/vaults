@@ -49,7 +49,10 @@ pub mod vaults {
         _deposit(ctx, amount)
     }
 
-    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+    pub fn withdraw<'info>(
+        ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
+        amount: u64,
+    ) -> Result<()> {
         _withdraw(ctx, amount)
     }
 
