@@ -98,8 +98,7 @@ Current limitations and upcoming features:
 - Currently, each manager can only create one vault
 - Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
 - Maximum number of tokens is currently set to 100
-- TODO: Throw an error when trying to initialize whitelist twice
-- TODO: Add vault.is_initialized() and whitelist.is_initialized() to throw the right error messages
+- TODO: Add swap logic here from: https://github.com/starke-labs/jup-swap-integration
 
 ## Contributing
 
