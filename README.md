@@ -1,6 +1,35 @@
-# Vaults
+# Starke Finance Vaults
 
-A Solana program for managing token vaults. Users can create vaults, deposit tokens, and withdraw them.
+A secure and flexible Solana program for managing token vaults with advanced features for DeFi applications.
+
+## Overview
+
+Starke Finance Vaults is a Solana program that enables:
+
+- Creation and management of token vaults
+- Secure token deposits and withdrawals
+- Configurable entry/exit fees
+- Token whitelisting with price feed integration
+- Integration with Jupiter for token swaps
+- Advanced security features and access controls
+
+## Key Features
+
+- **Vault Management**: Create and manage vaults with customizable parameters
+- **Token Whitelisting**: Only approved tokens can be used with built-in Pyth price feed integration
+- **Fee Structure**: Configurable entry and exit fees with time-delayed updates
+- **Security**: Program-controlled authority and comprehensive access controls
+- **Event Emission**: Detailed events for all major operations
+- **Jupiter Integration**: Built-in support for token swaps (coming soon)
+
+## Architecture
+
+The program is structured into several key components:
+
+- **Instructions**: Core program instructions for vault operations
+- **State**: Account structures for vaults and whitelists
+- **Controllers**: Business logic for token management and pricing
+- **Constants**: Program-wide configuration values
 
 ## Prerequisites
 
@@ -10,37 +39,88 @@ A Solana program for managing token vaults. Users can create vaults, deposit tok
 - [Node.js](https://nodejs.org/) (v16 or later)
 - [Yarn](https://yarnpkg.com/getting-started/install)
 
-## Installation & Setup
+## Installation
 
+1. Clone the repository:
 ```bash
-$ git clone https://github.com/starke-labs/vaults.git
-$ cd vaults
-$ mkdir deploy
-$ cp <path-to-deploy-authority-keypair> deploy/authority.json
-$ cp <path-to-vaults-keypair> target/deploy/vaults-keypair.json
-$ anchor build
+git clone https://github.com/starke-labs/vaults.git
+cd vaults
+```
+
+2. Install dependencies:
+```bash
+yarn install
+```
+
+3. Build the program:
+```bash
+anchor build
+```
+
+4. Set up deployment keys:
+```bash
+mkdir deploy
+cp <path-to-deploy-authority-keypair> deploy/authority.json
+cp <path-to-vaults-keypair> target/deploy/vaults-keypair.json
 ```
 
 ## Testing
 
-To run the tests, use the following command:
-
+Run the test suite:
 ```bash
-$ anchor test
+anchor test
 ```
 
-## Program Structure
+The tests cover:
+- Whitelist management
+- Vault creation and configuration
+- Token deposits and withdrawals
+- Fee updates
+- Security controls
+- Event emission
 
-- `programs/vault_manager/src/lib.rs`: Main program logic and instruction handlers
-- `programs/vault_manager/src/vault.rs`: Vault account structure and methods
-- `programs/vault_manager/src/vault_balance.rs`: VaultBalance account structure and methods
-- `programs/vault_manager/src/event.rs`: Program event definitions
-- `tests/`: TypeScript tests
+## Security
 
-## Development Notes and Todos
+Security is a top priority. The program includes:
+
+- Comprehensive access controls
+- Time-delayed fee updates
+- Token whitelisting
+- Program authority controls
+- Regular security audits
+
+For reporting vulnerabilities, please see our [Security Policy](SECURITY.md).
+
+## Development Status
+
+Current limitations and upcoming features:
 
 - Currently, each manager can only create one vault
 - Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
 - Maximum number of tokens is currently set to 100
 - TODO: Throw an error when trying to initialize whitelist twice
 - TODO: Add vault.is_initialized() and whitelist.is_initialized() to throw the right error messages
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+## License
+
+ISC License
+
+## Contact
+
+- Discord: [Join our server](https://discord.gg/Kwvx8hcZBx)
+- Email: contact@starkevalidator.com
+- Website: https://starke.finance
+
+## Acknowledgments
+
+- [Anchor Framework](https://www.anchor-lang.com/)
+- [Pyth Network](https://pyth.network/)
+- [Jupiter](https://jup.ag/)
