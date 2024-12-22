@@ -110,7 +110,9 @@ Current limitations and upcoming features:
 
 ## License
 
-ISC License
+AGPL License
+
+See [LICENSE.md](LICENSE.md) for more details.
 
 ## Contact
 
