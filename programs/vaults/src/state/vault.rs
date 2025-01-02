@@ -56,6 +56,7 @@ impl Vault {
         exit_fee: u16,
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
+        require!(name.len() > 0, VaultError::NameTooShort);
         require!(entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
         require!(exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
 
@@ -151,6 +152,8 @@ pub enum VaultError {
     #[msg("Invalid deposit token")]
     InvalidDepositToken,
     #[msg("Name must be 32 characters or less")]
+    NameTooShort,
+    #[msg("Name must be 1 character or more")]
     NameTooLong,
     #[msg("Numeric overflow")]
     NumericOverflow,

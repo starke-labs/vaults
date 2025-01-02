@@ -116,6 +116,10 @@ pub struct Withdraw<'info> {
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 
     // Token whitelist
+    #[account(
+        seeds = [TokenWhitelist::SEED],
+        bump = whitelist.bump,
+    )]
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
     pub price_update: Box<Account<'info, PriceUpdateV2>>,
