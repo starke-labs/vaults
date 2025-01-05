@@ -18,7 +18,7 @@ import {
   WithdrawParams,
 } from "@starke/sdk/types";
 
-import { toTokenAmount } from "../utils.new";
+import { getAuthorityKeypair, toTokenAmount } from "../utils.new";
 
 describe("VaultsSDK Unit Tests", () => {
   const priceFeedId =
@@ -34,14 +34,8 @@ describe("VaultsSDK Unit Tests", () => {
 
   before(() => {
     provider = AnchorProvider.env();
-    setProvider(provider);
 
-    authority = Keypair.fromSecretKey(
-      new Uint8Array(
-        JSON.parse(fs.readFileSync("./deploy/authority.json", "utf8"))
-      )
-    );
-
+    authority = getAuthorityKeypair();
     const wallet = new Wallet(authority);
 
     manager = Keypair.generate();
