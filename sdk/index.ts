@@ -1,12 +1,23 @@
-import { AnchorProvider, Idl, Program, Wallet } from "@coral-xyz/anchor";
 import {
+  AnchorProvider,
+  Idl,
+  Program,
+  Wallet,
+  setProvider,
+} from "@coral-xyz/anchor";
+import {
+  ConfirmOptions,
   Connection,
+  Keypair,
   PublicKey,
+  SendOptions,
   Signer,
   Transaction,
   TransactionInstruction,
+  SystemProgram,
 } from "@solana/web3.js";
 
+import { WHITELIST_PDA } from "./constants";
 import { EventHandler } from "./events";
 import {
   AddTokenAccounts,
@@ -28,13 +39,13 @@ export class VaultsSDK {
 
   constructor(
     connection: Connection,
-    wallet: Wallet,
+    keypair: Keypair,
     programId: PublicKey,
     idl: Idl
   ) {
     this.provider = new AnchorProvider(
       connection,
-      wallet,
+      new Wallet(keypair),
       AnchorProvider.defaultOptions()
     );
     this.program = new Program(idl, this.provider);
@@ -42,7 +53,10 @@ export class VaultsSDK {
   }
 
   // Instruction methods
-  async createVault(params: CreateVaultParams, accounts: CreateVaultAccounts) {
+  async createVault(
+    params: CreateVaultParams,
+    accounts: CreateVaultAccounts
+  ): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .createVault(params.name, params.entryFee, params.exitFee)
       .accounts({
@@ -54,15 +68,22 @@ export class VaultsSDK {
     return instruction;
   }
 
-  async initializeWhitelist() {
+  async initializeWhitelist(): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .initializeWhitelist()
+      .accounts({
+        whitelist: WHITELIST_PDA,
+        systemProgram: SystemProgram.programId,
+      })
       .instruction();
 
     return instruction;
   }
 
-  async addToken(params: AddTokenParams, accounts: AddTokenAccounts) {
+  async addToken(
+    params: AddTokenParams,
+    accounts: AddTokenAccounts
+  ): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .addToken(params.token, params.priceFeedId)
       .accounts({
@@ -73,7 +94,10 @@ export class VaultsSDK {
     return instruction;
   }
 
-  async deposit(params: DepositParams, accounts: DepositAccounts) {
+  async deposit(
+    params: DepositParams,
+    accounts: DepositAccounts
+  ): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .deposit(params.amount)
       .accounts({
@@ -87,7 +111,10 @@ export class VaultsSDK {
     return instruction;
   }
 
-  async withdraw(params: WithdrawParams, accounts: WithdrawAccounts) {
+  async withdraw(
+    params: WithdrawParams,
+    accounts: WithdrawAccounts
+  ): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .withdraw(params.amount)
       .accounts({
@@ -104,7 +131,7 @@ export class VaultsSDK {
   async updateVaultFees(
     params: UpdateFeesParams,
     accounts: UpdateFeesAccounts
-  ) {
+  ): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .updateVaultFees(params.newEntryFee, params.newExitFee)
       .accounts({
@@ -115,7 +142,7 @@ export class VaultsSDK {
     return instruction;
   }
 
-  async swapOnJupiter(params: any) {
+  async swapOnJupiter(params: any): Promise<TransactionInstruction> {
     // Implementation depends on Jupiter API integration
     const instruction = await this.program.methods
       .swapOnJupiter(params)
@@ -124,20 +151,18 @@ export class VaultsSDK {
     return instruction;
   }
 
-  // Helper method to send and confirm transaction
-  async sendAndConfirmTransaction(
+  async fetchWhitelist() {
+    return await this.program.account.tokenWhitelist.fetch(WHITELIST_PDA);
+  }
+
+  async sendTransaction(
     instructions: TransactionInstruction[],
-    signers?: Signer[]
-  ) {
-    try {
-      const tx = new Transaction();
-      tx.add(...instructions);
-      const signature = await this.provider.sendAndConfirm(tx, signers, {
-        commitment: "confirmed",
-      });
-      return signature;
-    } catch (error) {
-      throw new Error(`Transaction failed: ${error}`);
-    }
+    signers: Signer[] = [],
+    options: ConfirmOptions = {}
+  ): Promise<string> {
+    const tx = new Transaction();
+    tx.add(...instructions);
+    const signature = await this.provider.sendAndConfirm(tx, signers, options);
+    return signature;
   }
 }
