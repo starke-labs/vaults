@@ -12,13 +12,13 @@ import {
   PublicKey,
   SendOptions,
   Signer,
+  SystemProgram,
   Transaction,
   TransactionInstruction,
-  SystemProgram,
 } from "@solana/web3.js";
 
-import { WHITELIST_PDA } from "./constants";
 import { EventHandler } from "./events";
+import { getVaultPda, getVaultTokenMintPda, getWhitelistPda } from "./pdas";
 import {
   AddTokenAccounts,
   AddTokenParams,
@@ -71,10 +71,7 @@ export class VaultsSDK {
   async initializeWhitelist(): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .initializeWhitelist()
-      .accounts({
-        whitelist: WHITELIST_PDA,
-        systemProgram: SystemProgram.programId,
-      })
+      .accounts({})
       .instruction();
 
     return instruction;
@@ -151,10 +148,27 @@ export class VaultsSDK {
     return instruction;
   }
 
+  // Fetch state methods
   async fetchWhitelist() {
-    return await this.program.account.tokenWhitelist.fetch(WHITELIST_PDA);
+    // @ts-ignore
+    return await this.program.account.tokenWhitelist.fetch(
+      getWhitelistPda()[0]
+    );
   }
 
+  async fetchVault(manager: PublicKey) {
+    // @ts-ignore
+    return await this.program.account.vault.fetch(getVaultPda(manager)[0]);
+  }
+
+  async fetchVaultTokenMint(vault: PublicKey) {
+    // @ts-ignore
+    return await this.program.account.vaultTokenMint.fetch(
+      getVaultTokenMintPda(vault)[0]
+    );
+  }
+
+  // Transaction methods
   async sendTransaction(
     instructions: TransactionInstruction[],
     signers: Signer[] = [],
