@@ -1,11 +1,5 @@
 import { AnchorProvider, BN, Wallet } from "@coral-xyz/anchor";
-import {
-  Commitment,
-  Connection,
-  Keypair,
-  PublicKey,
-  TransactionSignature,
-} from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import fs from "fs";
 
 import { DEFAULT_COMMITMENT, DEFAULT_TIMEOUT } from "./constants";
@@ -22,20 +16,6 @@ export function createConnection(
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-// export async function confirmTransaction(
-//   connection: Connection,
-//   signature: TransactionSignature
-// ): Promise<void> {
-//   const latestBlockhash = await connection.getLatestBlockhash();
-//   await connection.confirmTransaction(
-//     {
-//       signature,
-//       ...latestBlockhash,
-//     },
-//     connection.commitment || DEFAULT_COMMITMENT
-//   );
-// }
 
 export function getProvider(keypair: Keypair): AnchorProvider {
   const provider = AnchorProvider.env();
