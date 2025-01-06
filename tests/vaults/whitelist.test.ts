@@ -28,18 +28,12 @@ describe("Whitelist Tests", () => {
     // Setup provider and authority
     tester = Keypair.generate();
     provider = getProvider(tester);
-    // console.log("provider", provider);
 
     // Get program authority keypair
     programAuthority = getAuthorityKeypair();
-    // console.log("programAuthority", programAuthority);
 
     // Request SOL for authority if needed
     await requestAirdropIfNecessary(provider.connection, tester.publicKey);
-    // console.log(
-    //   "Authority balance:",
-    //   await provider.connection.getBalance(authority.publicKey)
-    // );
 
     // Initialize SDK
     sdk = new VaultsSDK(
@@ -48,7 +42,6 @@ describe("Whitelist Tests", () => {
       new PublicKey(idl.address),
       idl as Idl
     );
-    // console.log("sdk", sdk);
 
     // Create a test token mint
     tokenMint = await createMint(
@@ -58,7 +51,6 @@ describe("Whitelist Tests", () => {
       null,
       DEFAULT_MINT_DECIMALS
     );
-    // console.log("tokenMint", tokenMint);
   });
 
   it("should not initialize whitelist without proper authority", async () => {
@@ -180,6 +172,7 @@ describe("Whitelist Tests", () => {
     expect(whitelist.tokens[0].mint.toString()).to.equal(tokenMint.toString());
   });
 
+  // TODO: Implement this
   // it("should not add token with invalid price feed ID", async () => {
   //   // Create a new token mint with program authority as mint authority
   //   const newToken = await createMint(
