@@ -16,4 +16,7 @@ wallet = "./deploy/authority.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/*.test.ts"
+# Need to run `anchor localnet` first to build, deploy and run local validator
+test-whitelist = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/whitelist.test.ts"
+test-vault = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/vault.test.ts"
 test-sdk = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/sdk/*.test.ts"
