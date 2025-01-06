@@ -22,7 +22,7 @@ describe("Whitelist Tests", () => {
   let provider: AnchorProvider;
   let tester: Keypair;
   let tokenMint: PublicKey;
-  let programAuthority: Keypair;
+  let authority: Keypair;
 
   before(async () => {
     // Setup provider and authority
@@ -30,7 +30,7 @@ describe("Whitelist Tests", () => {
     provider = getProvider(tester);
 
     // Get program authority keypair
-    programAuthority = getAuthorityKeypair();
+    authority = getAuthorityKeypair();
 
     // Request SOL for authority if needed
     await requestAirdropIfNecessary(provider.connection, tester.publicKey);
@@ -73,16 +73,16 @@ describe("Whitelist Tests", () => {
 
   it("should successfully initialize token whitelist", async () => {
     const ix = await sdk.initializeWhitelist();
-    const signature = await sdk.sendTransaction([ix], [programAuthority]);
+    const signature = await sdk.sendTransaction([ix], [authority]);
     expect(signature).to.not.be.empty;
 
     // Verify whitelist was initialized
     const whitelist = await sdk.fetchWhitelist();
     expect(whitelist.authority.toString()).to.equal(
-      programAuthority.publicKey.toString()
+      authority.publicKey.toString()
     );
     expect(whitelist.programAuthority.toString()).to.equal(
-      programAuthority.publicKey.toString()
+      authority.publicKey.toString()
     );
     expect(whitelist.tokens).to.be.empty;
   });
@@ -133,11 +133,11 @@ describe("Whitelist Tests", () => {
     };
 
     const accounts: AddTokenAccounts = {
-      authority: programAuthority.publicKey,
+      authority: authority.publicKey,
     };
 
     const ix = await sdk.addToken(params, accounts);
-    const signature = await sdk.sendTransaction([ix], [programAuthority]);
+    const signature = await sdk.sendTransaction([ix], [authority]);
     expect(signature).to.not.be.empty;
 
     // Verify token was added
@@ -154,13 +154,13 @@ describe("Whitelist Tests", () => {
     };
 
     const accounts: AddTokenAccounts = {
-      authority: programAuthority.publicKey,
+      authority: authority.publicKey,
     };
 
     const ix = await sdk.addToken(params, accounts);
 
     try {
-      await sdk.sendTransaction([ix], [programAuthority]);
+      await sdk.sendTransaction([ix], [authority]);
       expect.fail("Should have thrown an error");
     } catch (e) {
       expect(e.toString()).to.have.string("Token is already whitelisted");

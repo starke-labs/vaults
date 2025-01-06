@@ -161,13 +161,6 @@ export class VaultsSDK {
     return await this.program.account.vault.fetch(getVaultPda(manager)[0]);
   }
 
-  async fetchVaultTokenMint(vault: PublicKey) {
-    // @ts-ignore
-    return await this.program.account.vaultTokenMint.fetch(
-      getVaultTokenMintPda(vault)[0]
-    );
-  }
-
   // Transaction methods
   async sendTransaction(
     instructions: TransactionInstruction[],
