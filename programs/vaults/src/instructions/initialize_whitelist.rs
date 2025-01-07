@@ -20,7 +20,7 @@ pub struct InitializeWhitelist<'info> {
     pub authority: Signer<'info>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = authority,
         space = TokenWhitelist::MAX_SPACE,
         seeds = [TokenWhitelist::SEED],
