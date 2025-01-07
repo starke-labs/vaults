@@ -1,18 +1,10 @@
-import {
-  AnchorProvider,
-  Idl,
-  Program,
-  Wallet,
-  setProvider,
-} from "@coral-xyz/anchor";
+import { AnchorProvider, Idl, Program, Wallet } from "@coral-xyz/anchor";
 import {
   ConfirmOptions,
   Connection,
   Keypair,
   PublicKey,
-  SendOptions,
   Signer,
-  SystemProgram,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
