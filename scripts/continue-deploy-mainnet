@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Check if RPC endpoint is provided
+if [ -z "$MAINNET_RPC" ]; then
+    echo "Error: MAINNET_RPC environment variable is not set"
+    echo "Please set it using: export MAINNET_RPC=<your-rpc-endpoint>"
+    exit 1
+fi
+
+solana -u $MAINNET_RPC program deploy target/verifiable/vaults.so -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id ./target/deploy/vaults-keypair.json
