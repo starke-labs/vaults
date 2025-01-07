@@ -52,10 +52,7 @@ describe("Vault Tests", () => {
     // Get authority keypair
     const authority = getAuthorityKeypair();
 
-    // Initialize whitelist
-    const ix = await sdk.initializeWhitelist();
-    await sdk.sendTransaction([ix], [authority]);
-
+    // This test must be run after the whitelist test so that the whitelist is initialized
     // Add deposit token to whitelist
     const addTokenIx = await sdk.addToken(
       { token: depositTokenMint, priceFeedId: DUMMY_PRICE_FEED_ID },
@@ -159,7 +156,37 @@ describe("Vault Tests", () => {
     }
   });
 
-  it("should successfully create vault", async () => {
+  it("should not create vault with non-whitelisted deposit token", async () => {
+    const newTokenMint = await createMint(
+      provider.connection,
+      tester,
+      tester.publicKey,
+      null,
+      DEFAULT_MINT_DECIMALS
+    );
+
+    const params: CreateVaultParams = {
+      name: "Test Vault",
+      entryFee: 100, // 1%
+      exitFee: 200, // 2%
+    };
+
+    const accounts: CreateVaultAccounts = {
+      manager: tester.publicKey,
+      depositTokenMint: newTokenMint, // Non-whitelisted
+    };
+
+    // Try to create vault
+    try {
+      const ix = await sdk.createVault(params, accounts);
+      await sdk.sendTransaction([ix], [tester]);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      expect(e.toString()).to.have.string("TokenNotWhitelisted");
+    }
+  });
+
+  it("should successfully create vault and vault token mint", async () => {
     const params: CreateVaultParams = {
       name: "Test Vault",
       entryFee: 100, // 1%
@@ -197,7 +224,6 @@ describe("Vault Tests", () => {
   it("should not create multiple vaults for same manager", async () => {
     const existingVaultName = "Test Vault";
 
-    // Try to create new vault by the same manager
     const params: CreateVaultParams = {
       name: "Test Vault 1",
       entryFee: 100,

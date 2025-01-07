@@ -18,7 +18,7 @@ import {
   WithdrawParams,
 } from "@starke/sdk/types";
 
-import { getAuthorityKeypair, toTokenAmount } from "../utils.new";
+import { getAuthorityKeypair, getProvider, toTokenAmount } from "../utils.new";
 
 describe("VaultsSDK Unit Tests", () => {
   const priceFeedId =
@@ -28,25 +28,25 @@ describe("VaultsSDK Unit Tests", () => {
   let provider: AnchorProvider;
   let authority: Keypair;
   let manager: Keypair;
-  let user: Keypair;
+  let tester: Keypair;
   let depositTokenMint: PublicKey;
   let priceUpdate: PublicKey;
 
   before(() => {
-    provider = AnchorProvider.env();
-
+    // Setup keypairs
     authority = getAuthorityKeypair();
-    const wallet = new Wallet(authority);
-
+    tester = Keypair.generate();
     manager = Keypair.generate();
-    user = Keypair.generate();
     depositTokenMint = Keypair.generate().publicKey;
-    // Use a mock price feed account instead of actual Pyth price feed
+    // Use a mock priceUpdate account instead of actual Pyth priceUpdateV2 account
     priceUpdate = Keypair.generate().publicKey;
+
+    // Setup provider
+    provider = getProvider(tester);
 
     // Initialize SDK
     const programId = new PublicKey(idl.address);
-    sdk = new VaultsSDK(provider.connection, wallet, programId, idl as Idl);
+    sdk = new VaultsSDK(provider.connection, tester, programId, idl as Idl);
   });
 
   describe("Instruction Generation", () => {
@@ -105,7 +105,7 @@ describe("VaultsSDK Unit Tests", () => {
         };
 
         const accounts: DepositAccounts = {
-          user: user.publicKey,
+          user: tester.publicKey,
           manager: manager.publicKey,
           depositTokenMint,
           priceUpdate,
@@ -125,7 +125,7 @@ describe("VaultsSDK Unit Tests", () => {
         };
 
         const accounts: WithdrawAccounts = {
-          user: user.publicKey,
+          user: tester.publicKey,
           manager: manager.publicKey,
           depositTokenMint,
           priceUpdate,

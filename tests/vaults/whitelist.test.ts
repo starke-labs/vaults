@@ -126,6 +126,16 @@ describe("Whitelist Tests", () => {
     expect(whitelist.tokens).to.be.empty;
   });
 
+  it("should not initialize whitelist twice", async () => {
+    const ix = await sdk.initializeWhitelist();
+    try {
+      await sdk.sendTransaction([ix], [authority]);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      expect(e.toString()).to.have.string("already in use");
+    }
+  });
+
   it("should successfully add token to whitelist", async () => {
     const params: AddTokenParams = {
       token: tokenMint,

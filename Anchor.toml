@@ -15,8 +15,7 @@ cluster = "Localnet"
 wallet = "./deploy/authority.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/*.test.ts"
-# Need to run `anchor localnet` first to build, deploy and run local validator
-test-whitelist = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/whitelist.test.ts"
-test-vault = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/vault.test.ts"
-test-sdk = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/sdk/*.test.ts"
+test = "yarn test:vaults"
+# TODO: Fix errors in these commands
+test-vaults = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:vaults; pkill solana-test-validator)"
+test-sdk = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:sdk; pkill solana-test-validator)"
