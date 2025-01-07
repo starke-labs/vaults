@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Check if RPC endpoint is provided
+if [ -z "$MAINNET_RPC" ]; then
+    echo "Error: MAINNET_RPC environment variable is not set"
+    echo "Please set it using: export MAINNET_RPC=<your-rpc-endpoint>"
+    exit 1
+fi
+
+anchor deploy -v --provider.cluster $MAINNET_RPC
