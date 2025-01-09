@@ -18,8 +18,6 @@ export async function sleep(ms: number): Promise<void> {
 }
 
 export function getProvider(keypair: Keypair): AnchorProvider {
-  const provider = AnchorProvider.env();
-
   return new AnchorProvider(
     createConnection(),
     new Wallet(keypair),
@@ -60,5 +58,11 @@ export function getAuthorityKeypair(): Keypair {
     new Uint8Array(
       JSON.parse(fs.readFileSync("./deploy/authority.json", "utf8"))
     )
+  );
+}
+
+export function getTesterKeypair(): Keypair {
+  return Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(fs.readFileSync("./deploy/tester.json", "utf8")))
   );
 }

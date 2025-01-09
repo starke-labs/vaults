@@ -1,4 +1,4 @@
-import { AnchorProvider, Idl, Wallet, setProvider } from "@coral-xyz/anchor";
+import { AnchorProvider, Idl } from "@coral-xyz/anchor";
 import { createMint } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";

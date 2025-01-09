@@ -15,7 +15,7 @@ cluster = "Localnet"
 wallet = "./deploy/authority.json"
 
 [scripts]
-test = "yarn test:vaults"
+test = "yarn setup:mainnet"
 # TODO: Fix errors in these commands
 test-vaults = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:vaults; pkill solana-test-validator)"
 test-sdk = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:sdk; pkill solana-test-validator)"

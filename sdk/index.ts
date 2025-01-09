@@ -10,7 +10,7 @@ import {
 } from "@solana/web3.js";
 
 import { EventHandler } from "./events";
-import { getVaultPda, getVaultTokenMintPda, getWhitelistPda } from "./pdas";
+import { getVaultPda, getWhitelistPda } from "./pdas";
 import {
   AddTokenAccounts,
   AddTokenParams,
@@ -23,6 +23,7 @@ import {
   WithdrawAccounts,
   WithdrawParams,
 } from "./types";
+import { TransactionRetryConfig, sendAndConfirmWithRetry } from "./utils";
 
 export class VaultsSDK {
   private program: Program;
@@ -63,7 +64,6 @@ export class VaultsSDK {
   async initializeWhitelist(): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .initializeWhitelist()
-      .accounts({})
       .instruction();
 
     return instruction;
@@ -156,12 +156,16 @@ export class VaultsSDK {
   // Transaction methods
   async sendTransaction(
     instructions: TransactionInstruction[],
-    signers: Signer[] = [],
-    options: ConfirmOptions = {}
+    signers: Keypair[] = [],
+    retryConfig?: TransactionRetryConfig
   ): Promise<string> {
-    const tx = new Transaction();
-    tx.add(...instructions);
-    const signature = await this.provider.sendAndConfirm(tx, signers, options);
-    return signature;
+    const transaction = new Transaction();
+    transaction.add(...instructions);
+    return sendAndConfirmWithRetry(
+      this.provider,
+      transaction,
+      signers,
+      retryConfig
+    );
   }
 }
