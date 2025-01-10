@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use super::{TokenWhitelist, VaultFeesUpdated};
 use crate::controllers::{
@@ -129,7 +128,7 @@ impl Vault {
         vault_token_accounts: &'info [AccountInfo<'info>],
         whitelist: Box<Account<'info, TokenWhitelist>>,
         vault_key: Pubkey,
-        price_update: Box<Account<'info, PriceUpdateV2>>,
+        // price_update: Box<Account<'info, PriceUpdateV2>>,
     ) -> Result<u64> {
         let vault_balances = parse_vault_balances(vault_token_accounts, whitelist, vault_key)?;
         let nav = vault_balances
@@ -137,7 +136,7 @@ impl Vault {
             .map(|b| {
                 let price = transform_price_to_nav_decimals(get_token_price_from_pyth_feed(
                     b.price_feed_id.clone(),
-                    price_update.clone(),
+                    b.price_update.clone(),
                 )?)?;
                 compute_token_value_usd(b.token_balance, b.token_decimals, price)
             })
