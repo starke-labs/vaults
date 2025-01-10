@@ -17,7 +17,6 @@ pub fn _deposit<'info>(
         ctx.remaining_accounts,
         ctx.accounts.whitelist.clone(),
         ctx.accounts.vault.key(),
-        ctx.accounts.price_update.clone(),
     )?;
 
     // Calculate the USD value of deposit tokens
@@ -26,7 +25,7 @@ pub fn _deposit<'info>(
         &ctx.accounts.deposit_token_mint.key(),
         ctx.accounts.deposit_token_mint.decimals,
         amount,
-        ctx.accounts.price_update.clone(),
+        ctx.accounts.deposit_token_price_update.clone(),
     )?;
 
     // Calculate vault tokens to mint based on NAV
@@ -125,6 +124,9 @@ pub struct Deposit<'info> {
     )]
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 
+    // Deposit token price update
+    pub deposit_token_price_update: Box<Account<'info, PriceUpdateV2>>,
+
     // Token whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
@@ -132,7 +134,6 @@ pub struct Deposit<'info> {
     )]
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
-    pub price_update: Box<Account<'info, PriceUpdateV2>>,
     pub clock: Sysvar<'info, Clock>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,

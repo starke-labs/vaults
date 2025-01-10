@@ -1,27 +1,35 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::{
     constants::NAV_DECIMALS,
     state::{TokenWhitelist, VaultError},
 };
 
-pub struct VaultTokenInfo {
+pub struct VaultTokenInfo<'info> {
     pub token_balance: u64,
     pub token_decimals: u8,
     pub price_feed_id: String,
+    pub price_update: Box<Account<'info, PriceUpdateV2>>,
 }
 
 pub fn parse_vault_balances<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
     whitelist: Box<Account<'info, TokenWhitelist>>,
     vault_key: Pubkey,
-) -> Result<Vec<VaultTokenInfo>> {
+) -> Result<Vec<VaultTokenInfo<'info>>> {
     let mut vault_token_infos = Vec::new();
 
-    for chunk in remaining_accounts.chunks(2) {
+    for chunk in remaining_accounts.chunks(3) {
+        // Each chunk must contain 3 accounts in this order:
+        // - 1 mint account
+        // - 2 token account
+        // - 3 price feed account
+        
         let mint = Account::<'info, Mint>::try_from(&chunk[0])?;
         let token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[1])?;
+        let price_update: Box<Account<'info, PriceUpdateV2>> = Box::new(Account::try_from(&chunk[2])?);
 
         require!(
             mint.key() == token_account.mint,
@@ -38,6 +46,7 @@ pub fn parse_vault_balances<'info>(
             token_balance: token_account.amount,
             token_decimals: mint.decimals,
             price_feed_id,
+            price_update,
         });
     }
 

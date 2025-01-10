@@ -32,7 +32,6 @@ pub fn _withdraw<'info>(
         ctx.remaining_accounts,
         ctx.accounts.whitelist.clone(),
         ctx.accounts.vault.key(),
-        ctx.accounts.price_update.clone(),
     )?;
 
     // Calculate how many tokens to withdraw based on:
@@ -115,6 +114,9 @@ pub struct Withdraw<'info> {
     )]
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 
+    // Deposit token price update
+    pub price_update: Box<Account<'info, PriceUpdateV2>>,
+
     // Token whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
@@ -122,7 +124,6 @@ pub struct Withdraw<'info> {
     )]
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
-    pub price_update: Box<Account<'info, PriceUpdateV2>>,
     pub clock: Sysvar<'info, Clock>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
