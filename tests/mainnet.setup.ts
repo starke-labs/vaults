@@ -1,11 +1,12 @@
-import { AnchorProvider, BN, Idl } from "@coral-xyz/anchor";
+import { AnchorProvider, BN, Idl, Wallet } from "@coral-xyz/anchor";
 import { PriceServiceConnection } from "@pythnetwork/price-service-client";
+import { PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver";
 import {
   createAssociatedTokenAccount,
   createMint,
   mintTo,
 } from "@solana/spl-token";
-import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 
 import idl from "@starke/idl/vaults.json";
@@ -37,6 +38,7 @@ describe("Setup Vaults", () => {
   let provider: AnchorProvider;
   let sdk: VaultsSDK;
   let priceService: PriceServiceConnection;
+  let pythSolReceiver: PythSolanaReceiver;
   let testerATA: PublicKey;
 
   before(async () => {
@@ -60,6 +62,12 @@ describe("Setup Vaults", () => {
       },
     });
 
+    // NOTE: works with rpc-websockets@7.5.1, use `yarn add rpc-websockets@7.5.1 --exact`
+    pythSolReceiver = new PythSolanaReceiver({
+      connection: provider.connection,
+      wallet: new Wallet(tester),
+    });
+
     // Only required for Localnet, comment out for mainnet
     await requestAirdropIfNecessary(provider.connection, tester.publicKey);
     USDC = await createMint(
@@ -75,12 +83,12 @@ describe("Setup Vaults", () => {
       USDC,
       tester.publicKey
     );
-    mintTo(
+    await mintTo(
       provider.connection,
       tester,
       USDC,
       testerATA,
-      authority.publicKey,
+      authority,
       1000 * 10 ** USDC_DECIMALS
     );
   });
@@ -174,52 +182,41 @@ describe("Setup Vaults", () => {
       amount: new BN(1).pow(new BN(USDC_DECIMALS)),
     };
 
-    // Get latest price update from Pyth
-    const priceUpdates = await priceService.getLatestVaas([
-      USDC_USD_PYTH_FEED_ID,
-    ]);
-    const priceUpdateData = priceUpdates[0];
+    // Get latest price updates for all tokens in whitelist
+    const whitelist = await sdk.fetchWhitelist();
+    const priceFeeds = whitelist.tokens.map((token) => token.priceFeedId);
+    const priceUpdates = await priceService.getLatestVaas(priceFeeds);
 
-    // Create a temporary account to store the price update
-    const priceUpdateAccount = Keypair.generate();
-    const space = priceUpdateData.length;
-    const rentExemptLamports =
-      await provider.connection.getMinimumBalanceForRentExemption(space);
+    // Build transaction with price updates and deposit instruction
+    const txBuilder = pythSolReceiver.newTransactionBuilder({
+      closeUpdateAccounts: false,
+    });
+    await txBuilder.addPostPriceUpdates(priceUpdates);
 
-    // Create transaction to create account and write price update
-    const createAccountIx = SystemProgram.createAccount({
-      fromPubkey: tester.publicKey,
-      newAccountPubkey: priceUpdateAccount.publicKey,
-      lamports: rentExemptLamports,
-      space,
-      programId: new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"),
+    await txBuilder.addPriceConsumerInstructions(
+      async (getPriceUpdateAccount: (priceFeedId: string) => PublicKey) => [
+        {
+          instruction: await sdk.deposit(params, {
+            user: tester.publicKey,
+            manager: tester.publicKey,
+            depositTokenMint: USDC,
+            priceUpdate: getPriceUpdateAccount(USDC_USD_PYTH_FEED_ID),
+          }),
+          signers: [tester],
+        },
+      ]
+    );
+
+    // Send transaction
+    const txs = await txBuilder.buildVersionedTransactions({
+      computeUnitPriceMicroLamports: 50000,
     });
 
-    // Create deposit instruction with the temporary price update account
-    const depositIx = await sdk.deposit(params, {
-      user: tester.publicKey,
-      manager: tester.publicKey,
-      depositTokenMint: USDC,
-      priceUpdate: priceUpdateAccount.publicKey,
-    });
-
-    // Create transaction to close temporary account
-    const closeIx = SystemProgram.transfer({
-      fromPubkey: tester.publicKey,
-      toPubkey: SystemProgram.programId,
-      lamports: rentExemptLamports,
-    });
-
-    // Build and send transaction
-    try {
-      const signature = await sdk.sendTransaction(
-        [createAccountIx, depositIx],
-        [tester, priceUpdateAccount]
-      );
+    for (const tx of txs) {
+      const signature = await pythSolReceiver.provider.sendAndConfirm(tx, [], {
+        skipPreflight: true,
+      });
       console.log("Deposit successful:", signature);
-    } catch (error) {
-      console.error("Deposit failed:", error);
-      throw error;
     }
   });
 });
