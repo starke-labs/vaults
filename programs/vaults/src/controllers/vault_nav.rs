@@ -23,9 +23,9 @@ pub fn parse_vault_balances<'info>(
 
     for chunk in remaining_accounts.chunks(3) {
         // Each chunk must contain 3 accounts in this order:
-        // - 1 mint account
-        // - 2 token account
-        // - 3 price feed account
+        // 1. Token mint
+        // 2. Token account
+        // 3. Price update
         
         let mint = Account::<'info, Mint>::try_from(&chunk[0])?;
         let token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[1])?;

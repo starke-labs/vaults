@@ -85,16 +85,81 @@ export class VaultsSDK {
 
   async deposit(
     params: DepositParams,
-    accounts: DepositAccounts
+    accounts: DepositAccounts,
+    getPriceUpdateAccount: (priceFeedId: string) => PublicKey
   ): Promise<TransactionInstruction> {
+    // TODO: Move this to somewhere else
+    interface Token {
+      mint: PublicKey;
+      priceFeedId: string;
+    }
+
+    const tokenAccounts =
+      await this.provider.connection.getParsedTokenAccountsByOwner(
+        getVaultPda(accounts.manager)[0],
+        {
+          programId: TOKEN_PROGRAM_ID,
+        }
+      );
+    const token2022Accounts =
+      await this.provider.connection.getParsedTokenAccountsByOwner(
+        getVaultPda(accounts.manager)[0],
+        {
+          programId: TOKEN_2022_PROGRAM_ID,
+        }
+      );
+    const allTokenAccounts = [
+      ...tokenAccounts.value,
+      ...token2022Accounts.value,
+    ];
+    const whitelistedTokens = (await this.fetchWhitelist()).tokens as Token[];
+    const remainingAccounts = allTokenAccounts.reduce((prev, account) => {
+      const tokenMint = new PublicKey(account.account.data.parsed.info.mint);
+      const token = whitelistedTokens.find(
+        (token) => token.mint.toBase58() === tokenMint.toBase58()
+      );
+      if (!token) {
+        return prev;
+      }
+      return [
+        ...prev,
+        // Token mint
+        {
+          pubkey: tokenMint,
+          isWritable: false,
+          isSigner: false,
+        },
+        // Token account
+        {
+          pubkey: account.pubkey,
+          isWritable: false,
+          isSigner: false,
+        },
+        // Price update account
+        {
+          pubkey: getPriceUpdateAccount(token.priceFeedId),
+          isWritable: false,
+          isSigner: false,
+        },
+      ];
+    }, []);
+
+    const depositTokenPriceFeedId = whitelistedTokens.find(
+      (token) => token.mint.toBase58() === accounts.depositTokenMint.toBase58()
+    )?.priceFeedId;
+    if (!depositTokenPriceFeedId) {
+      throw new Error("Deposit token not whitelisted");
+    }
+
     const instruction = await this.program.methods
       .deposit(params.amount)
       .accounts({
         user: accounts.user,
         manager: accounts.manager,
         depositTokenMint: accounts.depositTokenMint,
-        priceUpdate: accounts.priceUpdate,
+        depositTokenPriceUpdate: getPriceUpdateAccount(depositTokenPriceFeedId),
       })
+      .remainingAccounts(remainingAccounts)
       .instruction();
 
     return instruction;

@@ -32,7 +32,6 @@ export interface DepositAccounts {
   user: PublicKey;
   manager: PublicKey;
   depositTokenMint: PublicKey;
-  priceUpdate: PublicKey;
 }
 
 // Withdraw
