@@ -128,16 +128,28 @@ impl Vault {
         vault_token_accounts: &'info [AccountInfo<'info>],
         whitelist: Box<Account<'info, TokenWhitelist>>,
         vault_key: Pubkey,
-        // price_update: Box<Account<'info, PriceUpdateV2>>,
     ) -> Result<u64> {
+        msg!("get_nav called");
         let vault_balances = parse_vault_balances(vault_token_accounts, whitelist, vault_key)?;
         let nav = vault_balances
             .iter()
             .map(|b| {
-                let price = transform_price_to_nav_decimals(get_token_price_from_pyth_feed(
+                msg!("Token balance: {}", b.token_balance);
+                msg!("Token decimals: {}", b.token_decimals);
+                let token_price = get_token_price_from_pyth_feed(
                     b.price_feed_id.clone(),
                     b.price_update.clone(),
-                )?)?;
+                )?;
+                // TODO: Throw error if confidence interval is above threshold
+                //       https://docs.pyth.network/price-feeds/best-practices#confidence-intervals
+                msg!(
+                    "Token price: {} {} {}",
+                    token_price.price,
+                    token_price.conf,
+                    token_price.exponent
+                );
+                let price = transform_price_to_nav_decimals(token_price)?;
+                msg!("Price in NAV decimals: {}", price);
                 compute_token_value_usd(b.token_balance, b.token_decimals, price)
             })
             .sum::<Result<u64>>()?;
