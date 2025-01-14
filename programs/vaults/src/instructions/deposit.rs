@@ -18,6 +18,7 @@ pub fn _deposit<'info>(
         ctx.accounts.whitelist.clone(),
         ctx.accounts.vault.key(),
     )?;
+    msg!("Total NAV: {}", total_nav);
 
     // Calculate the USD value of deposit tokens
     let deposit_value = calculate_deposit_token_value(
@@ -27,6 +28,7 @@ pub fn _deposit<'info>(
         amount,
         ctx.accounts.deposit_token_price_update.clone(),
     )?;
+    msg!("Deposit value: {}", deposit_value);
 
     // Calculate vault tokens to mint based on NAV
     let vault_tokens_to_mint = calculate_vault_tokens_to_mint(
@@ -34,35 +36,37 @@ pub fn _deposit<'info>(
         deposit_value,
         ctx.accounts.vault_token_mint.supply,
     )?;
+    msg!("Vault tokens to mint: {}", vault_tokens_to_mint);
 
-    // Transfer deposit tokens from depositor to vault
-    transfer_token(
-        ctx.accounts.user_deposit_token_account.clone(),
-        ctx.accounts.vault_deposit_token_account.clone(),
-        amount,
-        ctx.accounts.user.to_account_info(),
-        ctx.accounts.token_program.clone(),
-    )?;
+    // Commenting this out for testing
+    // // Transfer deposit tokens from depositor to vault
+    // transfer_token(
+    //     ctx.accounts.user_deposit_token_account.clone(),
+    //     ctx.accounts.vault_deposit_token_account.clone(),
+    //     amount,
+    //     ctx.accounts.user.to_account_info(),
+    //     ctx.accounts.token_program.clone(),
+    // )?;
 
-    // Mint vault tokens to depositor
-    let manager = ctx.accounts.manager.key();
-    let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
-    let signer_seeds = &[&vault_seeds[..]];
-    mint_vault_token(
-        ctx.accounts.vault.clone(),
-        ctx.accounts.vault_token_mint.clone(),
-        ctx.accounts.vault_token_account.clone(),
-        vault_tokens_to_mint,
-        signer_seeds,
-        ctx.accounts.token_program.clone(),
-    )?;
+    // // Mint vault tokens to depositor
+    // let manager = ctx.accounts.manager.key();
+    // let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
+    // let signer_seeds = &[&vault_seeds[..]];
+    // mint_vault_token(
+    //     ctx.accounts.vault.clone(),
+    //     ctx.accounts.vault_token_mint.clone(),
+    //     ctx.accounts.vault_token_account.clone(),
+    //     vault_tokens_to_mint,
+    //     signer_seeds,
+    //     ctx.accounts.token_program.clone(),
+    // )?;
 
-    emit!(DepositMade {
-        vault: ctx.accounts.vault.key(),
-        user: ctx.accounts.user.key(),
-        amount,
-        timestamp: ctx.accounts.clock.unix_timestamp,
-    });
+    // emit!(DepositMade {
+    //     vault: ctx.accounts.vault.key(),
+    //     user: ctx.accounts.user.key(),
+    //     amount,
+    //     timestamp: ctx.accounts.clock.unix_timestamp,
+    // });
 
     Ok(())
 }
