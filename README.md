@@ -42,22 +42,26 @@ The program is structured into several key components:
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/starke-labs/vaults.git
 cd vaults
 ```
 
 2. Install dependencies:
+
 ```bash
 yarn install
 ```
 
 3. Build the program:
+
 ```bash
 anchor build
 ```
 
 4. Set up deployment keys:
+
 ```bash
 mkdir deploy
 cp <path-to-deploy-authority-keypair> deploy/authority.json
@@ -67,11 +71,13 @@ cp <path-to-vaults-keypair> target/deploy/vaults-keypair.json
 ## Testing
 
 Run the test suite:
+
 ```bash
 anchor test
 ```
 
 The tests cover:
+
 - Whitelist management
 - Vault creation and configuration
 - Token deposits and withdrawals
@@ -99,6 +105,8 @@ Current limitations and upcoming features:
 - Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
 - Maximum number of tokens is currently set to 100
 - TODO: Add swap logic here from: https://github.com/starke-labs/jup-swap-integration
+- TODO: Use Box::into_raw() for accounts
+- TODO: Add types for whitelist and vault accounts in sdk
 
 ## Contributing
 

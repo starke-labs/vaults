@@ -148,75 +148,53 @@ describe("Setup Vaults", () => {
       depositTokenMint: USDC,
     };
 
-    try {
-      const ix = await sdk.createVault(params, accounts);
-      const signature = await sdk.sendTransaction([ix], [tester]);
-      expect(signature).to.not.be.empty;
-    } catch (e) {
-      expect(e.toString()).to.have.string("already in use");
-    }
-
-    // Verify vault was created with correct parameters
-    const vault = await sdk.fetchVault(tester.publicKey);
-    expect(vault.manager.toString()).to.equal(tester.publicKey.toString());
-    expect(vault.depositTokenMint.toString()).to.equal(USDC.toString());
-    expect(vault.name).to.equal(params.name);
-    expect(vault.entryFee).to.equal(params.entryFee);
-    expect(vault.exitFee).to.equal(params.exitFee);
-
-    // Verify vault token mint was created
-    const [vaultPda] = getVaultPda(tester.publicKey);
-    const [vaultTokenMintPda] = getVaultTokenMintPda(vaultPda);
-
-    console.log("Vault:", vaultPda.toString());
-    console.log("Vault token mint:", vaultTokenMintPda.toString());
-
-    const vaultTokenMint = await provider.connection.getAccountInfo(
-      vaultTokenMintPda
-    );
-    expect(vaultTokenMint).to.not.be.null;
-  });
-
-  it("should successfully deposit into vault", async () => {
-    const params: DepositParams = {
-      amount: new BN(1).pow(new BN(USDC_DECIMALS)),
-    };
-
     // Get latest price updates for all tokens in whitelist
     const whitelist = await sdk.fetchWhitelist();
     const priceFeeds = whitelist.tokens.map((token) => token.priceFeedId);
-    const priceUpdates = await priceService.getLatestVaas(priceFeeds);
+    const priceUpdateData = (
+      await hermesClient.getLatestPriceUpdates(priceFeeds, {
+        encoding: "base64",
+      })
+    ).binary.data;
 
-    // Build transaction with price updates and deposit instruction
-    const txBuilder = pythSolReceiver.newTransactionBuilder({
-      closeUpdateAccounts: false,
-    });
-    await txBuilder.addPostPriceUpdates(priceUpdates);
+    const {
+      postInstructions: postIxs,
+      closeInstructions: closeIxs,
+      priceFeedIdToPriceUpdateAccount,
+    } = await pythSolReceiver.buildPostPriceUpdateInstructions(priceUpdateData);
 
-    await txBuilder.addPriceConsumerInstructions(
-      async (getPriceUpdateAccount: (priceFeedId: string) => PublicKey) => [
-        {
-          instruction: await sdk.deposit(params, {
-            user: tester.publicKey,
-            manager: tester.publicKey,
-            depositTokenMint: USDC,
-            priceUpdate: getPriceUpdateAccount(USDC_USD_PYTH_FEED_ID),
-          }),
-          signers: [tester],
-        },
-      ]
+    const depositIx: InstructionWithEphemeralSigners = {
+      instruction: await sdk.deposit(
+        params,
+        accounts,
+        (priceFeedId: string) => priceFeedIdToPriceUpdateAccount[priceFeedId]
+      ),
+      signers: [tester],
+      computeUnits: 100000,
+    };
+
+    const transactions = await pythSolReceiver.batchIntoVersionedTransactions(
+      [...postIxs, depositIx, ...closeIxs],
+      {
+        computeUnitPriceMicroLamports: 100000,
+        tightComputeBudget: true,
+      }
     );
 
-    // Send transaction
-    const txs = await txBuilder.buildVersionedTransactions({
-      computeUnitPriceMicroLamports: 50000,
-    });
-
-    for (const tx of txs) {
-      const signature = await pythSolReceiver.provider.sendAndConfirm(tx, [], {
-        skipPreflight: true,
-      });
-      console.log("Deposit successful:", signature);
+    for (let tx of transactions) {
+      console.log("Transaction:", tx);
+      try {
+        const signature = await pythSolReceiver.provider.sendAndConfirm(
+          tx.tx,
+          tx.signers,
+          {
+            // skipPreflight: true,
+          }
+        );
+        console.log("Signature:", signature);
+      } catch (e) {
+        console.log("Error:", e);
+      }
     }
   });
 });

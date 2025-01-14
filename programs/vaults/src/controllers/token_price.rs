@@ -23,6 +23,6 @@ pub fn transform_price_to_nav_decimals(price: Price) -> Result<u64> {
     Ok(price
         .price
         .unsigned_abs()
-        .checked_mul(10u64.pow((NAV_DECIMALS - price.exponent as u8) as u32))
+        .checked_mul(10u64.pow((NAV_DECIMALS - (-price.exponent) as u8) as u32))
         .ok_or(VaultError::NumericOverflow)?)
 }
