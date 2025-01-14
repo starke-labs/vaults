@@ -107,6 +107,7 @@ Current limitations and upcoming features:
 - TODO: Add swap logic here from: https://github.com/starke-labs/jup-swap-integration
 - TODO: Use Box::into_raw() for accounts
 - TODO: Add types for whitelist and vault accounts in sdk
+- TODO: Add _in_nav_decimals to literals to avoid confusion
 
 ## Contributing
 
