@@ -129,7 +129,7 @@ impl Vault {
         whitelist: Box<Account<'info, TokenWhitelist>>,
         vault_key: Pubkey,
     ) -> Result<u64> {
-        msg!("get_nav called");
+        // msg!("get_nav called");
         let vault_balances = parse_vault_balances(vault_token_accounts, whitelist, vault_key)?;
         let nav = vault_balances
             .iter()
@@ -142,15 +142,15 @@ impl Vault {
                 )?;
                 // TODO: Throw error if confidence interval is above threshold
                 //       https://docs.pyth.network/price-feeds/best-practices#confidence-intervals
-                msg!(
-                    "Token price: {} {} {}",
-                    token_price.price,
-                    token_price.conf,
-                    token_price.exponent
-                );
-                let price = transform_price_to_nav_decimals(token_price)?;
-                msg!("Price in NAV decimals: {}", price);
-                compute_token_value_usd(b.token_balance, b.token_decimals, price)
+                // msg!(
+                //     "Token price: {} {} {}",
+                //     token_price.price,
+                //     token_price.conf,
+                //     token_price.exponent
+                // );
+                let price_in_nav_decimals = transform_price_to_nav_decimals(token_price)?;
+                // msg!("Price in NAV decimals: {}", price);
+                compute_token_value_usd(b.token_balance, b.token_decimals, price_in_nav_decimals)
             })
             .sum::<Result<u64>>()?;
 
