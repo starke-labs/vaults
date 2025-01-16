@@ -1,4 +1,5 @@
 import { AnchorProvider } from "@coral-xyz/anchor";
+import { Signer } from "@solana/web3.js";
 import { Keypair, Transaction } from "@solana/web3.js";
 
 /**
@@ -44,7 +45,7 @@ export const DEFAULT_RETRY_CONFIG: Required<TransactionRetryConfig> = {
 export async function sendAndConfirmWithRetry(
   provider: AnchorProvider,
   tx: Transaction,
-  signers: Keypair[],
+  signers: (Keypair | Signer)[],
   config: TransactionRetryConfig = {}
 ): Promise<string> {
   const finalConfig = { ...DEFAULT_RETRY_CONFIG, ...config };
