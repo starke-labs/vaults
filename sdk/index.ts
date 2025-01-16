@@ -1,4 +1,5 @@
 import { AnchorProvider, Idl, Program, Wallet } from "@coral-xyz/anchor";
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   ConfirmOptions,
   Connection,
@@ -221,7 +222,7 @@ export class VaultsSDK {
   // Transaction methods
   async sendTransaction(
     instructions: TransactionInstruction[],
-    signers: Keypair[] = [],
+    signers: (Keypair | Signer)[] = [],
     retryConfig?: TransactionRetryConfig
   ): Promise<string> {
     const transaction = new Transaction();
