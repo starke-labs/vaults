@@ -47,7 +47,7 @@ impl Vault {
         &mut self,
         manager: Pubkey,
         deposit_token_mint: Pubkey,
-        name: String,
+        name: &str,
         bump: u8,
         vault_token_mint: Pubkey,
         vault_token_mint_bump: u8,
@@ -61,7 +61,7 @@ impl Vault {
 
         self.manager = manager;
         self.deposit_token_mint = deposit_token_mint;
-        self.name = name;
+        self.name = name.to_string();
         self.bump = bump;
         self.mint = vault_token_mint;
         self.mint_bump = vault_token_mint_bump;
@@ -126,7 +126,7 @@ impl Vault {
     pub fn get_nav<'info>(
         &self,
         vault_token_accounts: &'info [AccountInfo<'info>],
-        whitelist: Box<Account<'info, TokenWhitelist>>,
+        whitelist: &Account<'info, TokenWhitelist>,
         vault_key: Pubkey,
     ) -> Result<u64> {
         // msg!("get_nav called");
@@ -134,12 +134,10 @@ impl Vault {
         let nav = vault_balances
             .iter()
             .map(|b| {
-                msg!("Token balance: {}", b.token_balance);
-                msg!("Token decimals: {}", b.token_decimals);
-                let token_price = get_token_price_from_pyth_feed(
-                    b.price_feed_id.clone(),
-                    b.price_update.clone(),
-                )?;
+                // msg!("Token balance: {}", b.token_balance);
+                // msg!("Token decimals: {}", b.token_decimals);
+                let token_price =
+                    get_token_price_from_pyth_feed(b.price_feed_id.as_str(), &b.price_update)?;
                 // TODO: Throw error if confidence interval is above threshold
                 //       https://docs.pyth.network/price-feeds/best-practices#confidence-intervals
                 // msg!(
@@ -148,7 +146,7 @@ impl Vault {
                 //     token_price.conf,
                 //     token_price.exponent
                 // );
-                let price_in_nav_decimals = transform_price_to_nav_decimals(token_price)?;
+                let price_in_nav_decimals = transform_price_to_nav_decimals(&token_price)?;
                 // msg!("Price in NAV decimals: {}", price);
                 compute_token_value_usd(b.token_balance, b.token_decimals, price_in_nav_decimals)
             })

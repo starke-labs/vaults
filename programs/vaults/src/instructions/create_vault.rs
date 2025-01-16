@@ -5,12 +5,12 @@ use crate::state::{TokenWhitelist, Vault, VaultCreated, WhitelistError};
 
 pub fn _create_vault(
     ctx: Context<CreateVault>,
-    name: String,
+    name: &str,
     entry_fee: u16,
     exit_fee: u16,
 ) -> Result<()> {
     ctx.accounts.vault.initialize(
-        *ctx.accounts.manager.key,
+        ctx.accounts.manager.key(),
         ctx.accounts.deposit_token_mint.key(),
         name,
         ctx.bumps.vault,
@@ -75,7 +75,7 @@ pub struct CreateVault<'info> {
 
     // Deposit token mint
     #[account(
-        constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
+        constraint = whitelist.is_whitelisted(deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
     )]
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 

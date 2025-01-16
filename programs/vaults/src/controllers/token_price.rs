@@ -5,8 +5,8 @@ use crate::constants::{NAV_DECIMALS, PYTH_PRICE_FEED_MAX_AGE_SECONDS};
 use crate::state::VaultError;
 
 pub fn get_token_price_from_pyth_feed<'info>(
-    price_feed_id: String,
-    price_update: Box<Account<'info, PriceUpdateV2>>,
+    price_feed_id: &str,
+    price_update: &Account<'info, PriceUpdateV2>,
 ) -> Result<Price> {
     let feed_id: [u8; 32] = get_feed_id_from_hex(&price_feed_id)?;
     let price = price_update.get_price_no_older_than(
@@ -18,7 +18,7 @@ pub fn get_token_price_from_pyth_feed<'info>(
     Ok(price)
 }
 
-pub fn transform_price_to_nav_decimals(price: Price) -> Result<u64> {
+pub fn transform_price_to_nav_decimals(price: &Price) -> Result<u64> {
     // msg!("transform_price_to_nav_decimals called");
     // msg!("Price: {}", price.price);
     // msg!("Token decimals: {}", price.exponent);
