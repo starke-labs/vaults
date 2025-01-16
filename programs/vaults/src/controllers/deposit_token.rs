@@ -8,10 +8,10 @@ use crate::state::TokenWhitelist;
 
 pub fn calculate_deposit_token_value<'info>(
     whitelist: &Account<'info, TokenWhitelist>,
-    deposit_token_mint: &Pubkey,
+    deposit_token_mint: Pubkey,
     deposit_token_decimals: u8,
     amount: u64,
-    price_update: Box<Account<'info, PriceUpdateV2>>,
+    price_update: &Account<'info, PriceUpdateV2>,
 ) -> Result<u64> {
     // msg!("calculate_deposit_token_value called");
     // msg!("Deposit token mint: {}", deposit_token_mint);
@@ -26,7 +26,7 @@ pub fn calculate_deposit_token_value<'info>(
     //     deposit_price.exponent
     // );
 
-    let deposit_price_in_nav_decimals = transform_price_to_nav_decimals(deposit_price)?;
+    let deposit_price_in_nav_decimals = transform_price_to_nav_decimals(&deposit_price)?;
     // msg!(
     //     "Deposit price in nav decimals: {}",
     //     deposit_price_in_nav_decimals

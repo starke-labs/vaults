@@ -4,12 +4,12 @@ use anchor_spl::token::{burn, mint_to, Burn, Mint, MintTo, Token, TokenAccount};
 use crate::state::{Vault, VaultError};
 
 pub fn mint_vault_token<'info>(
-    vault: Box<Account<'info, Vault>>,
-    mint: Box<Account<'info, Mint>>,
-    to: Box<Account<'info, TokenAccount>>,
+    vault: &Account<'info, Vault>,
+    mint: &Account<'info, Mint>,
+    to: &Account<'info, TokenAccount>,
     amount: u64,
     signer_seeds: &[&[&[u8]]],
-    token_program: Program<'info, Token>,
+    token_program: &Program<'info, Token>,
 ) -> Result<()> {
     let mint_accounts = MintTo {
         mint: mint.to_account_info(),
@@ -24,12 +24,12 @@ pub fn mint_vault_token<'info>(
 }
 
 pub fn burn_vault_token<'info>(
-    user: Signer<'info>,
-    mint: Box<Account<'info, Mint>>,
-    from: Box<Account<'info, TokenAccount>>,
+    user: &Signer<'info>,
+    mint: &Account<'info, Mint>,
+    from: &Account<'info, TokenAccount>,
     amount: u64,
     signer_seeds: &[&[&[u8]]],
-    token_program: Program<'info, Token>,
+    token_program: &Program<'info, Token>,
 ) -> Result<()> {
     let burn_accounts = Burn {
         mint: mint.to_account_info(),
@@ -48,6 +48,10 @@ pub fn calculate_vault_tokens_to_mint(
     deposit_value: u64,
     vault_token_supply: u64,
 ) -> Result<u64> {
+    // msg!("calculate_vault_tokens_to_mint called");
+    // msg!("Total NAV: {}", total_nav);
+    // msg!("Deposit value: {}", deposit_value);
+    // msg!("Vault token supply: {}", vault_token_supply);
     if total_nav == 0 {
         // Initial deposit - mint 1:1
         Ok(deposit_value)

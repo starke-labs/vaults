@@ -2,21 +2,18 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
-use crate::{
-    constants::NAV_DECIMALS,
-    state::{TokenWhitelist, VaultError},
-};
+use crate::state::{TokenWhitelist, VaultError};
 
 pub struct VaultTokenInfo<'info> {
     pub token_balance: u64,
     pub token_decimals: u8,
     pub price_feed_id: String,
-    pub price_update: Box<Account<'info, PriceUpdateV2>>,
+    pub price_update: Account<'info, PriceUpdateV2>,
 }
 
 pub fn parse_vault_balances<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
-    whitelist: Box<Account<'info, TokenWhitelist>>,
+    whitelist: &Account<'info, TokenWhitelist>,
     vault_key: Pubkey,
 ) -> Result<Vec<VaultTokenInfo<'info>>> {
     let mut vault_token_infos = Vec::new();
@@ -28,8 +25,7 @@ pub fn parse_vault_balances<'info>(
         // 3. Price update
         let mint = Account::<'info, Mint>::try_from(&chunk[0])?;
         let token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[1])?;
-        let price_update: Box<Account<'info, PriceUpdateV2>> =
-            Box::new(Account::try_from(&chunk[2])?);
+        let price_update: Account<'_, PriceUpdateV2> = Account::try_from(&chunk[2])?;
 
         require!(
             mint.key() == token_account.mint,
@@ -40,7 +36,7 @@ pub fn parse_vault_balances<'info>(
             VaultError::VaultAndTokenAccountMismatch
         );
 
-        let price_feed_id = whitelist.get_price_feed_id(&mint.key())?;
+        let price_feed_id = whitelist.get_price_feed_id(mint.key())?.to_string();
 
         vault_token_infos.push(VaultTokenInfo {
             token_balance: token_account.amount,
@@ -59,17 +55,16 @@ pub fn compute_token_value_usd(
     token_decimals: u8,
     price_in_nav_decimals: u64,
 ) -> Result<u64> {
-    msg!("compute_token_value_usd called");
-    msg!("Token balance: {}", token_balance);
-    msg!("Token decimals: {}", token_decimals);
-    msg!("Price in NAV decimals: {}", price_in_nav_decimals);
-
+    // msg!("compute_token_value_usd called");
+    // msg!("Token balance: {}", token_balance);
+    // msg!("Token decimals: {}", token_decimals);
+    // msg!("Price in NAV decimals: {}", price_in_nav_decimals);
     let value = token_balance
         .checked_mul(price_in_nav_decimals)
         .ok_or(VaultError::NumericOverflow)?
         .checked_div(10u64.pow(token_decimals as u32))
         .ok_or(VaultError::NumericOverflow)?;
-    msg!("Token USD value: {}", value);
+    // msg!("Token USD value: {}", value);
 
     Ok(value)
 }

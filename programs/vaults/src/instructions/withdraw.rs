@@ -19,18 +19,18 @@ pub fn _withdraw<'info>(
 
     // Burn vault tokens from depositor
     burn_vault_token(
-        ctx.accounts.user.clone(),
-        ctx.accounts.vault_token_mint.clone(),
-        ctx.accounts.user_vault_token_account.clone(),
+        &ctx.accounts.user,
+        &ctx.accounts.vault_token_mint,
+        &ctx.accounts.user_vault_token_account,
         amount,
         signer_seeds,
-        ctx.accounts.token_program.clone(),
+        &ctx.accounts.token_program,
     )?;
 
     // First, calculate the total NAV (Net Asset Value) of the vault
     let total_nav = ctx.accounts.vault.get_nav(
         ctx.remaining_accounts,
-        ctx.accounts.whitelist.clone(),
+        &ctx.accounts.whitelist,
         ctx.accounts.vault.key(),
     )?;
 
@@ -40,12 +40,12 @@ pub fn _withdraw<'info>(
 
     // Transfer deposit tokens from vault to depositor
     transfer_token_with_signer(
-        ctx.accounts.vault_deposit_token_account.clone(),
-        ctx.accounts.user_deposit_token_account.clone(),
+        &ctx.accounts.vault_deposit_token_account,
+        &ctx.accounts.user_deposit_token_account,
         tokens_to_withdraw,
-        ctx.accounts.vault.to_account_info(),
+        &ctx.accounts.vault.to_account_info(),
         signer_seeds,
-        ctx.accounts.token_program.clone(),
+        &ctx.accounts.token_program,
     )?;
 
     emit!(WithdrawMade {

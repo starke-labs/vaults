@@ -22,7 +22,7 @@ pub mod vaults {
         token: Pubkey,
         price_feed_id: String,
     ) -> Result<()> {
-        _add_token(ctx, token, price_feed_id)
+        _add_token(ctx, token, price_feed_id.as_str())
     }
 
     pub fn create_vault(
@@ -31,7 +31,7 @@ pub mod vaults {
         entry_fee: u16,
         exit_fee: u16,
     ) -> Result<()> {
-        _create_vault(ctx, name, entry_fee, exit_fee)
+        _create_vault(ctx, name.as_str(), entry_fee, exit_fee)
     }
 
     pub fn update_vault_fees(
