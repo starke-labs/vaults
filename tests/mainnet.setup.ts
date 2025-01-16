@@ -1,6 +1,9 @@
 import { AnchorProvider, BN, Idl, Wallet } from "@coral-xyz/anchor";
-import { PriceServiceConnection } from "@pythnetwork/price-service-client";
-import { PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver";
+import { HermesClient } from "@pythnetwork/hermes-client";
+import {
+  InstructionWithEphemeralSigners,
+  PythSolanaReceiver,
+} from "@pythnetwork/pyth-solana-receiver";
 import {
   createAssociatedTokenAccount,
   createMint,
@@ -17,6 +20,7 @@ import {
   AddTokenParams,
   CreateVaultAccounts,
   CreateVaultParams,
+  DepositAccounts,
   DepositParams,
 } from "@starke/sdk/types";
 
@@ -26,18 +30,17 @@ import {
   getTesterKeypair,
   requestAirdropIfNecessary,
 } from "./utils.new";
+import { DUMMY_PRICE_FEED_ID } from "./utils.new/constants";
 
 describe("Setup Vaults", () => {
   let USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-  const USDC_USD_PYTH_FEED_ID =
-    "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a";
   const USDC_DECIMALS = 6;
 
   let authority: Keypair;
   let tester: Keypair;
   let provider: AnchorProvider;
   let sdk: VaultsSDK;
-  let priceService: PriceServiceConnection;
+  let hermesClient: HermesClient;
   let pythSolReceiver: PythSolanaReceiver;
   let testerATA: PublicKey;
 
@@ -56,11 +59,7 @@ describe("Setup Vaults", () => {
     );
 
     // Initialize price service
-    priceService = new PriceServiceConnection("https://hermes.pyth.network", {
-      priceFeedRequestConfig: {
-        binary: true,
-      },
-    });
+    hermesClient = new HermesClient("https://hermes.pyth.network", {});
 
     // NOTE: works with rpc-websockets@7.5.1, use `yarn add rpc-websockets@7.5.1 --exact`
     pythSolReceiver = new PythSolanaReceiver({
@@ -68,29 +67,31 @@ describe("Setup Vaults", () => {
       wallet: new Wallet(tester),
     });
 
-    // Only required for Localnet, comment out for mainnet
-    await requestAirdropIfNecessary(provider.connection, tester.publicKey);
-    USDC = await createMint(
-      provider.connection,
-      tester,
-      authority.publicKey,
-      null,
-      USDC_DECIMALS
-    );
-    testerATA = await createAssociatedTokenAccount(
-      provider.connection,
-      tester,
-      USDC,
-      tester.publicKey
-    );
-    await mintTo(
-      provider.connection,
-      tester,
-      USDC,
-      testerATA,
-      authority,
-      1000 * 10 ** USDC_DECIMALS
-    );
+    // Only required for Localnet
+    if (provider.connection.rpcEndpoint.includes("localnet")) {
+      await requestAirdropIfNecessary(provider.connection, tester.publicKey);
+      USDC = await createMint(
+        provider.connection,
+        tester,
+        authority.publicKey,
+        null,
+        USDC_DECIMALS
+      );
+      testerATA = await createAssociatedTokenAccount(
+        provider.connection,
+        tester,
+        USDC,
+        tester.publicKey
+      );
+      await mintTo(
+        provider.connection,
+        tester,
+        USDC,
+        testerATA,
+        authority,
+        1000 * 10 ** USDC_DECIMALS
+      );
+    }
   });
 
   it("should successfully initialize token whitelist or verify it is already initialized", async () => {
@@ -115,7 +116,7 @@ describe("Setup Vaults", () => {
   it("should successfully add token to whitelist or verify it is already added", async () => {
     const params: AddTokenParams = {
       token: USDC,
-      priceFeedId: USDC_USD_PYTH_FEED_ID,
+      priceFeedId: DUMMY_PRICE_FEED_ID,
     };
 
     const accounts: AddTokenAccounts = {
@@ -133,7 +134,7 @@ describe("Setup Vaults", () => {
     // Verify token was added
     const whitelist = await sdk.fetchWhitelist();
     expect(whitelist.tokens[0].mint.toString()).to.equal(USDC.toString());
-    expect(whitelist.tokens[0].priceFeedId).to.equal(USDC_USD_PYTH_FEED_ID);
+    expect(whitelist.tokens[0].priceFeedId).to.equal(DUMMY_PRICE_FEED_ID);
   });
 
   it("should successfully create vault and vault token mint or verify it is already created", async () => {
@@ -144,6 +145,45 @@ describe("Setup Vaults", () => {
     };
 
     const accounts: CreateVaultAccounts = {
+      manager: tester.publicKey,
+      depositTokenMint: USDC,
+    };
+
+    try {
+      const ix = await sdk.createVault(params, accounts);
+      const signature = await sdk.sendTransaction([ix], [tester]);
+      expect(signature).to.not.be.empty;
+    } catch (e) {
+      expect(e.toString()).to.have.string("already in use");
+    }
+
+    // Verify vault was created with correct parameters
+    const vault = await sdk.fetchVault(tester.publicKey);
+    expect(vault.manager.toString()).to.equal(tester.publicKey.toString());
+    expect(vault.depositTokenMint.toString()).to.equal(USDC.toString());
+    expect(vault.name).to.equal(params.name);
+    expect(vault.entryFee).to.equal(params.entryFee);
+    expect(vault.exitFee).to.equal(params.exitFee);
+
+    // Verify vault token mint was created
+    const [vaultPda] = getVaultPda(tester.publicKey);
+    const [vaultTokenMintPda] = getVaultTokenMintPda(vaultPda);
+
+    console.log("Vault:", vaultPda.toString());
+    console.log("Vault token mint:", vaultTokenMintPda.toString());
+
+    const vaultTokenMint = await provider.connection.getAccountInfo(
+      vaultTokenMintPda
+    );
+    expect(vaultTokenMint).to.not.be.null;
+  });
+
+  it("should successfully deposit into vault", async () => {
+    const params: DepositParams = {
+      amount: new BN(1).mul(new BN(10).pow(new BN(USDC_DECIMALS))),
+    };
+    const accounts: DepositAccounts = {
+      user: tester.publicKey,
       manager: tester.publicKey,
       depositTokenMint: USDC,
     };
