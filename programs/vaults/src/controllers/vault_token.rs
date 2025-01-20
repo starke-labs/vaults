@@ -65,16 +65,3 @@ pub fn calculate_vault_tokens_to_mint(
             .map(|result| result as u64)
     }
 }
-
-pub fn calculate_tokens_to_withdraw(
-    total_nav: u64,
-    vault_tokens_to_burn: u64,
-    vault_token_supply: u64,
-) -> Result<u64> {
-    (vault_tokens_to_burn as u128)
-        .checked_mul(total_nav as u128)
-        .ok_or(error!(VaultError::NumericOverflow))?
-        .checked_div(vault_token_supply as u128)
-        .ok_or(error!(VaultError::NumericOverflow))
-        .map(|result| result as u64)
-}

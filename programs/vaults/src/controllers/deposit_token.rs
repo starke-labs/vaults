@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
-use crate::controllers::{
+use super::{
     compute_token_value_usd, get_token_price_from_pyth_feed, transform_price_to_nav_decimals,
 };
 use crate::state::TokenWhitelist;

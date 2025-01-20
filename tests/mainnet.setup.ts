@@ -180,7 +180,7 @@ describe("Setup Vaults", () => {
 
   it("should successfully deposit into vault", async () => {
     const params: DepositParams = {
-      amount: new BN(1).mul(new BN(10).pow(new BN(USDC_DECIMALS))),
+      amount: new BN(1).mul(new BN(10).pow(new BN(USDC_DECIMALS))), // 1 USDC
     };
     const accounts: DepositAccounts = {
       user: tester.publicKey,
