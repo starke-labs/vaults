@@ -107,6 +107,8 @@ Current limitations and upcoming features:
 - TODO: Add swap logic here from: https://github.com/starke-labs/jup-swap-integration
 - TODO: Add types for whitelist and vault accounts in sdk
 - TODO: Add starke admin as signer for deposit and withdraw instructions, so that the remaining accounts can be verified
+- TODO: Fix token name https://solscan.io/token/9Gbw6ZkZY563o9RPa8fzFni3dthfmn4Ru4CPhtKkkcFZ
+- TODO: Use &Pubkey instead of Pubkey in function parameters
 
 ## Contributing
 
