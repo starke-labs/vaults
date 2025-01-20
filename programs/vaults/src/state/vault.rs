@@ -125,12 +125,12 @@ impl Vault {
 
     pub fn get_nav<'info>(
         &self,
-        vault_token_accounts: &'info [AccountInfo<'info>],
+        remaining_accounts: &'info [AccountInfo<'info>],
         whitelist: &Account<'info, TokenWhitelist>,
         vault_key: Pubkey,
     ) -> Result<u64> {
         // msg!("get_nav called");
-        let vault_balances = parse_vault_balances(vault_token_accounts, whitelist, vault_key)?;
+        let vault_balances = parse_vault_balances(remaining_accounts, whitelist, vault_key)?;
         let nav = vault_balances
             .iter()
             .map(|b| {

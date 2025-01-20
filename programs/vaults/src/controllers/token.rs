@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 
-// Wrapper function for the transfer token instruction
+/// Function for the transfer token instruction
 pub fn transfer_token<'info>(
     from: &Account<'info, TokenAccount>,
     to: &Account<'info, TokenAccount>,
@@ -12,7 +12,7 @@ pub fn transfer_token<'info>(
     _transfer_token(from, to, amount, authority, token_program, None)
 }
 
-// Wrapper function for the transfer token instruction with signer seeds
+/// Function for the transfer token instruction with signer seeds
 pub fn transfer_token_with_signer<'info>(
     from: &Account<'info, TokenAccount>,
     to: &Account<'info, TokenAccount>,
@@ -31,7 +31,7 @@ pub fn transfer_token_with_signer<'info>(
     )
 }
 
-// Actual implementation of the transfer token instruction
+/// Actual implementation of the transfer token instruction
 fn _transfer_token<'info>(
     from: &Account<'info, TokenAccount>,
     to: &Account<'info, TokenAccount>,
