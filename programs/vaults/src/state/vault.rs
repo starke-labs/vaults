@@ -176,4 +176,6 @@ pub enum VaultError {
     MintAndTokenAccountMismatch,
     #[msg("Vault and token account mismatch")]
     VaultAndTokenAccountMismatch,
+    #[msg("User and token account mismatch")]
+    UserAndTokenAccountMismatch,
 }
