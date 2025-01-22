@@ -1,5 +1,9 @@
 import { AnchorProvider, Idl, Program, Wallet } from "@coral-xyz/anchor";
-import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import {
   ConfirmOptions,
   Connection,
@@ -25,6 +29,12 @@ import {
   WithdrawParams,
 } from "./types";
 import { TransactionRetryConfig, sendAndConfirmWithRetry } from "./utils";
+
+// TODO: Move this to somewhere else
+interface Token {
+  mint: PublicKey;
+  priceFeedId: string;
+}
 
 export class VaultsSDK {
   private program: Program;
@@ -89,12 +99,6 @@ export class VaultsSDK {
     accounts: DepositAccounts,
     getPriceUpdateAccount: (priceFeedId: string) => PublicKey
   ): Promise<TransactionInstruction> {
-    // TODO: Move this to somewhere else
-    interface Token {
-      mint: PublicKey;
-      priceFeedId: string;
-    }
-
     const tokenAccounts =
       await this.provider.connection.getParsedTokenAccountsByOwner(
         getVaultPda(accounts.manager)[0],
@@ -102,16 +106,17 @@ export class VaultsSDK {
           programId: TOKEN_PROGRAM_ID,
         }
       );
-    const token2022Accounts =
-      await this.provider.connection.getParsedTokenAccountsByOwner(
-        getVaultPda(accounts.manager)[0],
-        {
-          programId: TOKEN_2022_PROGRAM_ID,
-        }
-      );
+    // TODO: Enable 2022 tokens
+    // const token2022Accounts =
+    //   await this.provider.connection.getParsedTokenAccountsByOwner(
+    //     getVaultPda(accounts.manager)[0],
+    //     {
+    //       programId: TOKEN_2022_PROGRAM_ID,
+    //     }
+    //   );
     const allTokenAccounts = [
       ...tokenAccounts.value,
-      ...token2022Accounts.value,
+      // ...token2022Accounts.value,
     ];
     const whitelistedTokens = (await this.fetchWhitelist()).tokens as Token[];
     const remainingAccounts = allTokenAccounts.reduce((prev, account) => {
@@ -170,14 +175,75 @@ export class VaultsSDK {
     params: WithdrawParams,
     accounts: WithdrawAccounts
   ): Promise<TransactionInstruction> {
+    const tokenAccounts =
+      await this.provider.connection.getParsedTokenAccountsByOwner(
+        getVaultPda(accounts.manager)[0],
+        {
+          programId: TOKEN_PROGRAM_ID,
+        }
+      );
+    // TODO: Enable 2022 tokens
+    // const token2022Accounts =
+    //   await this.provider.connection.getParsedTokenAccountsByOwner(
+    //     getVaultPda(accounts.manager)[0],
+    //     {
+    //       programId: TOKEN_2022_PROGRAM_ID,
+    //     }
+    //   );
+    const allTokenAccounts = [
+      ...tokenAccounts.value,
+      // ...token2022Accounts.value,
+    ];
+
+    const whitelistedTokens = (await this.fetchWhitelist()).tokens as Token[];
+    const remainingAccounts = allTokenAccounts.reduce(
+      (prev, vaultTokenAccount) => {
+        const tokenMint = new PublicKey(
+          vaultTokenAccount.account.data.parsed.info.mint
+        );
+        const userTokenAccount = getAssociatedTokenAddress(
+          tokenMint,
+          accounts.user
+        );
+        const token = whitelistedTokens.find(
+          (token) => token.mint.toBase58() === tokenMint.toBase58()
+        );
+        if (!token) {
+          return prev;
+        }
+        return [
+          ...prev,
+          // Token mint
+          {
+            pubkey: tokenMint,
+            isWritable: false,
+            isSigner: false,
+          },
+          // Vault token account
+          {
+            pubkey: vaultTokenAccount.pubkey,
+            isWritable: false,
+            isSigner: false,
+          },
+          // User token account
+          {
+            pubkey: userTokenAccount,
+            isWritable: false,
+            isSigner: false,
+          },
+        ];
+      },
+      []
+    );
+
     const instruction = await this.program.methods
       .withdraw(params.amount)
       .accounts({
         user: accounts.user,
         manager: accounts.manager,
         depositTokenMint: accounts.depositTokenMint,
-        priceUpdate: accounts.priceUpdate,
       })
+      .remainingAccounts(remainingAccounts)
       .instruction();
 
     return instruction;
