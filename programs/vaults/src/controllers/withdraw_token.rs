@@ -19,15 +19,31 @@ pub fn withdraw_all_tokens<'info>(
     associated_token_program: &Program<'info, AssociatedToken>,
     system_program: &Program<'info, System>,
 ) -> Result<()> {
+    msg!("Starting withdrawal of all tokens");
+    msg!("Vault token amount to withdraw: {}", vault_token_amount);
+
     // Calculate withdrawal ratio
     let total_supply = vault_token_mint.supply;
+    msg!("Total vault token supply: {}", total_supply);
     let withdrawal_ratio = calculate_withdrawal_ratio(vault_token_amount, total_supply)?;
+    msg!("Withdrawal ratio calculated: {}", withdrawal_ratio);
 
     // Parse withdrawal accounts
+    msg!("Parsing withdrawal accounts");
     let withdrawal_accounts =
         parse_withdrawal_accounts(remaining_accounts, user, whitelist, vault.key())?;
+    msg!(
+        "Found {} token accounts to process",
+        withdrawal_accounts.len()
+    );
 
-    for withdrawal_account in withdrawal_accounts {
+    for (i, withdrawal_account) in withdrawal_accounts.iter().enumerate() {
+        msg!(
+            "Processing withdrawal {} of {} for mint: {}",
+            i + 1,
+            withdrawal_accounts.len(),
+            withdrawal_account.mint.key()
+        );
         withdraw_token(
             &withdrawal_account.mint,
             &withdrawal_account.vault_token_account,
@@ -40,20 +56,29 @@ pub fn withdraw_all_tokens<'info>(
             associated_token_program,
             system_program,
         )?;
+        msg!("Successfully processed withdrawal {}", i + 1);
     }
 
+    msg!("All token withdrawals completed successfully");
     Ok(())
 }
 
 /// Calculate the withdrawal ratio based on the amount of vault tokens being withdrawn
 /// and the total supply of vault tokens in NAV decimals
 fn calculate_withdrawal_ratio(amount: u64, total_supply: u64) -> Result<u64> {
-    amount
+    msg!(
+        "Calculating withdrawal ratio - Amount: {}, Total Supply: {}",
+        amount,
+        total_supply
+    );
+    let ratio = amount
         .checked_mul(PRECISION)
         .ok_or(error!(VaultError::NumericOverflow))?
         .checked_div(total_supply)
         .ok_or(error!(VaultError::NumericOverflow))
-        .map(|result| result as u64)
+        .map(|result| result as u64)?;
+    msg!("Calculated withdrawal ratio: {}", ratio);
+    Ok(ratio)
 }
 
 struct WithdrawalAccounts<'info> {
@@ -130,8 +155,12 @@ fn withdraw_token<'info>(
     // TODO: Throw error if to account (user token account) key doesn't match
     //       the one associated with the user and the mint
     // require!(...)
+    msg!("Processing withdrawal for mint: {}", mint.key());
+    msg!("From account: {}", from.key());
+    msg!("To account: {}", to.key());
 
     // Create a token account for the recipient if it doesn't exist
+    msg!("Ensuring user token account exists");
     create_associated_token_account(
         user,
         mint,
@@ -140,12 +169,16 @@ fn withdraw_token<'info>(
         system_program,
         associated_token_program,
     )?;
+    msg!("User token account verified/created");
 
     // Calculate the amount of tokens to withdraw based on the withdrawal ratio
     let token_balance = from.amount;
+    msg!("Vault token account balance: {}", token_balance);
     let amount = calculate_token_withdrawal_amount(token_balance, withdrawal_ratio)?;
+    msg!("Amount to withdraw: {}", amount);
 
     // Transfer tokens from vault to withdrawer
+    msg!("Transferring tokens from vault to user");
     transfer_token_with_signer(
         from,
         to,
@@ -154,6 +187,7 @@ fn withdraw_token<'info>(
         signer_seeds,
         token_program,
     )?;
+    msg!("Token transfer completed successfully");
 
     Ok(())
 }
@@ -161,9 +195,16 @@ fn withdraw_token<'info>(
 /// Calculate the amount of tokens to withdraw for a specific
 /// token balance and withdrawal ratio in NAV decimals
 fn calculate_token_withdrawal_amount(token_balance: u64, withdrawal_ratio: u64) -> Result<u64> {
-    token_balance
+    msg!(
+        "Calculating token withdrawal amount - Balance: {}, Ratio: {}",
+        token_balance,
+        withdrawal_ratio
+    );
+    let amount = token_balance
         .checked_mul(withdrawal_ratio)
         .ok_or(error!(VaultError::NumericOverflow))?
         .checked_div(PRECISION)
-        .ok_or(error!(VaultError::NumericOverflow))
+        .ok_or(error!(VaultError::NumericOverflow))?;
+    msg!("Calculated withdrawal amount: {}", amount);
+    Ok(amount)
 }

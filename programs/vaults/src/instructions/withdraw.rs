@@ -9,11 +9,15 @@ pub fn _withdraw<'info>(
     ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
     amount: u64,
 ) -> Result<()> {
+    msg!("Withdraw instruction called with amount: {}", amount);
+
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
     let signer_seeds = &[&vault_seeds[..]];
+    msg!("Vault seeds generated");
 
     // Burn vault tokens from depositor
+    msg!("Burning vault tokens: {}", amount);
     burn_vault_token(
         &ctx.accounts.user,
         &ctx.accounts.vault_token_mint,
@@ -22,8 +26,10 @@ pub fn _withdraw<'info>(
         signer_seeds,
         &ctx.accounts.token_program,
     )?;
+    msg!("Vault tokens burned successfully");
 
     // Process withdrawals for all tokens in the vault
+    msg!("Processing withdrawals for all vault tokens");
     withdraw_all_tokens(
         &ctx.remaining_accounts,
         &ctx.accounts.user,
@@ -36,6 +42,7 @@ pub fn _withdraw<'info>(
         &ctx.accounts.associated_token_program,
         &ctx.accounts.system_program,
     )?;
+    msg!("All token withdrawals processed successfully");
 
     emit!(WithdrawMade {
         vault: ctx.accounts.vault.key(),
@@ -43,6 +50,7 @@ pub fn _withdraw<'info>(
         amount,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
+    msg!("Withdraw event emitted");
 
     Ok(())
 }
