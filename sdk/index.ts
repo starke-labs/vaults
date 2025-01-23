@@ -241,7 +241,6 @@ export class VaultsSDK {
       .accounts({
         user: accounts.user,
         manager: accounts.manager,
-        depositTokenMint: accounts.depositTokenMint,
       })
       .remainingAccounts(remainingAccounts)
       .instruction();
