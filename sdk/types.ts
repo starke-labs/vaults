@@ -42,7 +42,6 @@ export interface WithdrawParams {
 export interface WithdrawAccounts {
   user: PublicKey;
   manager: PublicKey;
-  depositTokenMint: PublicKey;
 }
 
 // Update Fees
