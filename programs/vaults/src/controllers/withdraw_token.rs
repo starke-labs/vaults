@@ -71,12 +71,21 @@ fn calculate_withdrawal_ratio(amount: u64, total_supply: u64) -> Result<u64> {
         amount,
         total_supply
     );
+
+    // Convert to u128 for intermediate calculations to prevent overflow
+    let amount = amount as u128;
+    let total_supply = total_supply as u128;
+    let precision = PRECISION as u128;
+
+    // Calculate (amount * PRECISION) / total_supply using u128
     let ratio = amount
-        .checked_mul(PRECISION)
+        .checked_mul(precision)
         .ok_or(error!(VaultError::NumericOverflow))?
         .checked_div(total_supply)
-        .ok_or(error!(VaultError::NumericOverflow))
-        .map(|result| result as u64)?;
+        .ok_or(error!(VaultError::NumericOverflow))?;
+
+    // Convert back to u64 after calculations
+    let ratio = ratio as u64;
     msg!("Calculated withdrawal ratio: {}", ratio);
     Ok(ratio)
 }
