@@ -104,11 +104,11 @@ Current limitations and upcoming features:
 - Currently, each manager can only create one vault
 - Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
 - Maximum number of tokens is currently set to 100
-- TODO: Add swap logic here from: https://github.com/starke-labs/jup-swap-integration
 - TODO: Add types for whitelist and vault accounts in sdk
 - TODO: Add starke admin as signer for deposit and withdraw instructions, so that the remaining accounts can be verified
 - TODO: Fix token name https://solscan.io/token/9Gbw6ZkZY563o9RPa8fzFni3dthfmn4Ru4CPhtKkkcFZ
 - TODO: Use &Pubkey instead of Pubkey in function parameters
+- TODO: Support for Token 2022
 
 ## Contributing
 
