@@ -1182,6 +1182,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "jupiter"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "keccak"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2573,6 +2580,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "jupiter",
  "pyth-solana-receiver-sdk",
  "solana-security-txt",
 ]

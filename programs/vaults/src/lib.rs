@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 pub mod constants;
 pub mod controllers;
 mod instructions;
+pub mod jupiter;
 pub mod state;
 
 use instructions::*;
@@ -56,8 +57,8 @@ pub mod vaults {
         _withdraw(ctx, amount)
     }
 
-    pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, amount: u64) -> Result<()> {
-        _swap_on_jupiter(ctx, amount)
+    pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
+        _swap_on_jupiter(ctx, data)
     }
 
     pub fn test_remaining_accounts<'info>(
