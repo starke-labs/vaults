@@ -239,7 +239,7 @@ export class VaultsSDK {
       // User token account
       remainingAccounts.push({
         pubkey: userTokenAccount,
-        isWritable: false,
+        isWritable: true,
         isSigner: false,
       });
     }
