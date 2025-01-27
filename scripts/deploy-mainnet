@@ -7,4 +7,4 @@ if [ -z "$MAINNET_RPC" ]; then
     exit 1
 fi
 
-anchor deploy -v --provider.cluster $MAINNET_RPC
+anchor deploy -p vaults -v --provider.cluster $MAINNET_RPC
