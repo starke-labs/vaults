@@ -60,6 +60,8 @@ pub struct CreateVault<'info> {
         payer = manager,
         seeds = [Vault::VAULT_TOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
+        // TODO: Update this to NAV_DECIMALS before creating new vault
+        // TODO: Add metadata
         mint::decimals = deposit_token_mint.decimals,
         mint::authority = vault,
         mint::freeze_authority = vault,
