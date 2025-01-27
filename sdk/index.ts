@@ -36,6 +36,12 @@ interface Token {
   priceFeedId: string;
 }
 
+interface AccountMeta {
+  pubkey: PublicKey;
+  isWritable: boolean;
+  isSigner: boolean;
+}
+
 export class VaultsSDK {
   private program: Program;
   private provider: AnchorProvider;
@@ -196,45 +202,47 @@ export class VaultsSDK {
     ];
 
     const whitelistedTokens = (await this.fetchWhitelist()).tokens as Token[];
-    const remainingAccounts = allTokenAccounts.reduce(
-      (prev, vaultTokenAccount) => {
-        const tokenMint = new PublicKey(
-          vaultTokenAccount.account.data.parsed.info.mint
-        );
-        const userTokenAccount = getAssociatedTokenAddress(
-          tokenMint,
-          accounts.user
-        );
-        const token = whitelistedTokens.find(
-          (token) => token.mint.toBase58() === tokenMint.toBase58()
-        );
-        if (!token) {
-          return prev;
-        }
-        return [
-          ...prev,
-          // Token mint
-          {
-            pubkey: tokenMint,
-            isWritable: false,
-            isSigner: false,
-          },
-          // Vault token account
-          {
-            pubkey: vaultTokenAccount.pubkey,
-            isWritable: false,
-            isSigner: false,
-          },
-          // User token account
-          {
-            pubkey: userTokenAccount,
-            isWritable: false,
-            isSigner: false,
-          },
-        ];
-      },
-      []
-    );
+
+    const remainingAccounts: AccountMeta[] = [];
+
+    for (const vaultTokenAccount of allTokenAccounts) {
+      const tokenMint = new PublicKey(
+        vaultTokenAccount.account.data.parsed.info.mint
+      );
+
+      const token = whitelistedTokens.find(
+        (token) => token.mint.toBase58() === tokenMint.toBase58()
+      );
+      if (!token) {
+        continue;
+      }
+
+      const userTokenAccount = await getAssociatedTokenAddress(
+        tokenMint,
+        accounts.user
+      );
+
+      // Token mint
+      remainingAccounts.push({
+        pubkey: tokenMint,
+        isWritable: false,
+        isSigner: false,
+      });
+
+      // Vault token account
+      remainingAccounts.push({
+        pubkey: vaultTokenAccount.pubkey,
+        isWritable: true,
+        isSigner: false,
+      });
+
+      // User token account
+      remainingAccounts.push({
+        pubkey: userTokenAccount,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
 
     const instruction = await this.program.methods
       .withdraw(params.amount)
