@@ -15,7 +15,7 @@ import {
 } from "../utils.new";
 import {
   DEFAULT_MINT_DECIMALS,
-  DUMMY_PRICE_FEED_ID,
+  USDC_PRICE_FEED_ID,
 } from "../utils.new/constants";
 
 describe("Vault Tests", () => {
@@ -55,7 +55,7 @@ describe("Vault Tests", () => {
     // This test must be run after the whitelist test so that the whitelist is initialized
     // Add deposit token to whitelist
     const addTokenIx = await sdk.addToken(
-      { token: depositTokenMint, priceFeedId: DUMMY_PRICE_FEED_ID },
+      { token: depositTokenMint, priceFeedId: USDC_PRICE_FEED_ID },
       { authority: authority.publicKey }
     );
     await sdk.sendTransaction([addTokenIx], [authority]);

@@ -14,7 +14,7 @@ import {
 } from "../utils.new";
 import {
   DEFAULT_MINT_DECIMALS,
-  DUMMY_PRICE_FEED_ID,
+  USDC_PRICE_FEED_ID,
 } from "../utils.new/constants";
 
 describe("Whitelist Tests", () => {
@@ -90,7 +90,7 @@ describe("Whitelist Tests", () => {
   it("should not add token to whitelist without proper authority", async () => {
     const params: AddTokenParams = {
       token: tokenMint,
-      priceFeedId: DUMMY_PRICE_FEED_ID,
+      priceFeedId: USDC_PRICE_FEED_ID,
     };
 
     // Test with no signer
@@ -139,7 +139,7 @@ describe("Whitelist Tests", () => {
   it("should successfully add token to whitelist", async () => {
     const params: AddTokenParams = {
       token: tokenMint,
-      priceFeedId: DUMMY_PRICE_FEED_ID,
+      priceFeedId: USDC_PRICE_FEED_ID,
     };
 
     const accounts: AddTokenAccounts = {
@@ -154,13 +154,13 @@ describe("Whitelist Tests", () => {
     const whitelist = await sdk.fetchWhitelist();
     expect(whitelist.tokens).to.have.length(1);
     expect(whitelist.tokens[0].mint.toString()).to.equal(tokenMint.toString());
-    expect(whitelist.tokens[0].priceFeedId).to.equal(DUMMY_PRICE_FEED_ID);
+    expect(whitelist.tokens[0].priceFeedId).to.equal(USDC_PRICE_FEED_ID);
   });
 
   it("should not add same token twice", async () => {
     const params: AddTokenParams = {
       token: tokenMint,
-      priceFeedId: DUMMY_PRICE_FEED_ID,
+      priceFeedId: USDC_PRICE_FEED_ID,
     };
 
     const accounts: AddTokenAccounts = {
