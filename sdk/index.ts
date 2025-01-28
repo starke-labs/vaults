@@ -1,10 +1,12 @@
 import { AnchorProvider, Idl, Program, Wallet } from "@coral-xyz/anchor";
+import { DefaultApi, Instruction, createJupiterApiClient } from "@jup-ag/api";
 import {
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import {
+  AddressLookupTableAccount,
   ConfirmOptions,
   Connection,
   Keypair,
@@ -12,6 +14,8 @@ import {
   Signer,
   Transaction,
   TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
 
 import { EventHandler } from "./events";
@@ -23,12 +27,18 @@ import {
   CreateVaultParams,
   DepositAccounts,
   DepositParams,
+  SwapOnJupiterAccounts,
+  SwapOnJupiterParams,
   UpdateFeesAccounts,
   UpdateFeesParams,
   WithdrawAccounts,
   WithdrawParams,
 } from "./types";
-import { TransactionRetryConfig, sendAndConfirmWithRetry } from "./utils";
+import {
+  DEFAULT_RETRY_CONFIG,
+  TransactionRetryConfig,
+  sendAndConfirmWithRetry,
+} from "./utils";
 
 // TODO: Move this to somewhere else
 interface Token {
@@ -47,6 +57,9 @@ export class VaultsSDK {
   private provider: AnchorProvider;
   public events: EventHandler;
 
+  // Jup API client
+  private jup: DefaultApi;
+
   constructor(
     connection: Connection,
     keypair: Keypair,
@@ -60,6 +73,9 @@ export class VaultsSDK {
     );
     this.program = new Program(idl, this.provider);
     this.events = new EventHandler(connection, programId);
+
+    // Jup API client
+    this.jup = createJupiterApiClient();
   }
 
   // Instruction methods
@@ -270,13 +286,89 @@ export class VaultsSDK {
     return instruction;
   }
 
-  async swapOnJupiter(params: any): Promise<TransactionInstruction> {
-    // Implementation depends on Jupiter API integration
+  async swapOnJupiter(
+    params: SwapOnJupiterParams,
+    accounts: SwapOnJupiterAccounts,
+    signers: Signer[]
+  ): Promise<string> {
+    const quoteResponse = await this.jup.quoteGet({
+      inputMint: accounts.inputMint.toBase58(),
+      outputMint: accounts.outputMint.toBase58(),
+      amount: params.amount.toNumber(),
+    });
+
+    const vault = getVaultPda(accounts.manager)[0];
+
+    const swapIxsResponse = await this.jup.swapInstructionsPost({
+      swapRequest: {
+        userPublicKey: vault.toBase58(),
+        quoteResponse,
+      },
+    });
+
+    function constructIxPayloadToTxIx(ixPayload: Instruction) {
+      return new TransactionInstruction({
+        programId: new PublicKey(ixPayload.programId),
+        keys: ixPayload.accounts.map((account) => ({
+          pubkey: new PublicKey(account.pubkey),
+          isSigner: false,
+          isWritable: account.isWritable,
+        })),
+        data: Buffer.from(ixPayload.data, "base64"),
+      });
+    }
+
+    const swapIx = constructIxPayloadToTxIx(swapIxsResponse.swapInstruction);
+
     const instruction = await this.program.methods
-      .swapOnJupiter(params)
+      .swapOnJupiter(swapIx.data)
+      .accounts({
+        manager: accounts.manager,
+        inputTokenMint: accounts.inputMint,
+        outputTokenMint: accounts.outputMint,
+      })
+      .remainingAccounts(swapIx.keys)
       .instruction();
 
-    return instruction;
+    async function getAddressLookupTables(
+      connection: Connection,
+      addressLookupTableAddresses: string[]
+    ): Promise<AddressLookupTableAccount[]> {
+      const keys = addressLookupTableAddresses.map(
+        (address) => new PublicKey(address)
+      );
+      const addressLookupTableAccountInfos =
+        await connection.getMultipleAccountsInfo(keys);
+
+      return addressLookupTableAccountInfos.map((info, index) => {
+        const key = keys[index];
+        if (info) {
+          return new AddressLookupTableAccount({
+            key,
+            state: AddressLookupTableAccount.deserialize(info.data),
+          });
+        }
+      });
+    }
+
+    let recentBlockhash = (await this.provider.connection.getLatestBlockhash())
+      .blockhash;
+    const messageV0 = new TransactionMessage({
+      payerKey: accounts.manager,
+      recentBlockhash,
+      instructions: [instruction],
+    }).compileToV0Message(
+      await getAddressLookupTables(
+        this.provider.connection,
+        swapIxsResponse.addressLookupTableAddresses
+      )
+    );
+    const tx = new VersionedTransaction(messageV0);
+    tx.sign(signers);
+    return await this.provider.sendAndConfirm(tx, signers, {
+      ...DEFAULT_RETRY_CONFIG,
+      maxRetries: 3, // Internal retries for network issues
+    });
   }
 
   // Fetch state methods

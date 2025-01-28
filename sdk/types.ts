@@ -44,6 +44,17 @@ export interface WithdrawAccounts {
   manager: PublicKey;
 }
 
+// Swap on Jupiter
+export interface SwapOnJupiterParams {
+  amount: BN;
+}
+
+export interface SwapOnJupiterAccounts {
+  manager: PublicKey;
+  inputMint: PublicKey;
+  outputMint: PublicKey;
+}
+
 // Update Fees
 export interface UpdateFeesParams {
   newEntryFee: number;
