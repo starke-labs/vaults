@@ -7,6 +7,7 @@ import {
 } from "@solana/spl-token";
 import {
   AddressLookupTableAccount,
+  ComputeBudgetProgram,
   ConfirmOptions,
   Connection,
   Keypair,
@@ -351,12 +352,21 @@ export class VaultsSDK {
       });
     }
 
+    const modifyComputeUnitsIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
+
+    const addPriorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+      // Does not work with 50k micro lamports, works with 100k
+      microLamports: 100_000,
+    });
+
     let recentBlockhash = (await this.provider.connection.getLatestBlockhash())
       .blockhash;
     const messageV0 = new TransactionMessage({
       payerKey: accounts.manager,
       recentBlockhash,
-      instructions: [instruction],
+      instructions: [modifyComputeUnitsIx, addPriorityFeeIx, instruction],
     }).compileToV0Message(
       await getAddressLookupTables(
         this.provider.connection,

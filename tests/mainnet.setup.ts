@@ -316,6 +316,7 @@ describe("Setup Vaults", () => {
       expect(signature).to.not.be.empty;
     } catch (e) {
       console.log("Error:", e);
+      throw e;
     }
   });
 });
