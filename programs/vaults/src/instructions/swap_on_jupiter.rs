@@ -16,7 +16,7 @@ pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()
         .iter()
         .map(|acc| AccountMeta {
             pubkey: *acc.key,
-            is_signer: acc.is_signer,
+            is_signer: acc.key == &ctx.accounts.vault.key() || acc.is_signer,
             is_writable: acc.is_writable,
         })
         .collect();
@@ -24,7 +24,19 @@ pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()
     let accounts_infos: Vec<AccountInfo> = ctx
         .remaining_accounts
         .iter()
-        .map(|acc| AccountInfo { ..acc.clone() })
+        .map(|acc| {
+            let is_signer = acc.key == &ctx.accounts.vault.key() || acc.is_signer;
+            AccountInfo {
+                key: acc.key,
+                is_signer,
+                is_writable: acc.is_writable,
+                lamports: acc.lamports.clone(),
+                data: acc.data.clone(),
+                owner: acc.owner,
+                rent_epoch: acc.rent_epoch,
+                executable: acc.executable,
+            }
+        })
         .collect();
 
     let manager = ctx.accounts.manager.key();
