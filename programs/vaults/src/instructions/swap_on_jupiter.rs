@@ -2,9 +2,13 @@ use anchor_lang::{
     prelude::*,
     solana_program::{instruction::Instruction, program::invoke_signed},
 };
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
 
 use crate::jupiter::Jupiter;
-use crate::state::Vault;
+use crate::state::{TokenWhitelist, Vault, WhitelistError};
 
 pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
     let accounts: Vec<AccountMeta> = ctx
@@ -43,8 +47,8 @@ pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()
 #[derive(Accounts)]
 pub struct SwapOnJupiter<'info> {
     // Manager
-    /// CHECK: We can skip checking the manager
-    pub manager: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub manager: Signer<'info>,
 
     // Vault
     #[account(
@@ -53,5 +57,44 @@ pub struct SwapOnJupiter<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
+    // Whitelist
+    #[account(
+        seeds = [TokenWhitelist::SEED],
+        bump = whitelist.bump,
+    )]
+    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+
+    // Token input mint
+    #[account(
+        constraint = whitelist.is_whitelisted(input_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
+    )]
+    pub input_token_mint: Box<Account<'info, Mint>>,
+
+    // Token output mint
+    #[account(
+        constraint = whitelist.is_whitelisted(output_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
+    )]
+    pub output_token_mint: Box<Account<'info, Mint>>,
+
+    // Token input account
+    #[account(
+        mut,
+        associated_token::authority = vault,
+        associated_token::mint = input_token_mint
+    )]
+    pub input_token_account: Box<Account<'info, TokenAccount>>,
+
+    // Token output account
+    #[account(
+        init_if_needed,
+        payer = manager,
+        associated_token::authority = vault,
+        associated_token::mint = output_token_mint
+    )]
+    pub output_token_account: Box<Account<'info, TokenAccount>>,
+
     pub jupiter_program: Program<'info, Jupiter>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
 }
