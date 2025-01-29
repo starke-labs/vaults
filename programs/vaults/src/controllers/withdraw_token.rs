@@ -30,8 +30,15 @@ pub fn withdraw_all_tokens<'info>(
 
     // Parse withdrawal accounts
     msg!("Parsing withdrawal accounts");
-    let withdrawal_accounts =
-        parse_withdrawal_accounts(remaining_accounts, user, whitelist, vault.key())?;
+    let withdrawal_accounts = parse_withdrawal_accounts(
+        remaining_accounts,
+        user,
+        whitelist,
+        vault.key(),
+        token_program,
+        system_program,
+        associated_token_program,
+    )?;
     msg!(
         "Found {} token accounts to process",
         withdrawal_accounts.len()
@@ -49,12 +56,9 @@ pub fn withdraw_all_tokens<'info>(
             &withdrawal_account.vault_token_account,
             &withdrawal_account.user_token_account,
             withdrawal_ratio,
-            user,
             vault,
             signer_seeds,
             token_program,
-            associated_token_program,
-            system_program,
         )?;
         msg!("Successfully processed withdrawal {}", i + 1);
     }
@@ -102,6 +106,9 @@ fn parse_withdrawal_accounts<'info>(
     user: &Signer<'info>,
     whitelist: &Account<'info, TokenWhitelist>,
     vault_key: Pubkey,
+    token_program: &Program<'info, Token>,
+    system_program: &Program<'info, System>,
+    associated_token_program: &Program<'info, AssociatedToken>,
 ) -> Result<Vec<WithdrawalAccounts<'info>>> {
     let mut withdrawal_accounts = Vec::new();
 
@@ -112,27 +119,47 @@ fn parse_withdrawal_accounts<'info>(
         // 3. User token account
         let mint = Account::<'info, Mint>::try_from(&chunk[0])?;
         let vault_token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[1])?;
-        let user_token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[2])?;
 
+        msg!("Trying to parse user token account");
+        if chunk[2].data_is_empty() {
+            // User token account doesn't exist
+            create_associated_token_account(
+                user,
+                &mint,
+                &chunk[2],
+                token_program,
+                system_program,
+                associated_token_program,
+            )?;
+        }
+
+        let user_token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[2])?;
+        msg!("Successfully parsed user token account");
+
+        msg!("Checking if mint and token account match");
         require!(
             whitelist.is_whitelisted(mint.key()),
             WhitelistError::TokenNotWhitelisted
         );
 
+        msg!("Checking if mint and vault token account match");
         require!(
             mint.key() == vault_token_account.mint,
             VaultError::MintAndTokenAccountMismatch
         );
+        msg!("Checking if vault key and vault token account match");
         require!(
             vault_key == vault_token_account.owner,
             VaultError::VaultAndTokenAccountMismatch
         );
 
         // TODO: What happens if the user token account doesn't exist yet?
+        msg!("Checking if mint and user token account match");
         require!(
             mint.key() == user_token_account.mint,
             VaultError::MintAndTokenAccountMismatch
         );
+        msg!("Checking if user and user token account match");
         require!(
             user.key() == user_token_account.owner,
             VaultError::UserAndTokenAccountMismatch
@@ -154,12 +181,9 @@ fn withdraw_token<'info>(
     from: &Account<'info, TokenAccount>,
     to: &Account<'info, TokenAccount>,
     withdrawal_ratio: u64,
-    user: &Signer<'info>,
     vault: &Account<'info, Vault>,
     signer_seeds: &[&[&[u8]]],
     token_program: &Program<'info, Token>,
-    associated_token_program: &Program<'info, AssociatedToken>,
-    system_program: &Program<'info, System>,
 ) -> Result<()> {
     // TODO: Throw error if to account (user token account) key doesn't match
     //       the one associated with the user and the mint
@@ -167,18 +191,6 @@ fn withdraw_token<'info>(
     msg!("Processing withdrawal for mint: {}", mint.key());
     msg!("From account: {}", from.key());
     msg!("To account: {}", to.key());
-
-    // Create a token account for the recipient if it doesn't exist
-    msg!("Ensuring user token account exists");
-    create_associated_token_account(
-        user,
-        mint,
-        to,
-        token_program,
-        system_program,
-        associated_token_program,
-    )?;
-    msg!("User token account verified/created");
 
     // Calculate the amount of tokens to withdraw based on the withdrawal ratio
     let token_balance = from.amount;
