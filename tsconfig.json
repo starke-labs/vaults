@@ -12,7 +12,7 @@
     "baseUrl": ".",
     "paths": {
       "@starke/sdk": ["sdk/index"],
-      "@starke/sdk/*": ["sdk/*"],
+      "@starke/sdk/*": ["sdk-ts/*"],
       "@starke/idl/*": ["target/idl/*"]
     }
   }
