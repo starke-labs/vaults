@@ -377,6 +377,7 @@ export class VaultsSDK {
     tx.sign(signers);
     return await this.provider.sendAndConfirm(tx, signers, {
       ...DEFAULT_RETRY_CONFIG,
+      skipPreflight: true,
       maxRetries: 3, // Internal retries for network issues
     });
   }
