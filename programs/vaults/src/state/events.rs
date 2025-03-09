@@ -49,5 +49,7 @@ pub struct WithdrawMade {
 #[event]
 pub struct TokenWhitelisted {
     pub token: Pubkey,
+    pub price_feed_id: String,
+    pub price_update: Pubkey,
     pub timestamp: i64,
 }
