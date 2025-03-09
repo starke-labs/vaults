@@ -23,7 +23,7 @@ pub struct Vault {
 }
 
 impl Vault {
-    pub const MAX_SPACE: usize = 8  // discriminator
+    pub const INIT_SPACE: usize = 8  // discriminator
         + 32 // manager pubkey
         + 32 // deposit token mint pubkey
         + 4  // name length (u32)

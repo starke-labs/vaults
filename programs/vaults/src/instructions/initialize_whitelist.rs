@@ -21,7 +21,7 @@ pub struct InitializeWhitelist<'info> {
     #[account(
         init,
         payer = authority,
-        space = TokenWhitelist::MAX_SPACE,
+        space = TokenWhitelist::INIT_SPACE,
         seeds = [TokenWhitelist::SEED],
         bump,
     )]

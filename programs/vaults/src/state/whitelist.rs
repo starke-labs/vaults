@@ -13,18 +13,20 @@ pub struct TokenInfo {
     pub mint: Pubkey,
     // Price feed id from https://www.pyth.network/developers/price-feed-ids#stable
     pub price_feed_id: String,
+    pub price_update: Pubkey,
 }
 
 impl TokenWhitelist {
     pub const MAX_TOKENS: usize = 100;
-    pub const MAX_SPACE: usize = 8 + // discriminator
+    pub const INIT_SPACE: usize = 8 + // discriminator
         32 + // authority pubkey
         32 + // program authority pubkey
         4 + // vec length
         // TokenInfo struct:
         // - 32 for the mint pubkey
         // - 66 for the price feed id (eg: 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43)
-        (32 + 66) * Self::MAX_TOKENS + // tokens (100 max)
+        // - 32 for the price update pubkey
+        (32 + 66 + 32) * Self::MAX_TOKENS + // tokens (100 max)
         1; // bump
 
     pub const SEED: &'static [u8] = b"STARKE_TOKEN_WHITELIST";
@@ -47,7 +49,12 @@ impl TokenWhitelist {
         Ok(())
     }
 
-    pub fn add_token(&mut self, token_mint: Pubkey, price_feed_id: &str) -> Result<()> {
+    pub fn add_token(
+        &mut self,
+        token_mint: Pubkey,
+        price_feed_id: &str,
+        price_update: Pubkey,
+    ) -> Result<()> {
         require!(
             !self.tokens.iter().any(|t| t.mint == token_mint),
             WhitelistError::TokenAlreadyWhitelisted
@@ -60,6 +67,7 @@ impl TokenWhitelist {
         self.tokens.push(TokenInfo {
             mint: token_mint,
             price_feed_id: price_feed_id.to_string(),
+            price_update,
         });
         Ok(())
     }
