@@ -48,7 +48,7 @@ pub struct CreateVault<'info> {
     #[account(
         init,
         payer = manager,
-        space = Vault::INIT_SPACE,
+        space = Vault::MAX_SPACE,
         seeds = [Vault::SEED, manager.key().as_ref()],
         bump,
     )]
