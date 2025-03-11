@@ -109,9 +109,6 @@ Current limitations and upcoming features:
 - TODO: Fix token name https://solscan.io/token/9Gbw6ZkZY563o9RPa8fzFni3dthfmn4Ru4CPhtKkkcFZ
 - TODO: Use &Pubkey instead of Pubkey in function parameters
 - TODO: Support for Token 2022
-- TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
-- TODO: Use `vtoken` instead of `vault_token` for clear naming convention
-- TODO: Add `remove_token` instruction, but note that before removing a token, we should also remove it from all the vaults
 
 ## Contributing
 

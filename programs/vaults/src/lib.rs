@@ -18,8 +18,12 @@ pub mod vaults {
         _initialize_whitelist(ctx)
     }
 
-    pub fn add_token(ctx: Context<ModifyWhitelist>, price_feed_id: String) -> Result<()> {
-        _add_token(ctx, price_feed_id.as_str())
+    pub fn add_token(
+        ctx: Context<ModifyWhitelist>,
+        token: Pubkey,
+        price_feed_id: String,
+    ) -> Result<()> {
+        _add_token(ctx, token, price_feed_id.as_str())
     }
 
     pub fn create_vault(
