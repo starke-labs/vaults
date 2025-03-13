@@ -44,6 +44,8 @@ docker run \
     --restart always \
     --name pyth-price-pusher \
     public.ecr.aws/pyth-network/xc-price-pusher:v9.1.0 \
+    -- npm run start \
+    -- \
     --endpoint "$SOLANA_RPC_URL" \
     --shard-id "$SHARD_ID" \
     --keypair-file "$1" \
