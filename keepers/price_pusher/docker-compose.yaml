@@ -1,0 +1,43 @@
+services:
+  price-pusher:
+    # Use this to build the price pusher from source.
+    #
+    # Please note that the docker build from source only works in x86_64 platforms
+    # and doesn't work on arm platforms (like Apple M1/M2).
+    #
+    # build:
+    #   context: ../..
+    #   dockerfile: Dockerfile.node
+    #   args:
+    #     package: "@pythnetwork/price-pusher"
+
+    # Replace <version> with the latest released image of the price pusher from here:
+    # https://gallery.ecr.aws/pyth-network/xc-price-pusher
+    image: public.ecr.aws/pyth-network/xc-price-pusher:v9.1.0
+    restart: always
+    command:
+      - "npm"
+      - "run"
+      - "start"
+      - "--"
+      - "solana"
+      - "--endpoint"
+      - ${RPC_ENDPOINT}
+      - "--keypair-file"
+      - "/keypair"
+      - "--shard-id"
+      - ${SHARD_ID}
+      - "--price-config-file"
+      - "/price_config"
+      - "--price-service-endpoint"
+      - ${HERMES_ENDPOINT}
+      - "--pyth-contract-address"
+      - "pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT"
+    configs:
+      - price_config
+      - keypair
+configs:
+  keypair:
+    file: ${KEYPAIR_FILE}
+  price_config:
+    file: ./config.yaml
