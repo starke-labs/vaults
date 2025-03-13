@@ -33,11 +33,6 @@ services:
       - ${HERMES_ENDPOINT}
       - "--pyth-contract-address"
       - "pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT"
-    configs:
-      - price_config
-      - keypair
-configs:
-  keypair:
-    file: ${KEYPAIR_FILE}
-  price_config:
-    file: ./config.yaml
+    volumes:
+      - ${KEYPAIR_FILE}:/keypair:ro
+      - ./config.yaml:/price_config:ro
