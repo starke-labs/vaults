@@ -12,6 +12,7 @@
     "@jup-ag/api": "^6.0.38",
     "@pythnetwork/hermes-client": "^1.3.0",
     "@pythnetwork/pyth-solana-receiver": "^0.9.1",
+    "@pythnetwork/solana-utils": "^0.4.4",
     "@solana/spl-token": "^0.4.9",
     "axios": "^1.7.9",
     "dotenv": "^16.4.5",

@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Exit on error, undefined variables, and pipe failures
+set -euo pipefail
+
+# Function to log messages with timestamps
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Check required environment variables
+required_vars=("SOLANA_RPC_URL" "SHARD_ID" "PRICE_SERVICE_ENDPOINT")
+for var in "${required_vars[@]}"; do
+    if [ -z "${!var:-}" ]; then
+        log "ERROR: Required environment variable $var is not set"
+        exit 1
+    fi
+done
+
+# Check keypair file argument
+if [ "$#" -ne 1 ]; then
+    log "ERROR: Missing keypair file argument"
+    log "Usage: $0 <keypair-file>"
+    exit 1
+fi
+
+if [ ! -f "$1" ]; then
+    log "ERROR: Keypair file '$1' not found"
+    exit 1
+fi
+
+# Check if config.yaml exists
+if [ ! -f "./config.yaml" ]; then
+    log "ERROR: config.yaml not found in current directory"
+    exit 1
+fi
+
+log "Starting Pyth price pusher..."
+log "Using RPC endpoint: $SOLANA_RPC_URL"
+log "Using shard ID: $SHARD_ID"
+
+# Run the docker container with restart policy
+docker run \
+    --restart always \
+    --name pyth-price-pusher \
+    public.ecr.aws/pyth-network/xc-price-pusher:v9.1.0 \
+    --endpoint "$SOLANA_RPC_URL" \
+    --shard-id "$SHARD_ID" \
+    --keypair-file "$1" \
+    --price-config-file ./config.yaml \
+    --price-service-endpoint "$PRICE_SERVICE_ENDPOINT" \
+    --pyth-contract-address pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT \
+    --pushing-frequency 30 \
+    --polling-frequency 5
