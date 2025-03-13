@@ -4,6 +4,7 @@ import {
   InstructionWithEphemeralSigners,
   PythSolanaReceiver,
 } from "@pythnetwork/pyth-solana-receiver";
+import { sendTransactions } from "@pythnetwork/solana-utils";
 import {
   createAssociatedTokenAccount,
   createMint,
@@ -11,6 +12,7 @@ import {
   mintTo,
 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { AddressLookupTableAccount } from "@solana/web3.js";
 import { expect } from "chai";
 
 import idl from "@starke/idl/vaults.json";
@@ -36,6 +38,8 @@ import {
   requestAirdropIfNecessary,
 } from "./utils.new";
 import { JUP_PRICE_FEED_ID, USDC_PRICE_FEED_ID } from "./utils.new/constants";
+
+const SHARD_ID = 0;
 
 describe("Setup Vaults", () => {
   let USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
@@ -102,39 +106,117 @@ describe("Setup Vaults", () => {
     }
   });
 
-  // it("should successfully initialize token whitelist or verify it is already initialized", async () => {
-  //   try {
-  //     const ix = await sdk.initializeWhitelist();
-  //     const signature = await sdk.sendTransaction([ix], [authority]);
-  //     expect(signature).to.not.be.empty;
-  //   } catch (e) {
-  //     expect(e.toString()).to.have.string("already in use");
-  //   }
+  // it("test", async () => {
+  //   const priceIds = [
+  //     // You can find the ids of prices at https://pyth.network/developers/price-feed-ids
+  //     "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43", // BTC/USD price id
+  //     "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", // ETH/USD price id
+  //   ];
 
-  //   // Verify whitelist was initialized
-  //   const whitelist = await sdk.fetchWhitelist();
-  //   expect(whitelist.authority.toString()).to.equal(
-  //     authority.publicKey.toString()
+  //   // // Get price feeds
+  //   // // You can also fetch price feeds for other assets by specifying the asset name and asset class.
+  //   // const priceFeeds = await connection.getPriceFeeds({
+  //   //   query: "btc",
+  //   //   filter: "crypto",
+  //   // });
+  //   // console.log(priceFeeds);
+
+  //   // Latest price updates
+  //   const response = await hermesClient.getLatestPriceUpdates(priceIds, {
+  //     encoding: "base64",
+  //   });
+  //   let priceUpdateData = response.binary.data;
+  //   console.log("priceUpdateData", priceUpdateData);
+
+  //   const txBuilder = pythSolReceiver.newTransactionBuilder({
+  //     closeUpdateAccounts: false,
+  //   });
+
+  //   // TODO: Move to constants
+  //   const SHARD_ID = 0;
+  //   txBuilder.addUpdatePriceFeed(priceUpdateData, SHARD_ID);
+
+  //   const txs = await txBuilder.buildVersionedTransactions({});
+
+  //   console.log("txs", txs);
+
+  //   const signatures = await sendTransactions(
+  //     txs,
+  //     provider.connection,
+  //     new Wallet(tester)
   //   );
-  //   expect(whitelist.programAuthority.toString()).to.equal(
-  //     authority.publicKey.toString()
+  //   console.log(signatures);
+
+  //   console.log(
+  //     "priceUpdateAccount",
+  //     priceIds[0],
+  //     txBuilder.getPriceUpdateAccount(priceIds[0]).toString()
   //   );
+
+  //   // const tx = await txBuilder.build();
+  //   // const signature = await provider.sendAndConfirm(tx);
+  //   // console.log(signature);
   // });
 
+  it("should successfully initialize token whitelist or verify it is already initialized", async () => {
+    // try {
+    //   const ix = await sdk.initializeWhitelist();
+    //   const signature = await sdk.sendTransaction([ix], [authority]);
+    //   expect(signature).to.not.be.empty;
+    // } catch (e) {
+    //   expect(e.toString()).to.have.string("already in use");
+    // }
+
+    // Verify whitelist was initialized
+    const whitelist = await sdk.fetchWhitelist();
+    console.log("whitelist", whitelist);
+    expect(whitelist.authority.toString()).to.equal(
+      authority.publicKey.toString()
+    );
+    expect(whitelist.programAuthority.toString()).to.equal(
+      authority.publicKey.toString()
+    );
+  });
+
   // it("should successfully add USDC to whitelist or verify it is already added", async () => {
+  //   const response = await hermesClient.getLatestPriceUpdates(
+  //     [USDC_PRICE_FEED_ID],
+  //     {
+  //       encoding: "base64",
+  //     }
+  //   );
+  //   let priceUpdateData = response.binary.data;
+
+  //   const txBuilder = pythSolReceiver.newTransactionBuilder({
+  //     closeUpdateAccounts: false,
+  //   });
+  //   txBuilder.addUpdatePriceFeed(priceUpdateData, SHARD_ID);
+
+  //   const priceUpdate = txBuilder.getPriceUpdateAccount(USDC_PRICE_FEED_ID);
+
   //   const params: AddTokenParams = {
-  //     token: USDC,
   //     priceFeedId: USDC_PRICE_FEED_ID,
   //   };
 
   //   const accounts: AddTokenAccounts = {
   //     authority: authority.publicKey,
+  //     tokenMint: USDC,
+  //     priceUpdate,
   //   };
 
+  //   txBuilder.addInstruction({
+  //     instruction: await sdk.addToken(params, accounts),
+  //     signers: [authority],
+  //   });
+
   //   try {
-  //     const ix = await sdk.addToken(params, accounts);
-  //     const signature = await sdk.sendTransaction([ix], [authority]);
-  //     expect(signature).to.not.be.empty;
+  //     const txs = await txBuilder.buildVersionedTransactions({});
+  //     const signatures = await sendTransactions(
+  //       txs,
+  //       provider.connection,
+  //       new Wallet(tester)
+  //     );
+  //     expect(signatures).to.not.be.empty;
   //   } catch (e) {
   //     expect(e.toString()).to.have.string("TokenAlreadyWhitelisted");
   //   }
@@ -142,7 +224,10 @@ describe("Setup Vaults", () => {
   //   // Verify token was added
   //   const whitelist = await sdk.fetchWhitelist();
   //   expect(whitelist.tokens[0].mint.toString()).to.equal(USDC.toString());
-  //   expect(whitelist.tokens[0].priceFeedId).to.equal(DUMMY_PRICE_FEED_ID);
+  //   expect(whitelist.tokens[0].priceFeedId).to.equal(USDC_PRICE_FEED_ID);
+  //   expect(whitelist.tokens[0].priceUpdate.toString()).to.equal(
+  //     priceUpdate.toString()
+  //   );
   // });
 
   // it("should successfully add JUP to whitelist or verify it is already added", async () => {
@@ -270,6 +355,27 @@ describe("Setup Vaults", () => {
   //   }
   // });
 
+  // it("should successfully swap vault funds on jupiter", async () => {
+  //   const params: SwapOnJupiterParams = {
+  //     amount: new BN(1).mul(new BN(10).pow(new BN(USDC_DECIMALS))),
+  //   };
+
+  //   const accounts: SwapOnJupiterAccounts = {
+  //     manager: tester.publicKey,
+  //     inputMint: USDC,
+  //     outputMint: JUP,
+  //   };
+
+  //   try {
+  //     const signature = await sdk.swapOnJupiter(params, accounts, [tester]);
+  //     console.log("Signature:", signature);
+  //     expect(signature).to.not.be.empty;
+  //   } catch (e) {
+  //     console.log("Error:", e);
+  //     throw e;
+  //   }
+  // });
+
   // it("should successfully withdraw from vault", async () => {
   //   const [vaultPda] = getVaultPda(tester.publicKey);
   //   const testerVaultTokenAccount = await getAssociatedTokenAddress(
@@ -298,25 +404,4 @@ describe("Setup Vaults", () => {
   //     console.log("Error:", e);
   //   }
   // });
-
-  it("should successfully swap vault funds on jupiter", async () => {
-    const params: SwapOnJupiterParams = {
-      amount: new BN(1).mul(new BN(10).pow(new BN(USDC_DECIMALS))),
-    };
-
-    const accounts: SwapOnJupiterAccounts = {
-      manager: tester.publicKey,
-      inputMint: USDC,
-      outputMint: JUP,
-    };
-
-    try {
-      const signature = await sdk.swapOnJupiter(params, accounts, [tester]);
-      console.log("Signature:", signature);
-      expect(signature).to.not.be.empty;
-    } catch (e) {
-      console.log("Error:", e);
-      throw e;
-    }
-  });
 });
