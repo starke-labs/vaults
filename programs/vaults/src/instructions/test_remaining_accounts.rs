@@ -30,7 +30,7 @@ pub fn _test_remaining_accounts<'info>(
         msg!("Token account balance: {:?}", token_account.amount);
         msg!("Token account owner: {:?}", token_account.owner);
 
-        let price_feed_id = ctx.accounts.whitelist.get_price_feed_id(mint.key())?;
+        let price_feed_id = ctx.accounts.whitelist.get_price_feed_id(&mint.key())?;
         msg!("Price feed id: {:?}", price_feed_id);
     }
 

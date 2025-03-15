@@ -14,7 +14,7 @@ pub struct VaultTokenInfo<'info> {
 pub fn parse_vault_balances<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
     whitelist: &Account<'info, TokenWhitelist>,
-    vault_key: Pubkey,
+    vault_key: &Pubkey,
 ) -> Result<Vec<VaultTokenInfo<'info>>> {
     let mut vault_token_infos = Vec::new();
 
@@ -32,11 +32,11 @@ pub fn parse_vault_balances<'info>(
             VaultError::MintAndTokenAccountMismatch
         );
         require!(
-            vault_key == token_account.owner,
+            *vault_key == token_account.owner,
             VaultError::VaultAndTokenAccountMismatch
         );
 
-        let price_feed_id = whitelist.get_price_feed_id(mint.key())?.to_string();
+        let price_feed_id = whitelist.get_price_feed_id(&mint.key())?.to_string();
 
         vault_token_infos.push(VaultTokenInfo {
             token_balance: token_account.amount,

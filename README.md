@@ -107,7 +107,6 @@ Current limitations and upcoming features:
 - TODO: Add types for whitelist and vault accounts in sdk
 - TODO: Add starke admin as signer for deposit and withdraw instructions, so that the remaining accounts can be verified
 - TODO: Fix token name https://solscan.io/token/9Gbw6ZkZY563o9RPa8fzFni3dthfmn4Ru4CPhtKkkcFZ
-- TODO: Use &Pubkey instead of Pubkey in function parameters
 - TODO: Support for Token 2022
 - TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
 - TODO: Use `vtoken` instead of `vault_token` for clear naming convention

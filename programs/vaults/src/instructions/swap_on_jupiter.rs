@@ -78,13 +78,13 @@ pub struct SwapOnJupiter<'info> {
 
     // Token input mint
     #[account(
-        constraint = whitelist.is_whitelisted(input_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
+        constraint = whitelist.is_whitelisted(&input_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
     )]
     pub input_token_mint: Box<Account<'info, Mint>>,
 
     // Token output mint
     #[account(
-        constraint = whitelist.is_whitelisted(output_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
+        constraint = whitelist.is_whitelisted(&output_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
     )]
     pub output_token_mint: Box<Account<'info, Mint>>,
 

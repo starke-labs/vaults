@@ -31,8 +31,8 @@ impl TokenWhitelist {
 
     pub fn initialize(
         &mut self,
-        authority: Pubkey,
-        program_authority: Pubkey,
+        authority: &Pubkey,
+        program_authority: &Pubkey,
         bump: u8,
     ) -> Result<()> {
         require!(
@@ -40,16 +40,16 @@ impl TokenWhitelist {
             WhitelistError::UnauthorizedAccess
         );
 
-        self.authority = authority;
-        self.program_authority = program_authority;
+        self.authority = *authority;
+        self.program_authority = *program_authority;
         self.tokens = Vec::new();
         self.bump = bump;
         Ok(())
     }
 
-    pub fn add_token(&mut self, token_mint: Pubkey, price_feed_id: &str) -> Result<()> {
+    pub fn add_token(&mut self, token_mint: &Pubkey, price_feed_id: &str) -> Result<()> {
         require!(
-            !self.tokens.iter().any(|t| t.mint == token_mint),
+            !self.tokens.iter().any(|t| t.mint == *token_mint),
             WhitelistError::TokenAlreadyWhitelisted
         );
         require!(
@@ -58,14 +58,14 @@ impl TokenWhitelist {
         );
 
         self.tokens.push(TokenInfo {
-            mint: token_mint,
+            mint: *token_mint,
             price_feed_id: price_feed_id.to_string(),
         });
         Ok(())
     }
 
-    pub fn remove_token(&mut self, token_mint: Pubkey) -> Result<()> {
-        if let Some(index) = self.tokens.iter().position(|x| x.mint == token_mint) {
+    pub fn remove_token(&mut self, token_mint: &Pubkey) -> Result<()> {
+        if let Some(index) = self.tokens.iter().position(|t| t.mint == *token_mint) {
             self.tokens.remove(index);
             Ok(())
         } else {
@@ -73,15 +73,15 @@ impl TokenWhitelist {
         }
     }
 
-    pub fn is_whitelisted(&self, token_mint: Pubkey) -> bool {
-        self.tokens.iter().any(|t| t.mint == token_mint)
+    pub fn is_whitelisted(&self, token_mint: &Pubkey) -> bool {
+        self.tokens.iter().any(|t| t.mint == *token_mint)
     }
 
-    pub fn get_price_feed_id(&self, token_mint: Pubkey) -> Result<&str> {
+    pub fn get_price_feed_id(&self, token_mint: &Pubkey) -> Result<&str> {
         let token_info = self
             .tokens
             .iter()
-            .find(|t| t.mint == token_mint)
+            .find(|t| t.mint == *token_mint)
             .ok_or(WhitelistError::TokenNotWhitelisted)?;
         Ok(token_info.price_feed_id.as_str())
     }

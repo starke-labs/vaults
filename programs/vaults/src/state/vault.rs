@@ -45,11 +45,11 @@ impl Vault {
 
     pub fn initialize(
         &mut self,
-        manager: Pubkey,
-        deposit_token_mint: Pubkey,
+        manager: &Pubkey,
+        deposit_token_mint: &Pubkey,
         name: &str,
         bump: u8,
-        vault_token_mint: Pubkey,
+        vault_token_mint: &Pubkey,
         vault_token_mint_bump: u8,
         entry_fee: u16,
         exit_fee: u16,
@@ -59,11 +59,11 @@ impl Vault {
         require!(entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
         require!(exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
 
-        self.manager = manager;
-        self.deposit_token_mint = deposit_token_mint;
+        self.manager = *manager;
+        self.deposit_token_mint = *deposit_token_mint;
         self.name = name.to_string();
         self.bump = bump;
-        self.mint = vault_token_mint;
+        self.mint = *vault_token_mint;
         self.mint_bump = vault_token_mint_bump;
         self.entry_fee = entry_fee;
         self.exit_fee = exit_fee;
@@ -98,7 +98,7 @@ impl Vault {
         Ok(())
     }
 
-    pub fn get_fees(&mut self, current_timestamp: i64, vault_key: Pubkey) -> Result<(u16, u16)> {
+    pub fn get_fees(&mut self, current_timestamp: i64, vault_key: &Pubkey) -> Result<(u16, u16)> {
         if let (Some(pending_entry), Some(pending_exit)) =
             (self.pending_entry_fee, self.pending_exit_fee)
         {
@@ -111,7 +111,7 @@ impl Vault {
                 self.fee_update_timestamp = 0;
 
                 emit!(VaultFeesUpdated {
-                    vault: vault_key,
+                    vault: *vault_key,
                     manager: self.manager,
                     new_entry_fee: pending_entry,
                     new_exit_fee: pending_exit,
@@ -127,7 +127,7 @@ impl Vault {
         &self,
         remaining_accounts: &'info [AccountInfo<'info>],
         whitelist: &Account<'info, TokenWhitelist>,
-        vault_key: Pubkey,
+        vault_key: &Pubkey,
     ) -> Result<u64> {
         // msg!("get_nav called");
         let vault_balances = parse_vault_balances(remaining_accounts, whitelist, vault_key)?;
