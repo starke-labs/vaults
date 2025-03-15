@@ -16,7 +16,7 @@ pub fn _deposit<'info>(
     let total_nav = ctx.accounts.vault.get_nav(
         ctx.remaining_accounts,
         &ctx.accounts.whitelist,
-        ctx.accounts.vault.key(),
+        &ctx.accounts.vault.key(),
     )?;
     msg!("Vault NAV: {}", total_nav);
 

@@ -34,7 +34,7 @@ pub fn withdraw_all_tokens<'info>(
         remaining_accounts,
         user,
         whitelist,
-        vault.key(),
+        &vault.key(),
         token_program,
         system_program,
         associated_token_program,
@@ -105,7 +105,7 @@ fn parse_withdrawal_accounts<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
     user: &Signer<'info>,
     whitelist: &Account<'info, TokenWhitelist>,
-    vault_key: Pubkey,
+    vault_key: &Pubkey,
     token_program: &Program<'info, Token>,
     system_program: &Program<'info, System>,
     associated_token_program: &Program<'info, AssociatedToken>,
@@ -138,7 +138,7 @@ fn parse_withdrawal_accounts<'info>(
 
         msg!("Checking if mint and token account match");
         require!(
-            whitelist.is_whitelisted(mint.key()),
+            whitelist.is_whitelisted(&mint.key()),
             WhitelistError::TokenNotWhitelisted
         );
 
@@ -149,7 +149,7 @@ fn parse_withdrawal_accounts<'info>(
         );
         msg!("Checking if vault key and vault token account match");
         require!(
-            vault_key == vault_token_account.owner,
+            *vault_key == vault_token_account.owner,
             VaultError::VaultAndTokenAccountMismatch
         );
 

@@ -10,11 +10,11 @@ pub fn _create_vault(
     exit_fee: u16,
 ) -> Result<()> {
     ctx.accounts.vault.initialize(
-        ctx.accounts.manager.key(),
-        ctx.accounts.deposit_token_mint.key(),
+        &ctx.accounts.manager.key(),
+        &ctx.accounts.deposit_token_mint.key(),
         name,
         ctx.bumps.vault,
-        ctx.accounts.vault_token_mint.key(),
+        &ctx.accounts.vault_token_mint.key(),
         ctx.bumps.vault_token_mint,
         entry_fee,
         exit_fee,
@@ -77,7 +77,7 @@ pub struct CreateVault<'info> {
 
     // Deposit token mint
     #[account(
-        constraint = whitelist.is_whitelisted(deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
+        constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
     )]
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 

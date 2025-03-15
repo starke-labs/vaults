@@ -17,7 +17,7 @@ pub fn calculate_deposit_token_value<'info>(
     // msg!("Deposit token mint: {}", deposit_token_mint);
     // msg!("Deposit token decimals: {}", deposit_token_decimals);
     // msg!("Deposit amount: {}", amount);
-    let deposit_price_feed_id = whitelist.get_price_feed_id(deposit_token_mint)?;
+    let deposit_price_feed_id = whitelist.get_price_feed_id(&deposit_token_mint)?;
     let deposit_price = get_token_price_from_pyth_feed(deposit_price_feed_id, price_update)?;
     // msg!(
     //     "Deposit price: {} {} {}",

@@ -7,7 +7,7 @@ pub fn _initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
     let authority_key = ctx.accounts.authority.key();
     ctx.accounts
         .whitelist
-        .initialize(authority_key, PROGRAM_AUTHORITY, ctx.bumps.whitelist)
+        .initialize(&authority_key, &PROGRAM_AUTHORITY, ctx.bumps.whitelist)
 }
 
 #[derive(Accounts)]
