@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::controllers::{burn_vault_token, withdraw_all_tokens};
+use crate::controllers::{burn_vtoken, withdraw_all_tokens};
 use crate::state::{TokenWhitelist, Vault, WithdrawMade};
 
 pub fn _withdraw<'info>(
@@ -16,17 +16,17 @@ pub fn _withdraw<'info>(
     let signer_seeds = &[&vault_seeds[..]];
     msg!("Vault seeds generated");
 
-    // Burn vault tokens from depositor
-    msg!("Burning vault tokens: {}", amount);
-    burn_vault_token(
+    // Burn vtokens from depositor
+    msg!("Burning vtokens: {}", amount);
+    burn_vtoken(
         &ctx.accounts.user,
-        &ctx.accounts.vault_token_mint,
-        &ctx.accounts.user_vault_token_account,
+        &ctx.accounts.vtoken_mint,
+        &ctx.accounts.user_vtoken_account,
         amount,
         signer_seeds,
         &ctx.accounts.token_program,
     )?;
-    msg!("Vault tokens burned successfully");
+    msg!("Vtokens burned successfully");
 
     // Process withdrawals for all tokens in the vault
     msg!("Processing withdrawals for all vault tokens");
@@ -34,7 +34,7 @@ pub fn _withdraw<'info>(
         &ctx.remaining_accounts,
         &ctx.accounts.user,
         &ctx.accounts.vault,
-        &ctx.accounts.vault_token_mint,
+        &ctx.accounts.vtoken_mint,
         amount,
         &ctx.accounts.whitelist,
         signer_seeds,
@@ -65,13 +65,13 @@ pub struct Withdraw<'info> {
     /// CHECK: We can skip checking the manager
     pub manager: UncheckedAccount<'info>,
 
-    // Depositor's vault token account
+    // Depositor's vtoken account
     #[account(
         mut,
         associated_token::authority = user,
-        associated_token::mint = vault_token_mint,
+        associated_token::mint = vtoken_mint,
     )]
-    pub user_vault_token_account: Box<Account<'info, TokenAccount>>,
+    pub user_vtoken_account: Box<Account<'info, TokenAccount>>,
 
     // Vault
     #[account(
@@ -80,13 +80,13 @@ pub struct Withdraw<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
-    // Vault token mint
+    // Vtoken mint
     #[account(
         mut,
-        seeds = [Vault::VAULT_TOKEN_MINT_SEED, vault.key().as_ref()],
+        seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump = vault.mint_bump,
     )]
-    pub vault_token_mint: Box<Account<'info, Mint>>,
+    pub vtoken_mint: Box<Account<'info, Mint>>,
 
     // Token whitelist
     #[account(

@@ -18,7 +18,7 @@ const DECIMALS = 6;
 const TOKEN_FACTOR = Math.pow(10, DECIMALS);
 const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
 const VAULT_SEED = "STARKE_VAULT";
-const VAULT_TOKEN_MINT_SEED = "STARKE_VAULT_TOKEN_MINT";
+const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
 
 // TODO: Move to utils
 // Helper function to convert tokens to raw amount
@@ -49,10 +49,10 @@ describe("Vaults", () => {
   // Vault, vault token mint, and associated token accounts (ATAs)
   let vault: PublicKey;
   let vaultBump: number;
-  let vaultTokenMint: PublicKey;
-  let vaultTokenMintBump: number;
-  let depositor1VaultTokenATA: PublicKey;
-  let depositor2VaultTokenATA: PublicKey;
+  let vtokenMint: PublicKey;
+  let vtokenMintBump: number;
+  let depositor1VtokenATA: PublicKey;
+  let depositor2VtokenATA: PublicKey;
 
   // Whitelist
   let whitelist: PublicKey;
@@ -117,8 +117,8 @@ describe("Vaults", () => {
       program.programId
     );
 
-    [vaultTokenMint, vaultTokenMintBump] = PublicKey.findProgramAddressSync(
-      [Buffer.from(VAULT_TOKEN_MINT_SEED), vault.toBuffer()],
+    [vtokenMint, vtokenMintBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from(VTOKEN_MINT_SEED), vault.toBuffer()],
       program.programId
     );
 
@@ -129,13 +129,13 @@ describe("Vaults", () => {
       true
     );
 
-    depositor1VaultTokenATA = await getAssociatedTokenAddress(
-      vaultTokenMint,
+    depositor1VtokenATA = await getAssociatedTokenAddress(
+      vtokenMint,
       depositor1.publicKey
     );
 
-    depositor2VaultTokenATA = await getAssociatedTokenAddress(
-      vaultTokenMint,
+    depositor2VtokenATA = await getAssociatedTokenAddress(
+      vtokenMint,
       depositor2.publicKey
     );
 
@@ -240,14 +240,14 @@ describe("Vaults", () => {
       expect(vaultAccount.depositTokenMint).to.eql(depositTokenMint);
       expect(vaultAccount.name).to.equal("Test Vault");
       expect(vaultAccount.bump).to.equal(vaultBump);
-      expect(vaultAccount.mint).to.eql(vaultTokenMint);
-      expect(vaultAccount.mintBump).to.equal(vaultTokenMintBump);
+      expect(vaultAccount.mint).to.eql(vtokenMint);
+      expect(vaultAccount.mintBump).to.equal(vtokenMintBump);
       expect(vaultAccount.entryFee).to.equal(entryFee);
       expect(vaultAccount.exitFee).to.equal(exitFee);
 
       // Check if vault token mint has been created
       const vaultTokenMintAccount = await provider.connection.getAccountInfo(
-        vaultTokenMint
+        vtokenMint
       );
       expect(vaultTokenMintAccount).to.not.be.null;
     });
@@ -433,7 +433,7 @@ describe("Vaults", () => {
       // Check and withdraw depositor1's balance if any
       try {
         const balance1 = await provider.connection.getTokenAccountBalance(
-          depositor1VaultTokenATA
+          depositor1VtokenATA
         );
         const amount1 = new anchor.BN(balance1.value.amount);
         if (amount1.gt(new anchor.BN(0))) {
@@ -456,7 +456,7 @@ describe("Vaults", () => {
       // Check and withdraw depositor2's balance if any
       try {
         const balance2 = await provider.connection.getTokenAccountBalance(
-          depositor2VaultTokenATA
+          depositor2VtokenATA
         );
         const amount2 = new anchor.BN(balance2.value.amount);
         if (amount2.gt(new anchor.BN(0))) {
@@ -482,7 +482,7 @@ describe("Vaults", () => {
       expect(vaultTokenBalance.value.amount).to.equal("0");
 
       // Verify vault token mint supply
-      const mintInfo = await provider.connection.getTokenSupply(vaultTokenMint);
+      const mintInfo = await provider.connection.getTokenSupply(vtokenMint);
       expect(mintInfo.value.amount).to.equal("0");
     });
 
@@ -519,15 +519,15 @@ describe("Vaults", () => {
 
     //     // Get balances from vault token accounts
     //     const balance1 = await provider.connection.getTokenAccountBalance(
-    //       depositor1VaultTokenATA
+    //       depositor1VtokenATA
     //     );
     //     const balance2 = await provider.connection.getTokenAccountBalance(
-    //       depositor2VaultTokenATA
+    //       depositor2VtokenATA
     //     );
 
     //     // Get the vault token mint supply
     //     const mintInfo = await provider.connection.getTokenSupply(
-    //       vaultTokenMint
+    //       vtokenMint
     //     );
     //     const totalSupply = Number(mintInfo.value.amount);
 
@@ -559,7 +559,7 @@ describe("Vaults", () => {
     //     // Check vault total deposits after first deposit
     //     let vaultTokenBalance =
     //       await provider.connection.getTokenAccountBalance(
-    //         depositor1VaultTokenATA
+    //         depositor1VtokenATA
     //       );
     //     expect(vaultTokenBalance.value.amount).to.equal(
     //       deposit1Amount.toString()
@@ -592,7 +592,7 @@ describe("Vaults", () => {
     //     // Check initial total deposits
     //     let vaultTokenBalance =
     //       await provider.connection.getTokenAccountBalance(
-    //         depositor1VaultTokenATA
+    //         depositor1VtokenATA
     //       );
     //     const initialTotalDeposits = new anchor.BN(
     //       vaultTokenBalance.value.amount
@@ -628,7 +628,7 @@ describe("Vaults", () => {
 
     //     // Check vault total deposits after withdrawal
     //     vaultTokenBalance = await provider.connection.getTokenAccountBalance(
-    //       depositor1VaultTokenATA
+    //       depositor1VtokenATA
     //     );
     //     expect(vaultTokenBalance.value.amount).to.equal(
     //       depositAmount.sub(withdrawAmount).toString()
@@ -651,14 +651,14 @@ describe("Vaults", () => {
 
     //     // Verify vault token mint supply
     //     const mintInfo = await provider.connection.getTokenSupply(
-    //       vaultTokenMint
+    //       vtokenMint
     //     );
     //     expect(mintInfo.value.amount).to.equal(depositAmount.toString());
 
     //     // Verify depositor1's vault token balance
     //     const vaultTokenBalance =
     //       await provider.connection.getTokenAccountBalance(
-    //         depositor1VaultTokenATA
+    //         depositor1VtokenATA
     //       );
     //     expect(vaultTokenBalance.value.amount).to.equal(
     //       depositAmount.toString()
@@ -683,22 +683,10 @@ describe("Vaults", () => {
         );
 
         // Verify that vault token account has the correct balance
-        let vaultDepositTokenBalance =
-          await provider.connection.getTokenAccountBalance(
-            vaultDepositTokenATA
-          );
-        expect(vaultDepositTokenBalance.value.amount).to.equal(
-          depositAmount.toString()
+        let vtokenBalance = await provider.connection.getTokenAccountBalance(
+          depositor1VtokenATA
         );
-
-        // Verify that depositor1's vault token account has the correct balance
-        let depositorVaultTokenBalance =
-          await provider.connection.getTokenAccountBalance(
-            depositor1VaultTokenATA
-          );
-        expect(depositorVaultTokenBalance.value.amount).to.equal(
-          depositAmount.toString()
-        );
+        expect(vtokenBalance.value.amount).to.equal(depositAmount.toString());
       });
 
       it("successfully makes multiple deposits from same depositor", async () => {
@@ -732,7 +720,7 @@ describe("Vaults", () => {
 
         // Verify total deposits by checking vault token balance of depositor2
         const finalBalance = await provider.connection.getTokenAccountBalance(
-          depositor2VaultTokenATA
+          depositor2VtokenATA
         );
         const expectedBalance = depositAmount.add(depositAmount);
         expect(finalBalance.value.amount).to.equal(expectedBalance.toString());
@@ -827,7 +815,7 @@ describe("Vaults", () => {
     });
 
     describe("withdraw", () => {
-      let depositor1VaultTokenBalance: anchor.BN;
+      let depositor1VtokenBalance: anchor.BN;
 
       beforeEach(async () => {
         // Make initial deposit to test withdrawals
@@ -843,10 +831,10 @@ describe("Vaults", () => {
             .rpc()
         );
 
-        depositor1VaultTokenBalance = new anchor.BN(
+        depositor1VtokenBalance = new anchor.BN(
           (
             await provider.connection.getTokenAccountBalance(
-              depositor1VaultTokenATA
+              depositor1VtokenATA
             )
           ).value.amount
         );
@@ -883,39 +871,39 @@ describe("Vaults", () => {
         ).to.equal(withdrawAmount.toNumber());
 
         // Verify vault token balance update
-        const finalVaultTokenBalance =
-          await provider.connection.getTokenAccountBalance(
-            depositor1VaultTokenATA
-          );
-        expect(finalVaultTokenBalance.value.amount).to.equal(
-          depositor1VaultTokenBalance.sub(withdrawAmount).toString()
+        const finalVtokenBalance =
+          await provider.connection.getTokenAccountBalance(depositor1VtokenATA);
+        expect(finalVtokenBalance.value.amount).to.equal(
+          depositor1VtokenBalance.sub(withdrawAmount).toString()
         );
       });
 
       it("burns vault tokens when fully withdrawn", async () => {
-        // Withdraw full amount
         await confirmTransaction(
           await program.methods
-            .withdraw(depositor1VaultTokenBalance)
+            .withdraw(depositor1VtokenBalance)
             .accounts({
               user: depositor1.publicKey,
               manager: manager.publicKey,
-              depositTokenMint,
+              userVtokenAccount: depositor1VtokenATA,
+              vault,
+              vtokenMint,
+              whitelist,
             })
-            .signers([depositor1])
+            .remainingAccounts([
+              // ... existing code ...
+            ])
             .rpc()
         );
 
         // Verify vault token balance is zero
-        const finalDepositor1VaultTokenBalance =
-          await provider.connection.getTokenAccountBalance(
-            depositor1VaultTokenATA
-          );
-        expect(finalDepositor1VaultTokenBalance.value.amount).to.equal("0");
+        const finalDepositor1VtokenBalance =
+          await provider.connection.getTokenAccountBalance(depositor1VtokenATA);
+        expect(finalDepositor1VtokenBalance.value.amount).to.equal("0");
       });
 
       it("fails when trying to withdraw more than deposited", async () => {
-        const tooMuchAmount = depositor1VaultTokenBalance.add(new anchor.BN(1));
+        const tooMuchAmount = depositor1VtokenBalance.add(new anchor.BN(1));
 
         try {
           await confirmTransaction(

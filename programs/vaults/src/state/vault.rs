@@ -38,7 +38,7 @@ impl Vault {
         + 8; // fee_update_timestamp (i64)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
-    pub const VAULT_TOKEN_MINT_SEED: &'static [u8] = b"STARKE_VAULT_TOKEN_MINT";
+    pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
 
     pub const FEE_UPDATE_DELAY: i64 = 30 * 24 * 60 * 60; // 30 days in seconds
     pub const MAX_FEE: u16 = 10000;
@@ -49,8 +49,8 @@ impl Vault {
         deposit_token_mint: &Pubkey,
         name: &str,
         bump: u8,
-        vault_token_mint: &Pubkey,
-        vault_token_mint_bump: u8,
+        vtoken_mint: &Pubkey,
+        vtoken_mint_bump: u8,
         entry_fee: u16,
         exit_fee: u16,
     ) -> Result<()> {
@@ -63,8 +63,8 @@ impl Vault {
         self.deposit_token_mint = *deposit_token_mint;
         self.name = name.to_string();
         self.bump = bump;
-        self.mint = *vault_token_mint;
-        self.mint_bump = vault_token_mint_bump;
+        self.mint = *vtoken_mint;
+        self.mint_bump = vtoken_mint_bump;
         self.entry_fee = entry_fee;
         self.exit_fee = exit_fee;
         self.pending_entry_fee = None;

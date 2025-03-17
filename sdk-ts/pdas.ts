@@ -7,7 +7,7 @@ export const PROGRAM_ID = new PublicKey(
 // Seeds
 export const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
 export const VAULT_SEED = "STARKE_VAULT";
-export const VAULT_TOKEN_MINT_SEED = "STARKE_VAULT_TOKEN_MINT";
+export const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
 
 // PDAs
 export function getWhitelistPda(): [PublicKey, number] {
@@ -24,9 +24,9 @@ export function getVaultPda(manager: PublicKey): [PublicKey, number] {
   );
 }
 
-export function getVaultTokenMintPda(vault: PublicKey): [PublicKey, number] {
+export function getVtokenMintPda(vault: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(VAULT_TOKEN_MINT_SEED), vault.toBuffer()],
+    [Buffer.from(VTOKEN_MINT_SEED), vault.toBuffer()],
     PROGRAM_ID
   );
 }
