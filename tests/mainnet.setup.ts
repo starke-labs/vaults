@@ -159,13 +159,13 @@ describe("Setup Vaults", () => {
   // });
 
   it("should successfully initialize token whitelist or verify it is already initialized", async () => {
-    // try {
-    //   const ix = await sdk.initializeWhitelist();
-    //   const signature = await sdk.sendTransaction([ix], [authority]);
-    //   expect(signature).to.not.be.empty;
-    // } catch (e) {
-    //   expect(e.toString()).to.have.string("already in use");
-    // }
+    try {
+      const ix = await sdk.initializeWhitelist();
+      const signature = await sdk.sendTransaction([ix], [authority]);
+      expect(signature).to.not.be.empty;
+    } catch (e) {
+      expect(e.toString()).to.have.string("already in use");
+    }
 
     // Verify whitelist was initialized
     const whitelist = await sdk.fetchWhitelist();
@@ -178,48 +178,47 @@ describe("Setup Vaults", () => {
     );
   });
 
-  // it("should successfully add USDC to whitelist or verify it is already added", async () => {
-  //   const response = await hermesClient.getLatestPriceUpdates(
-  //     [USDC_PRICE_FEED_ID],
-  //     {
-  //       encoding: "base64",
-  //     }
-  //   );
-  //   let priceUpdateData = response.binary.data;
+  it("should successfully add USDC to whitelist or verify it is already added", async () => {
+    const response = await hermesClient.getLatestPriceUpdates(
+      [USDC_PRICE_FEED_ID],
+      {
+        encoding: "base64",
+      }
+    );
+    let priceUpdateData = response.binary.data;
 
-  //   const txBuilder = pythSolReceiver.newTransactionBuilder({
-  //     closeUpdateAccounts: false,
-  //   });
-  //   txBuilder.addUpdatePriceFeed(priceUpdateData, SHARD_ID);
+    const txBuilder = pythSolReceiver.newTransactionBuilder({
+      closeUpdateAccounts: false,
+    });
+    txBuilder.addUpdatePriceFeed(priceUpdateData, SHARD_ID);
 
-  //   const priceUpdate = txBuilder.getPriceUpdateAccount(USDC_PRICE_FEED_ID);
+    const priceUpdate = txBuilder.getPriceUpdateAccount(USDC_PRICE_FEED_ID);
 
-  //   const params: AddTokenParams = {
-  //     priceFeedId: USDC_PRICE_FEED_ID,
-  //   };
+    const params: AddTokenParams = {
+      priceFeedId: USDC_PRICE_FEED_ID,
+      token: USDC,
+    };
 
-  //   const accounts: AddTokenAccounts = {
-  //     authority: authority.publicKey,
-  //     tokenMint: USDC,
-  //     priceUpdate,
-  //   };
+    const accounts: AddTokenAccounts = {
+      authority: authority.publicKey,
+    };
 
-  //   txBuilder.addInstruction({
-  //     instruction: await sdk.addToken(params, accounts),
-  //     signers: [authority],
-  //   });
+    txBuilder.addInstruction({
+      instruction: await sdk.addToken(params, accounts),
+      signers: [authority],
+    });
 
-  //   try {
-  //     const txs = await txBuilder.buildVersionedTransactions({});
-  //     const signatures = await sendTransactions(
-  //       txs,
-  //       provider.connection,
-  //       new Wallet(tester)
-  //     );
-  //     expect(signatures).to.not.be.empty;
-  //   } catch (e) {
-  //     expect(e.toString()).to.have.string("TokenAlreadyWhitelisted");
-  //   }
+    try {
+      const txs = await txBuilder.buildVersionedTransactions({});
+      const signatures = await sendTransactions(
+        txs,
+        provider.connection,
+        new Wallet(tester)
+      );
+      expect(signatures).to.not.be.empty;
+    } catch (e) {
+      expect(e.toString()).to.have.string("TokenAlreadyWhitelisted");
+    }
 
   //   // Verify token was added
   //   const whitelist = await sdk.fetchWhitelist();
