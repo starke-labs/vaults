@@ -3,7 +3,7 @@ use anchor_spl::token::{burn, mint_to, Burn, Mint, MintTo, Token, TokenAccount};
 
 use crate::state::{Vault, VaultError};
 
-pub fn mint_vault_token<'info>(
+pub fn mint_vtoken<'info>(
     vault: &Account<'info, Vault>,
     mint: &Account<'info, Mint>,
     to: &Account<'info, TokenAccount>,
@@ -23,7 +23,7 @@ pub fn mint_vault_token<'info>(
     Ok(())
 }
 
-pub fn burn_vault_token<'info>(
+pub fn burn_vtoken<'info>(
     user: &Signer<'info>,
     mint: &Account<'info, Mint>,
     from: &Account<'info, TokenAccount>,
@@ -43,22 +43,22 @@ pub fn burn_vault_token<'info>(
     Ok(())
 }
 
-pub fn calculate_vault_tokens_to_mint(
+pub fn calculate_vtokens_to_mint(
     total_nav: u64,
     deposit_value: u64,
-    vault_token_supply: u64,
+    vtoken_supply: u64,
 ) -> Result<u64> {
-    // msg!("calculate_vault_tokens_to_mint called");
+    // msg!("calculate_vtokens_to_mint called");
     // msg!("Total NAV: {}", total_nav);
     // msg!("Deposit value: {}", deposit_value);
-    // msg!("Vault token supply: {}", vault_token_supply);
+    // msg!("Vtoken supply: {}", vtoken_supply);
     if total_nav == 0 {
         // Initial deposit - mint 1:1
         Ok(deposit_value)
     } else {
         // Calculate proportional amount based on NAV
         (deposit_value as u128)
-            .checked_mul(vault_token_supply as u128)
+            .checked_mul(vtoken_supply as u128)
             .ok_or(error!(VaultError::NumericOverflow))?
             .checked_div(total_nav as u128)
             .ok_or(error!(VaultError::NumericOverflow))

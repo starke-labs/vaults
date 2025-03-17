@@ -4,7 +4,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::controllers::{
-    calculate_deposit_token_value, calculate_vault_tokens_to_mint, mint_vault_token, transfer_token,
+    calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
 use crate::state::{DepositMade, TokenWhitelist, Vault};
 
@@ -30,13 +30,10 @@ pub fn _deposit<'info>(
     )?;
     msg!("Deposit value: {}", deposit_value);
 
-    // Calculate vault tokens to mint based on NAV
-    let vault_tokens_to_mint = calculate_vault_tokens_to_mint(
-        total_nav,
-        deposit_value,
-        ctx.accounts.vault_token_mint.supply,
-    )?;
-    msg!("Vault tokens to mint: {}", vault_tokens_to_mint);
+    // Calculate vtokens to mint based on NAV
+    let vtokens_to_mint =
+        calculate_vtokens_to_mint(total_nav, deposit_value, ctx.accounts.vtoken_mint.supply)?;
+    msg!("Vtokens to mint: {}", vtokens_to_mint);
 
     // Transfer deposit tokens from depositor to vault
     transfer_token(
@@ -47,16 +44,16 @@ pub fn _deposit<'info>(
         &ctx.accounts.token_program,
     )?;
 
-    // Mint vault tokens to depositor
+    // Mint vtokens to depositor
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
     let signer_seeds = &[&vault_seeds[..]];
 
-    mint_vault_token(
+    mint_vtoken(
         &ctx.accounts.vault,
-        &ctx.accounts.vault_token_mint,
-        &ctx.accounts.vault_token_account,
-        vault_tokens_to_mint,
+        &ctx.accounts.vtoken_mint,
+        &ctx.accounts.vtoken_account,
+        vtokens_to_mint,
         signer_seeds,
         &ctx.accounts.token_program,
     )?;
@@ -98,14 +95,14 @@ pub struct Deposit<'info> {
     )]
     pub vault_deposit_token_account: Box<Account<'info, TokenAccount>>,
 
-    // Depositor's vault token account
+    // Depositor's vtoken account
     #[account(
         init_if_needed,
         payer = user,
         associated_token::authority = user,
-        associated_token::mint = vault_token_mint,
+        associated_token::mint = vtoken_mint,
     )]
-    pub vault_token_account: Box<Account<'info, TokenAccount>>,
+    pub vtoken_account: Box<Account<'info, TokenAccount>>,
 
     // Vault
     #[account(
@@ -114,13 +111,13 @@ pub struct Deposit<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
-    // Vault token mint
+    // Vtoken mint
     #[account(
         mut,
-        seeds = [Vault::VAULT_TOKEN_MINT_SEED, vault.key().as_ref()],
+        seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump = vault.mint_bump,
     )]
-    pub vault_token_mint: Box<Account<'info, Mint>>,
+    pub vtoken_mint: Box<Account<'info, Mint>>,
 
     // Deposit token mint
     #[account(

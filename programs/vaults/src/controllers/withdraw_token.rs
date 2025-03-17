@@ -11,8 +11,8 @@ pub fn withdraw_all_tokens<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
     user: &Signer<'info>,
     vault: &Account<'info, Vault>,
-    vault_token_mint: &Account<'info, Mint>,
-    vault_token_amount: u64,
+    vtoken_mint: &Account<'info, Mint>,
+    vtoken_amount: u64,
     whitelist: &Account<'info, TokenWhitelist>,
     signer_seeds: &[&[&[u8]]],
     token_program: &Program<'info, Token>,
@@ -20,12 +20,12 @@ pub fn withdraw_all_tokens<'info>(
     system_program: &Program<'info, System>,
 ) -> Result<()> {
     msg!("Starting withdrawal of all tokens");
-    msg!("Vault token amount to withdraw: {}", vault_token_amount);
+    msg!("Vtoken amount to withdraw: {}", vtoken_amount);
 
     // Calculate withdrawal ratio
-    let total_supply = vault_token_mint.supply;
-    msg!("Total vault token supply: {}", total_supply);
-    let withdrawal_ratio = calculate_withdrawal_ratio(vault_token_amount, total_supply)?;
+    let total_supply = vtoken_mint.supply;
+    msg!("Total vtoken supply: {}", total_supply);
+    let withdrawal_ratio = calculate_withdrawal_ratio(vtoken_amount, total_supply)?;
     msg!("Withdrawal ratio calculated: {}", withdrawal_ratio);
 
     // Parse withdrawal accounts
@@ -67,8 +67,8 @@ pub fn withdraw_all_tokens<'info>(
     Ok(())
 }
 
-/// Calculate the withdrawal ratio based on the amount of vault tokens being withdrawn
-/// and the total supply of vault tokens in NAV decimals
+/// Calculate the withdrawal ratio based on the amount of vtokens being withdrawn
+/// and the total supply of vtokens in NAV decimals
 fn calculate_withdrawal_ratio(amount: u64, total_supply: u64) -> Result<u64> {
     msg!(
         "Calculating withdrawal ratio - Amount: {}, Total Supply: {}",

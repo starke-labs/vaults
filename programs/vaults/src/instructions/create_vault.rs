@@ -14,8 +14,8 @@ pub fn _create_vault(
         &ctx.accounts.deposit_token_mint.key(),
         name,
         ctx.bumps.vault,
-        &ctx.accounts.vault_token_mint.key(),
-        ctx.bumps.vault_token_mint,
+        &ctx.accounts.vtoken_mint.key(),
+        ctx.bumps.vtoken_mint,
         entry_fee,
         exit_fee,
     )?;
@@ -24,7 +24,7 @@ pub fn _create_vault(
         vault: ctx.accounts.vault.key(),
         manager: *ctx.accounts.manager.key,
         deposit_token: ctx.accounts.deposit_token_mint.key(),
-        vault_token_mint: ctx.accounts.vault_token_mint.key(),
+        vtoken_mint: ctx.accounts.vtoken_mint.key(),
         name: ctx.accounts.vault.name.to_string(),
         timestamp: ctx.accounts.clock.unix_timestamp,
         entry_fee: ctx.accounts.vault.entry_fee,
@@ -58,7 +58,7 @@ pub struct CreateVault<'info> {
     #[account(
         init,
         payer = manager,
-        seeds = [Vault::VAULT_TOKEN_MINT_SEED, vault.key().as_ref()],
+        seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
         // TODO: Update this to NAV_DECIMALS before creating new vault
         // TODO: Add metadata
@@ -66,7 +66,7 @@ pub struct CreateVault<'info> {
         mint::authority = vault,
         mint::freeze_authority = vault,
     )]
-    pub vault_token_mint: Box<Account<'info, Mint>>,
+    pub vtoken_mint: Box<Account<'info, Mint>>,
 
     // Whitelist
     #[account(

@@ -5,7 +5,7 @@ pub struct VaultCreated {
     pub vault: Pubkey,
     pub manager: Pubkey,
     pub deposit_token: Pubkey,
-    pub vault_token_mint: Pubkey,
+    pub vtoken_mint: Pubkey,
     pub name: String,
     pub timestamp: i64,
     pub entry_fee: u16,
