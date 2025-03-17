@@ -111,6 +111,7 @@ Current limitations and upcoming features:
 - TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
 - TODO: Use `vtoken` instead of `vault_token` for clear naming convention
 - TODO: Add `remove_token` instruction, but note that before removing a token, we should also remove it from all the vaults
+- TODO: Consider adding a `price_feed_account` to the token whitelist, so that we can add one more layer of verification
 
 ## Contributing
 
