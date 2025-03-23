@@ -48,10 +48,6 @@ pub fn calculate_vtokens_to_mint(
     deposit_value: u64,
     vtoken_supply: u64,
 ) -> Result<u64> {
-    // msg!("calculate_vtokens_to_mint called");
-    // msg!("Total NAV: {}", total_nav);
-    // msg!("Deposit value: {}", deposit_value);
-    // msg!("Vtoken supply: {}", vtoken_supply);
     if total_nav == 0 {
         // Initial deposit - mint 1:1
         Ok(deposit_value)

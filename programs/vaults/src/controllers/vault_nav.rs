@@ -58,16 +58,11 @@ pub fn compute_token_value_usd(
     token_decimals: u8,
     price_in_nav_decimals: u64,
 ) -> Result<u64> {
-    // msg!("compute_token_value_usd called");
-    // msg!("Token balance: {}", token_balance);
-    // msg!("Token decimals: {}", token_decimals);
-    // msg!("Price in NAV decimals: {}", price_in_nav_decimals);
     let value = token_balance
         .checked_mul(price_in_nav_decimals)
         .ok_or(VaultError::NumericOverflow)?
         .checked_div(10u64.pow(token_decimals as u32))
         .ok_or(VaultError::NumericOverflow)?;
-    // msg!("Token USD value: {}", value);
 
     Ok(value)
 }

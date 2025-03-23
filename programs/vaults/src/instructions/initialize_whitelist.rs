@@ -4,10 +4,19 @@ use crate::constants::PROGRAM_AUTHORITY;
 use crate::state::{TokenWhitelist, WhitelistError};
 
 pub fn _initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
+    msg!("Initializing token whitelist");
+    msg!("Authority: {}", ctx.accounts.authority.key());
+    msg!("Whitelist account: {}", ctx.accounts.whitelist.key());
+    msg!("Bump: {}", ctx.bumps.whitelist);
+
     let authority_key = ctx.accounts.authority.key();
     ctx.accounts
         .whitelist
-        .initialize(&authority_key, &PROGRAM_AUTHORITY, ctx.bumps.whitelist)
+        .initialize(&authority_key, &PROGRAM_AUTHORITY, ctx.bumps.whitelist)?;
+
+    msg!("Whitelist initialized successfully");
+
+    Ok(())
 }
 
 #[derive(Accounts)]

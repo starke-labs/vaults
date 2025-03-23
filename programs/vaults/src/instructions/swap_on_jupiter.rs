@@ -11,6 +11,14 @@ use crate::jupiter::Jupiter;
 use crate::state::{TokenWhitelist, Vault, WhitelistError};
 
 pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
+    msg!("Processing Jupiter swap request");
+    msg!("Manager: {}", ctx.accounts.manager.key());
+    msg!("Vault: {}", ctx.accounts.vault.key());
+    msg!("Input token: {}", ctx.accounts.input_token_mint.key());
+    msg!("Output token: {}", ctx.accounts.output_token_mint.key());
+    msg!("Jupiter program: {}", ctx.accounts.jupiter_program.key);
+    msg!("Data size: {} bytes", data.len());
+
     let accounts: Vec<AccountMeta> = ctx
         .remaining_accounts
         .iter()
@@ -20,6 +28,7 @@ pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()
             is_writable: acc.is_writable,
         })
         .collect();
+    msg!("Account metas prepared: {} accounts", accounts.len());
 
     let accounts_infos: Vec<AccountInfo> = ctx
         .remaining_accounts
@@ -38,6 +47,7 @@ pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()
             }
         })
         .collect();
+    msg!("Account infos prepared: {} accounts", accounts_infos.len());
 
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
@@ -52,6 +62,8 @@ pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()
         &accounts_infos,
         signer_seeds,
     )?;
+
+    msg!("Jupiter swap completed successfully");
 
     Ok(())
 }

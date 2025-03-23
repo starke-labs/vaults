@@ -61,12 +61,6 @@ pub mod vaults {
     pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
         _swap_on_jupiter(ctx, data)
     }
-
-    pub fn test_remaining_accounts<'info>(
-        ctx: Context<'_, '_, 'info, 'info, TestRemainingAccounts<'info>>,
-    ) -> Result<()> {
-        _test_remaining_accounts(ctx)
-    }
 }
 
 #[cfg(not(feature = "no-entrypoint"))]

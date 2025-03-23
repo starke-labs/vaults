@@ -13,6 +13,14 @@ pub fn _deposit<'info>(
     ctx: Context<'_, '_, 'info, 'info, Deposit<'info>>,
     amount: u64,
 ) -> Result<()> {
+    msg!("Processing deposit request of {} tokens", amount);
+    msg!("User: {}", ctx.accounts.user.key());
+    msg!("Vault: {}", ctx.accounts.vault.key());
+    msg!(
+        "Deposit token mint: {}",
+        ctx.accounts.deposit_token_mint.key()
+    );
+
     // Calculate the total NAV using vault's get_nav function
     let total_nav = ctx.accounts.vault.get_nav(
         ctx.remaining_accounts,
@@ -44,6 +52,10 @@ pub fn _deposit<'info>(
         &ctx.accounts.user,
         &ctx.accounts.token_program,
     )?;
+    msg!(
+        "{} tokens transferred from user to vault successfully",
+        amount
+    );
 
     // Mint vtokens to depositor
     let manager = ctx.accounts.manager.key();
@@ -58,6 +70,9 @@ pub fn _deposit<'info>(
         signer_seeds,
         &ctx.accounts.token_program,
     )?;
+    msg!("{} vtokens minted to user successfully", vtokens_to_mint);
+
+    msg!("Deposit completed successfully");
 
     emit!(Deposited {
         vault: ctx.accounts.vault.key(),
