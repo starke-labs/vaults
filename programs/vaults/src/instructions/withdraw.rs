@@ -2,8 +2,9 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
+use crate::constants::PROGRAM_AUTHORITY;
 use crate::controllers::{burn_vtoken, withdraw_all_tokens};
-use crate::state::{TokenWhitelist, Vault, WithdrawMade};
+use crate::state::{TokenWhitelist, Vault, WhitelistError, WithdrawMade};
 
 pub fn _withdraw<'info>(
     ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
@@ -60,6 +61,15 @@ pub struct Withdraw<'info> {
     // Depositor
     #[account(mut)]
     pub user: Signer<'info>,
+
+    // Program authority
+    // NOTE: It is necessary for the authority to be a signer as well because
+    //       the remaining accounts needs to be verified
+    #[account(
+        mut,
+        address = PROGRAM_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+    )]
+    pub authority: Signer<'info>,
 
     // Manager
     /// CHECK: We can skip checking the manager

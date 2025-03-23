@@ -3,10 +3,11 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
+use crate::constants::PROGRAM_AUTHORITY;
 use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
-use crate::state::{DepositMade, TokenWhitelist, Vault};
+use crate::state::{DepositMade, TokenWhitelist, Vault, WhitelistError};
 
 pub fn _deposit<'info>(
     ctx: Context<'_, '_, 'info, 'info, Deposit<'info>>,
@@ -73,6 +74,15 @@ pub struct Deposit<'info> {
     // Depositor
     #[account(mut)]
     pub user: Signer<'info>,
+
+    // Program authority
+    // NOTE: It is necessary for the authority to be a signer as well because
+    //       the remaining accounts needs to be verified
+    #[account(
+        mut,
+        address = PROGRAM_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+    )]
+    pub authority: Signer<'info>,
 
     // Manager
     /// CHECK: We can skip checking the manager
