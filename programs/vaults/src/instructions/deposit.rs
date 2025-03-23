@@ -7,7 +7,7 @@ use crate::constants::PROGRAM_AUTHORITY;
 use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
-use crate::state::{DepositMade, TokenWhitelist, Vault, WhitelistError};
+use crate::state::{Deposited, TokenWhitelist, Vault, WhitelistError};
 
 pub fn _deposit<'info>(
     ctx: Context<'_, '_, 'info, 'info, Deposit<'info>>,
@@ -59,10 +59,14 @@ pub fn _deposit<'info>(
         &ctx.accounts.token_program,
     )?;
 
-    emit!(DepositMade {
+    emit!(Deposited {
         vault: ctx.accounts.vault.key(),
         user: ctx.accounts.user.key(),
-        amount,
+        deposit_amount: amount,
+        vtoken_mint: ctx.accounts.vtoken_mint.key(),
+        vtoken_minted_amount: vtokens_to_mint,
+        // TODO: Check if this is correct
+        new_vtoken_supply: ctx.accounts.vtoken_mint.supply + vtokens_to_mint,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 

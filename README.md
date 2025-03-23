@@ -109,7 +109,6 @@ Current limitations and upcoming features:
 - TODO: Support for Token 2022
 - TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
 - TODO: Add `remove_token` instruction, but note that before removing a token, we should also remove it from all the vaults
-- TODO: Consider adding a `price_feed_account` to the token whitelist, so that we can add one more layer of verification
 - TODO: Fix tests (use mainnet)
 
 ## Contributing

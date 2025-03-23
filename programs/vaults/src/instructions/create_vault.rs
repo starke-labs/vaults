@@ -23,7 +23,7 @@ pub fn _create_vault(
     emit!(VaultCreated {
         vault: ctx.accounts.vault.key(),
         manager: *ctx.accounts.manager.key,
-        deposit_token: ctx.accounts.deposit_token_mint.key(),
+        deposit_token_mint: ctx.accounts.deposit_token_mint.key(),
         vtoken_mint: ctx.accounts.vtoken_mint.key(),
         name: ctx.accounts.vault.name.to_string(),
         timestamp: ctx.accounts.clock.unix_timestamp,

@@ -4,7 +4,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::constants::PROGRAM_AUTHORITY;
 use crate::controllers::{burn_vtoken, withdraw_all_tokens};
-use crate::state::{TokenWhitelist, Vault, WhitelistError, WithdrawMade};
+use crate::state::{TokenWhitelist, Vault, WhitelistError, Withdrawn};
 
 pub fn _withdraw<'info>(
     ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
@@ -45,10 +45,13 @@ pub fn _withdraw<'info>(
     )?;
     msg!("All token withdrawals processed successfully");
 
-    emit!(WithdrawMade {
+    emit!(Withdrawn {
         vault: ctx.accounts.vault.key(),
         user: ctx.accounts.user.key(),
-        amount,
+        vtoken_mint: ctx.accounts.vtoken_mint.key(),
+        vtoken_burned_amount: amount,
+        // TODO: Check if this is correct
+        new_vtoken_supply: ctx.accounts.vtoken_mint.supply - amount,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
     msg!("Withdraw event emitted");
