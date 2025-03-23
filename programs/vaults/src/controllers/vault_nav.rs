@@ -5,6 +5,7 @@ use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 use crate::state::{TokenWhitelist, VaultError};
 
 pub struct VaultTokenInfo<'info> {
+    pub token_mint: Pubkey,
     pub token_balance: u64,
     pub token_decimals: u8,
     pub price_feed_id: String,
@@ -36,9 +37,11 @@ pub fn parse_vault_balances<'info>(
             VaultError::VaultAndTokenAccountMismatch
         );
 
-        let price_feed_id = whitelist.get_price_feed_id(&mint.key())?.to_string();
+        let token_mint = mint.key();
+        let price_feed_id = whitelist.get_price_feed_id(&token_mint)?.to_string();
 
         vault_token_infos.push(VaultTokenInfo {
+            token_mint,
             token_balance: token_account.amount,
             token_decimals: mint.decimals,
             price_feed_id,

@@ -2,7 +2,8 @@ use anchor_lang::prelude::*;
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use super::{
-    compute_token_value_usd, get_token_price_from_pyth_feed, transform_price_to_nav_decimals,
+    compute_token_value_usd, transform_price_to_nav_decimals,
+    verify_price_update_and_get_pyth_price,
 };
 use crate::state::TokenWhitelist;
 
@@ -17,8 +18,9 @@ pub fn calculate_deposit_token_value<'info>(
     // msg!("Deposit token mint: {}", deposit_token_mint);
     // msg!("Deposit token decimals: {}", deposit_token_decimals);
     // msg!("Deposit amount: {}", amount);
-    let deposit_price_feed_id = whitelist.get_price_feed_id(&deposit_token_mint)?;
-    let deposit_price = get_token_price_from_pyth_feed(deposit_price_feed_id, price_update)?;
+    // let deposit_price_feed_id = whitelist.get_price_feed_id(&deposit_token_mint)?;
+    let deposit_price =
+        verify_price_update_and_get_pyth_price(whitelist, &deposit_token_mint, price_update)?;
     // msg!(
     //     "Deposit price: {} {} {}",
     //     deposit_price.price,
