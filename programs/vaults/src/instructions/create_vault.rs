@@ -9,6 +9,15 @@ pub fn _create_vault(
     entry_fee: u16,
     exit_fee: u16,
 ) -> Result<()> {
+    msg!("Processing vault creation request");
+    msg!("Manager: {}", ctx.accounts.manager.key());
+    msg!(
+        "Deposit token mint: {}",
+        ctx.accounts.deposit_token_mint.key()
+    );
+    msg!("Name: {}", name);
+    msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
+
     ctx.accounts.vault.initialize(
         &ctx.accounts.manager.key(),
         &ctx.accounts.deposit_token_mint.key(),
@@ -19,6 +28,8 @@ pub fn _create_vault(
         entry_fee,
         exit_fee,
     )?;
+
+    msg!("Successfully created vault: {}", ctx.accounts.vault.key());
 
     emit!(VaultCreated {
         vault: ctx.accounts.vault.key(),

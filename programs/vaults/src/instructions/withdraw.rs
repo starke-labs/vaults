@@ -10,15 +10,16 @@ pub fn _withdraw<'info>(
     ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
     amount: u64,
 ) -> Result<()> {
-    msg!("Withdraw instruction called with amount: {}", amount);
+    msg!("Processing withdrawal request of {} vtokens", amount);
+    msg!("User: {}", ctx.accounts.user.key());
+    msg!("Vault: {}", ctx.accounts.vault.key());
+    msg!("Vtoken mint: {}", ctx.accounts.vtoken_mint.key());
 
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
     let signer_seeds = &[&vault_seeds[..]];
-    msg!("Vault seeds generated");
 
     // Burn vtokens from depositor
-    msg!("Burning vtokens: {}", amount);
     burn_vtoken(
         &ctx.accounts.user,
         &ctx.accounts.vtoken_mint,
@@ -27,10 +28,9 @@ pub fn _withdraw<'info>(
         signer_seeds,
         &ctx.accounts.token_program,
     )?;
-    msg!("Vtokens burned successfully");
+    msg!("{} vtokens burned successfully", amount);
 
     // Process withdrawals for all tokens in the vault
-    msg!("Processing withdrawals for all vault tokens");
     withdraw_all_tokens(
         &ctx.remaining_accounts,
         &ctx.accounts.user,
@@ -43,7 +43,8 @@ pub fn _withdraw<'info>(
         &ctx.accounts.associated_token_program,
         &ctx.accounts.system_program,
     )?;
-    msg!("All token withdrawals processed successfully");
+
+    msg!("Withdrawal completed successfully");
 
     emit!(Withdrawn {
         vault: ctx.accounts.vault.key(),
@@ -54,7 +55,6 @@ pub fn _withdraw<'info>(
         new_vtoken_supply: ctx.accounts.vtoken_mint.supply - amount,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
-    msg!("Withdraw event emitted");
 
     Ok(())
 }
