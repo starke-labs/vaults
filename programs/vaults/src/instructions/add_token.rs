@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::PROGRAM_AUTHORITY;
-use crate::state::{TokenWhitelist, TokenWhitelisted, WhitelistError};
+use crate::state::{TokenWhitelist, WhitelistError, WhitelistTokenAdded};
 
 pub fn _add_token(
     ctx: Context<ModifyWhitelist>,
@@ -13,8 +13,10 @@ pub fn _add_token(
         .whitelist
         .add_token(&token, price_feed_id, &price_update)?;
 
-    emit!(TokenWhitelisted {
-        token: *token,
+    emit!(WhitelistTokenAdded {
+        mint: *token,
+        price_feed_id: price_feed_id.to_string(),
+        price_update: *price_update,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 

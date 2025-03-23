@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 pub struct VaultCreated {
     pub vault: Pubkey,
     pub manager: Pubkey,
-    pub deposit_token: Pubkey,
+    pub deposit_token_mint: Pubkey,
     pub vtoken_mint: Pubkey,
     pub name: String,
     pub timestamp: i64,
@@ -31,23 +31,36 @@ pub struct VaultFeesUpdated {
 }
 
 #[event]
-pub struct DepositMade {
+pub struct Deposited {
     pub vault: Pubkey,
     pub user: Pubkey,
-    pub amount: u64,
+    pub deposit_amount: u64,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_minted_amount: u64,
+    pub new_vtoken_supply: u64,
     pub timestamp: i64,
 }
 
 #[event]
-pub struct WithdrawMade {
+pub struct Withdrawn {
     pub vault: Pubkey,
     pub user: Pubkey,
-    pub amount: u64,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_burned_amount: u64,
+    pub new_vtoken_supply: u64,
     pub timestamp: i64,
 }
 
 #[event]
-pub struct TokenWhitelisted {
-    pub token: Pubkey,
+pub struct WhitelistTokenAdded {
+    pub mint: Pubkey,
+    pub price_feed_id: String,
+    pub price_update: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct WhitelistTokenRemoved {
+    pub mint: Pubkey,
     pub timestamp: i64,
 }
