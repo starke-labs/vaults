@@ -22,8 +22,9 @@ pub mod vaults {
         ctx: Context<ModifyWhitelist>,
         token: Pubkey,
         price_feed_id: String,
+        price_update: Pubkey,
     ) -> Result<()> {
-        _add_token(ctx, token, price_feed_id.as_str())
+        _add_token(ctx, &token, &price_feed_id, &price_update)
     }
 
     pub fn create_vault(
@@ -32,7 +33,7 @@ pub mod vaults {
         entry_fee: u16,
         exit_fee: u16,
     ) -> Result<()> {
-        _create_vault(ctx, name.as_str(), entry_fee, exit_fee)
+        _create_vault(ctx, &name, entry_fee, exit_fee)
     }
 
     pub fn update_vault_fees(
@@ -75,7 +76,7 @@ use solana_security_txt::security_txt;
 security_txt! {
     name: "Starke Finance",
     project_url: "https://starke.finance",
-    contacts: "email:contact@starkevalidator.com,discord:https://discord.gg/Kwvx8hcZBx",
+    contacts: "email:contact@starke.finance,discord:https://discord.gg/Kwvx8hcZBx",
     policy: "https://github.com/starke-labs/vaults/blob/main/SECURITY.md",
     preferred_languages: "en",
     source_code: "https://github.com/starke-labs/vaults"

@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 
 use super::{TokenWhitelist, VaultFeesUpdated};
 use crate::controllers::{
-    compute_token_value_usd, get_token_price_from_pyth_feed, parse_vault_balances,
-    transform_price_to_nav_decimals,
+    compute_token_value_usd, parse_vault_balances, transform_price_to_nav_decimals,
+    verify_price_update_and_get_pyth_price,
 };
 
 #[account]
@@ -136,8 +136,11 @@ impl Vault {
             .map(|b| {
                 // msg!("Token balance: {}", b.token_balance);
                 // msg!("Token decimals: {}", b.token_decimals);
-                let token_price =
-                    get_token_price_from_pyth_feed(b.price_feed_id.as_str(), &b.price_update)?;
+                let token_price = verify_price_update_and_get_pyth_price(
+                    whitelist,
+                    &b.token_mint,
+                    &b.price_update,
+                )?;
                 // TODO: Throw error if confidence interval is above threshold
                 //       https://docs.pyth.network/price-feeds/best-practices#confidence-intervals
                 // msg!(
