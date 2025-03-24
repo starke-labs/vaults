@@ -23,6 +23,15 @@ export interface AddTokenAccounts {
   authority: PublicKey;
 }
 
+// Remove Token
+export interface RemoveTokenParams {
+  token: PublicKey;
+}
+
+export interface RemoveTokenAccounts {
+  authority: PublicKey;
+}
+
 // Deposit
 export interface DepositParams {
   amount: BN;

@@ -28,6 +28,8 @@ import {
   CreateVaultParams,
   DepositAccounts,
   DepositParams,
+  RemoveTokenAccounts,
+  RemoveTokenParams,
   SwapOnJupiterAccounts,
   SwapOnJupiterParams,
   UpdateFeesAccounts,
@@ -109,6 +111,20 @@ export class VaultsSDK {
   ): Promise<TransactionInstruction> {
     const instruction = await this.program.methods
       .addToken(params.token, params.priceFeedId)
+      .accounts({
+        authority: accounts.authority,
+      })
+      .instruction();
+
+    return instruction;
+  }
+
+  async removeToken(
+    params: RemoveTokenParams,
+    accounts: RemoveTokenAccounts
+  ): Promise<TransactionInstruction> {
+    const instruction = await this.program.methods
+      .removeToken(params.token)
       .accounts({
         authority: accounts.authority,
       })
