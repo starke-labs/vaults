@@ -27,6 +27,10 @@ pub mod vaults {
         _add_token(ctx, &token, &price_feed_id, &price_update)
     }
 
+    pub fn remove_token(ctx: Context<ModifyWhitelist>, token: Pubkey) -> Result<()> {
+        _remove_token(ctx, &token)
+    }
+
     pub fn create_vault(
         ctx: Context<CreateVault>,
         name: String,
