@@ -34,10 +34,12 @@ pub mod vaults {
     pub fn create_vault(
         ctx: Context<CreateVault>,
         name: String,
+        symbol: String,
+        uri: String,
         entry_fee: u16,
         exit_fee: u16,
     ) -> Result<()> {
-        _create_vault(ctx, &name, entry_fee, exit_fee)
+        _create_vault(ctx, &name, &symbol, &uri, entry_fee, exit_fee)
     }
 
     pub fn update_vault_fees(

@@ -105,10 +105,8 @@ Current limitations and upcoming features:
 - Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
 - Maximum number of tokens is currently set to 100
 - TODO: Add types for whitelist and vault accounts in sdk
-- TODO: Fix token name https://solscan.io/token/9Gbw6ZkZY563o9RPa8fzFni3dthfmn4Ru4CPhtKkkcFZ
 - TODO: Support for Token 2022
 - TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
-- TODO: Add `remove_token` instruction, but note that before removing a token, we should also remove it from all the vaults
 - TODO: Fix tests (use mainnet)
 
 ## Contributing

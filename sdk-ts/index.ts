@@ -20,7 +20,7 @@ import {
 } from "@solana/web3.js";
 
 import { EventHandler } from "./events";
-import { getVaultPda, getWhitelistPda } from "./pdas";
+import { getVaultPda, getVtokenMintPda, getWhitelistPda } from "./pdas";
 import {
   AddTokenAccounts,
   AddTokenParams,
@@ -86,11 +86,15 @@ export class VaultsSDK {
     params: CreateVaultParams,
     accounts: CreateVaultAccounts
   ): Promise<TransactionInstruction> {
+    const vaultPda = getVaultPda(accounts.manager)[0];
+    const vTokenMintPda = getVtokenMintPda(vaultPda)[0];
+
     const instruction = await this.program.methods
-      .createVault(params.name, params.entryFee, params.exitFee)
+      .createVault(params.name, params.symbol, params.uri, params.entryFee, params.exitFee)
       .accounts({
         manager: accounts.manager,
         depositTokenMint: accounts.depositTokenMint,
+        metadata: accounts.metadata,
       })
       .instruction();
 
