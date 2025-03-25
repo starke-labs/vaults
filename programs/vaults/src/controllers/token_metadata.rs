@@ -29,7 +29,7 @@ pub fn initialize_token_metadata<'info>(
         uses: None,
     };
 
-    // NOTE: Setting the mint as the update authority gives the authority to the program.
+    // NOTE: Setting the mint as the update authority gives the authority to the vault.
     let metadata_ctx = CpiContext::new_with_signer(
         metadata_program.to_account_info(),
         CreateMetadataAccountsV3 {
