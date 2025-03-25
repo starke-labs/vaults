@@ -4,6 +4,8 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 // Create Vault
 export interface CreateVaultParams {
   name: string;
+  symbol: string;
+  uri: string;
   entryFee: number;
   exitFee: number;
 }

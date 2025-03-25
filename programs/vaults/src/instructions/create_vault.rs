@@ -1,11 +1,20 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token};
+use anchor_spl::{
+    metadata::Metadata,
+    token::{Mint, Token},
+};
 
-use crate::state::{TokenWhitelist, Vault, VaultCreated, WhitelistError};
+use crate::{
+    constants::NAV_DECIMALS,
+    controllers::initialize_vtoken_metadata,
+    state::{TokenWhitelist, Vault, VaultCreated, WhitelistError},
+};
 
 pub fn _create_vault(
     ctx: Context<CreateVault>,
     name: &str,
+    symbol: &str,
+    uri: &str,
     entry_fee: u16,
     exit_fee: u16,
 ) -> Result<()> {
@@ -18,6 +27,26 @@ pub fn _create_vault(
     msg!("Name: {}", name);
     msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
 
+    // Initialize vtoken metadata
+    let manager = ctx.accounts.manager.key();
+    let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
+    let signer_seeds = &[&vault_seeds[..]];
+
+    initialize_vtoken_metadata(
+        name,
+        symbol,
+        uri,
+        &ctx.accounts.manager,
+        &ctx.accounts.vtoken_mint,
+        &ctx.accounts.metadata,
+        signer_seeds,
+        &ctx.accounts.rent,
+        &ctx.accounts.metadata_program,
+        &ctx.accounts.system_program,
+    )?;
+    msg!("Successfully initialized vtoken metadata");
+
+    // Initialize vault
     ctx.accounts.vault.initialize(
         &ctx.accounts.manager.key(),
         &ctx.accounts.deposit_token_mint.key(),
@@ -65,19 +94,22 @@ pub struct CreateVault<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
-    // Vault token mint
+    // Vtoken mint
     #[account(
         init,
         payer = manager,
         seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
-        // TODO: Update this to NAV_DECIMALS before creating new vault
         // TODO: Add metadata
-        mint::decimals = deposit_token_mint.decimals,
+        mint::decimals = NAV_DECIMALS,
         mint::authority = vault,
         mint::freeze_authority = vault,
     )]
     pub vtoken_mint: Box<Account<'info, Mint>>,
+
+    // Vtoken metadata
+    /// CHECK: This account will be initialized by the controller
+    pub metadata: UncheckedAccount<'info>,
 
     // Whitelist
     #[account(
@@ -92,7 +124,9 @@ pub struct CreateVault<'info> {
     )]
     pub deposit_token_mint: Box<Account<'info, Mint>>,
 
+    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+    pub metadata_program: Program<'info, Metadata>,
     pub clock: Sysvar<'info, Clock>,
 }

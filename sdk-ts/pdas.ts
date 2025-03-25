@@ -3,11 +3,14 @@ import { PublicKey } from "@solana/web3.js";
 export const PROGRAM_ID = new PublicKey(
   "STRK2VEGPAKstk6S6k5Cpin6uGtSDQkvanTaXUeaTNj"
 );
+export const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 
 // Seeds
 export const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
 export const VAULT_SEED = "STARKE_VAULT";
 export const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
+
+export const METADATA_SEED = "metadata";
 
 // PDAs
 export function getWhitelistPda(): [PublicKey, number] {
@@ -28,5 +31,12 @@ export function getVtokenMintPda(vault: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from(VTOKEN_MINT_SEED), vault.toBuffer()],
     PROGRAM_ID
+  );
+}
+
+export function getVtokenMetadataPda(vtokenMint: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(METADATA_SEED), TOKEN_METADATA_PROGRAM_ID.toBuffer(), vtokenMint.toBuffer()],
+    TOKEN_METADATA_PROGRAM_ID,
   );
 }
