@@ -6,7 +6,7 @@ use anchor_spl::{
 
 use crate::{
     constants::NAV_DECIMALS,
-    controllers::initialize_vtoken_metadata,
+    controllers::initialize_token_metadata,
     state::{TokenWhitelist, Vault, VaultCreated, WhitelistError},
 };
 
@@ -32,7 +32,7 @@ pub fn _create_vault(
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
     let signer_seeds = &[&vault_seeds[..]];
 
-    initialize_vtoken_metadata(
+    initialize_token_metadata(
         name,
         symbol,
         uri,

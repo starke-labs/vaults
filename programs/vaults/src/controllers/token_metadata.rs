@@ -7,7 +7,7 @@ use anchor_spl::{
     token::Mint,
 };
 
-pub fn initialize_vtoken_metadata<'info>(
+pub fn initialize_token_metadata<'info>(
     name: &str,
     symbol: &str,
     uri: &str,
