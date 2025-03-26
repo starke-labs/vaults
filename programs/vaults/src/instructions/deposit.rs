@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::constants::PROGRAM_AUTHORITY;
@@ -49,6 +49,7 @@ pub fn _deposit<'info>(
         &ctx.accounts.user_deposit_token_account,
         &ctx.accounts.vault_deposit_token_account,
         amount,
+        &ctx.accounts.deposit_token_mint,
         &ctx.accounts.user,
         &ctx.accounts.token_program,
     )?;
@@ -113,7 +114,7 @@ pub struct Deposit<'info> {
         associated_token::authority = user,
         associated_token::mint = deposit_token_mint,
     )]
-    pub user_deposit_token_account: Box<Account<'info, TokenAccount>>,
+    pub user_deposit_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // Vault's deposit token account (to account)
     #[account(
@@ -122,7 +123,7 @@ pub struct Deposit<'info> {
         associated_token::authority = vault,
         associated_token::mint = deposit_token_mint,
     )]
-    pub vault_deposit_token_account: Box<Account<'info, TokenAccount>>,
+    pub vault_deposit_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // Depositor's vtoken account
     #[account(
@@ -131,7 +132,7 @@ pub struct Deposit<'info> {
         associated_token::authority = user,
         associated_token::mint = vtoken_mint,
     )]
-    pub vtoken_account: Box<Account<'info, TokenAccount>>,
+    pub vtoken_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // Vault
     #[account(
@@ -146,13 +147,13 @@ pub struct Deposit<'info> {
         seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump = vault.mint_bump,
     )]
-    pub vtoken_mint: Box<Account<'info, Mint>>,
+    pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Deposit token mint
     #[account(
         constraint = deposit_token_mint.key() == vault.deposit_token_mint,
     )]
-    pub deposit_token_mint: Box<Account<'info, Mint>>,
+    pub deposit_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Deposit token price update
     pub deposit_token_price_update: Box<Account<'info, PriceUpdateV2>>,
@@ -165,7 +166,7 @@ pub struct Deposit<'info> {
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
     pub clock: Sysvar<'info, Clock>,
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }

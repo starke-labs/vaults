@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     metadata::Metadata,
-    token::{Mint, Token},
+    token_interface::{Mint, TokenInterface},
 };
 
 use crate::{
@@ -105,7 +105,7 @@ pub struct CreateVault<'info> {
         mint::authority = vault,
         mint::freeze_authority = vault,
     )]
-    pub vtoken_mint: Box<Account<'info, Mint>>,
+    pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Vtoken metadata
     /// CHECK: This account will be initialized by the controller
@@ -122,11 +122,11 @@ pub struct CreateVault<'info> {
     #[account(
         constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
     )]
-    pub deposit_token_mint: Box<Account<'info, Mint>>,
+    pub deposit_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub metadata_program: Program<'info, Metadata>,
     pub clock: Sysvar<'info, Clock>,
 }

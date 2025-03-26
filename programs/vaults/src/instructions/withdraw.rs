@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::constants::PROGRAM_AUTHORITY;
 use crate::controllers::{burn_vtoken, withdraw_all_tokens};
@@ -84,7 +84,7 @@ pub struct Withdraw<'info> {
         associated_token::authority = user,
         associated_token::mint = vtoken_mint,
     )]
-    pub user_vtoken_account: Box<Account<'info, TokenAccount>>,
+    pub user_vtoken_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // Vault
     #[account(
@@ -99,7 +99,7 @@ pub struct Withdraw<'info> {
         seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump = vault.mint_bump,
     )]
-    pub vtoken_mint: Box<Account<'info, Mint>>,
+    pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Token whitelist
     #[account(
@@ -109,7 +109,7 @@ pub struct Withdraw<'info> {
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
     pub clock: Sysvar<'info, Clock>,
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }

@@ -1,15 +1,17 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{burn, mint_to, Burn, Mint, MintTo, Token, TokenAccount};
+use anchor_spl::token_interface::{
+    burn, mint_to, Burn, Mint, MintTo, TokenAccount, TokenInterface,
+};
 
 use crate::state::{Vault, VaultError};
 
 pub fn mint_vtoken<'info>(
     vault: &Account<'info, Vault>,
-    mint: &Account<'info, Mint>,
-    to: &Account<'info, TokenAccount>,
+    mint: &InterfaceAccount<'info, Mint>,
+    to: &InterfaceAccount<'info, TokenAccount>,
     amount: u64,
     signer_seeds: &[&[&[u8]]],
-    token_program: &Program<'info, Token>,
+    token_program: &Interface<'info, TokenInterface>,
 ) -> Result<()> {
     let mint_accounts = MintTo {
         mint: mint.to_account_info(),
@@ -25,11 +27,11 @@ pub fn mint_vtoken<'info>(
 
 pub fn burn_vtoken<'info>(
     user: &Signer<'info>,
-    mint: &Account<'info, Mint>,
-    from: &Account<'info, TokenAccount>,
+    mint: &InterfaceAccount<'info, Mint>,
+    from: &InterfaceAccount<'info, TokenAccount>,
     amount: u64,
     signer_seeds: &[&[&[u8]]],
-    token_program: &Program<'info, Token>,
+    token_program: &Interface<'info, TokenInterface>,
 ) -> Result<()> {
     let burn_accounts = Burn {
         mint: mint.to_account_info(),
