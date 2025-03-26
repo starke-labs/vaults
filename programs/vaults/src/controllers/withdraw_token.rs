@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::*;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount, TokenInterface},
+};
 
 use super::{create_associated_token_account, transfer_token_with_signer};
 use crate::constants::PRECISION;
@@ -11,11 +13,11 @@ pub fn withdraw_all_tokens<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
     user: &Signer<'info>,
     vault: &Account<'info, Vault>,
-    vtoken_mint: &Account<'info, Mint>,
+    vtoken_mint: &InterfaceAccount<'info, Mint>,
     vtoken_amount: u64,
     whitelist: &Account<'info, TokenWhitelist>,
     signer_seeds: &[&[&[u8]]],
-    token_program: &Program<'info, Token>,
+    token_program: &Interface<'info, TokenInterface>,
     associated_token_program: &Program<'info, AssociatedToken>,
     system_program: &Program<'info, System>,
 ) -> Result<()> {
@@ -95,9 +97,9 @@ fn calculate_withdrawal_ratio(amount: u64, total_supply: u64) -> Result<u64> {
 }
 
 struct WithdrawalAccounts<'info> {
-    pub mint: Account<'info, Mint>,
-    pub vault_token_account: Account<'info, TokenAccount>,
-    pub user_token_account: Account<'info, TokenAccount>,
+    pub mint: InterfaceAccount<'info, Mint>,
+    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
 }
 
 /// Parse withdrawal accounts from remaining accounts
@@ -106,7 +108,7 @@ fn parse_withdrawal_accounts<'info>(
     user: &Signer<'info>,
     whitelist: &Account<'info, TokenWhitelist>,
     vault_key: &Pubkey,
-    token_program: &Program<'info, Token>,
+    token_program: &Interface<'info, TokenInterface>,
     system_program: &Program<'info, System>,
     associated_token_program: &Program<'info, AssociatedToken>,
 ) -> Result<Vec<WithdrawalAccounts<'info>>> {
@@ -117,8 +119,9 @@ fn parse_withdrawal_accounts<'info>(
         // 1. Token mint
         // 2. Vault token account
         // 3. User token account
-        let mint = Account::<'info, Mint>::try_from(&chunk[0])?;
-        let vault_token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[1])?;
+        let mint = InterfaceAccount::<'info, Mint>::try_from(&chunk[0])?;
+        let vault_token_account: InterfaceAccount<'info, TokenAccount> =
+            InterfaceAccount::try_from(&chunk[1])?;
 
         msg!("Trying to parse user token account");
         if chunk[2].data_is_empty() {
@@ -133,7 +136,8 @@ fn parse_withdrawal_accounts<'info>(
             )?;
         }
 
-        let user_token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[2])?;
+        let user_token_account: InterfaceAccount<'info, TokenAccount> =
+            InterfaceAccount::try_from(&chunk[2])?;
         msg!("Successfully parsed user token account");
 
         msg!("Checking if mint and token account match");
@@ -177,13 +181,13 @@ fn parse_withdrawal_accounts<'info>(
 
 /// Withdraw a single token from the vault token account to a user token account
 fn withdraw_token<'info>(
-    mint: &Account<'info, Mint>,
-    from: &Account<'info, TokenAccount>,
-    to: &Account<'info, TokenAccount>,
+    mint: &InterfaceAccount<'info, Mint>,
+    from: &InterfaceAccount<'info, TokenAccount>,
+    to: &InterfaceAccount<'info, TokenAccount>,
     withdrawal_ratio: u64,
     vault: &Account<'info, Vault>,
     signer_seeds: &[&[&[u8]]],
-    token_program: &Program<'info, Token>,
+    token_program: &Interface<'info, TokenInterface>,
 ) -> Result<()> {
     // TODO: Throw error if to account (user token account) key doesn't match
     //       the one associated with the user and the mint
@@ -204,6 +208,7 @@ fn withdraw_token<'info>(
         from,
         to,
         amount,
+        mint,
         &vault.to_account_info(),
         signer_seeds,
         token_program,

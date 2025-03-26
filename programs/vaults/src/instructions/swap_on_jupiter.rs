@@ -4,7 +4,7 @@ use anchor_lang::{
 };
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
+    token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
 use crate::jupiter::Jupiter;
@@ -92,13 +92,13 @@ pub struct SwapOnJupiter<'info> {
     #[account(
         constraint = whitelist.is_whitelisted(&input_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
     )]
-    pub input_token_mint: Box<Account<'info, Mint>>,
+    pub input_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Token output mint
     #[account(
         constraint = whitelist.is_whitelisted(&output_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
     )]
-    pub output_token_mint: Box<Account<'info, Mint>>,
+    pub output_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Token input account
     #[account(
@@ -106,7 +106,7 @@ pub struct SwapOnJupiter<'info> {
         associated_token::authority = vault,
         associated_token::mint = input_token_mint
     )]
-    pub input_token_account: Box<Account<'info, TokenAccount>>,
+    pub input_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // Token output account
     #[account(
@@ -115,10 +115,10 @@ pub struct SwapOnJupiter<'info> {
         associated_token::authority = vault,
         associated_token::mint = output_token_mint
     )]
-    pub output_token_account: Box<Account<'info, TokenAccount>>,
+    pub output_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub jupiter_program: Program<'info, Jupiter>,
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }

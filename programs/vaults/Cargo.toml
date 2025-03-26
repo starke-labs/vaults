@@ -18,7 +18,7 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
 anchor-lang = { version = "0.31.0", features = ["init-if-needed"] }
-anchor-spl = { version = "0.31.0", features=["metadata"] }
+anchor-spl = { version = "0.31.0", features=["metadata", "token_2022"] }
 solana-security-txt = { version = "1.1.1" }
 pyth-solana-receiver-sdk = { version = "0.6.0" }
 jupiter = { path = "../jupiter", features = ["no-entrypoint"] }

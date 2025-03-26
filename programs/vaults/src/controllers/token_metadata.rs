@@ -4,7 +4,7 @@ use anchor_spl::{
         create_metadata_accounts_v3, mpl_token_metadata::types::DataV2, CreateMetadataAccountsV3,
         Metadata,
     },
-    token::Mint,
+    token_interface::Mint,
 };
 
 pub fn initialize_token_metadata<'info>(
@@ -12,7 +12,7 @@ pub fn initialize_token_metadata<'info>(
     symbol: &str,
     uri: &str,
     payer: &Signer<'info>,
-    mint: &Account<'info, Mint>,
+    mint: &InterfaceAccount<'info, Mint>,
     metadata: &AccountInfo<'info>,
     signer_seeds: &[&[&[u8]]],
     rent: &Sysvar<'info, Rent>,

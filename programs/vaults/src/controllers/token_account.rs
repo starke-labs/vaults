@@ -1,14 +1,14 @@
 use anchor_lang::prelude::*;
 
 use anchor_spl::associated_token::{create_idempotent, AssociatedToken, Create};
-use anchor_spl::token::{Mint, Token};
+use anchor_spl::token_interface::{Mint, TokenInterface};
 
 /// Creates an associated token account for the given token mint and owner if it doesn't already exist.
 pub fn create_associated_token_account<'info>(
     user: &Signer<'info>,
-    mint: &Account<'info, Mint>,
+    mint: &InterfaceAccount<'info, Mint>,
     associated_token: &AccountInfo<'info>,
-    token_program: &Program<'info, Token>,
+    token_program: &Interface<'info, TokenInterface>,
     system_program: &Program<'info, System>,
     associated_token_program: &Program<'info, AssociatedToken>,
 ) -> Result<()> {

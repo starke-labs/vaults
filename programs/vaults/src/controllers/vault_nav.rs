@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, TokenAccount};
+use anchor_spl::token_interface::{Mint, TokenAccount};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::state::{TokenWhitelist, VaultError};
@@ -24,8 +24,9 @@ pub fn parse_vault_balances<'info>(
         // 1. Token mint
         // 2. Token account
         // 3. Price update
-        let mint = Account::<'info, Mint>::try_from(&chunk[0])?;
-        let token_account: Account<'info, TokenAccount> = Account::try_from(&chunk[1])?;
+        let mint = InterfaceAccount::<'info, Mint>::try_from(&chunk[0])?;
+        let token_account: InterfaceAccount<'info, TokenAccount> =
+            InterfaceAccount::try_from(&chunk[1])?;
         let price_update: Account<'_, PriceUpdateV2> = Account::try_from(&chunk[2])?;
 
         require!(
