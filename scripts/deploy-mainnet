@@ -7,4 +7,7 @@ if [ -z "$MAINNET_RPC" ]; then
     exit 1
 fi
 
-anchor deploy -p vaults -v --provider.cluster $MAINNET_RPC
+# NOTE: Can not use verifiable build unless anchor fixes their issue
+#       https://github.com/coral-xyz/anchor/issues/3585
+# anchor deploy -p vaults -v --provider.cluster $MAINNET_RPC
+anchor deploy -p vaults --provider.cluster $MAINNET_RPC
