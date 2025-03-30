@@ -20,7 +20,15 @@ import {
 } from "@solana/web3.js";
 
 import { EventHandler } from "./events";
-import { getVaultPda, getVtokenMintPda, getWhitelistPda } from "./pdas";
+import {
+  SignatureVerificationFailedError,
+  TokenAlreadyInWhitelistError,
+  TokenNotWhitelistedError,
+  WhitelistAlreadyInitializedError,
+  WhitelistNotInitializedError,
+} from "./lib/errors";
+import { getVaultPda, getVtokenMintPda, getWhitelistPda } from "./lib/pdas";
+import { Token, Whitelist } from "./lib/types";
 import {
   AddTokenAccounts,
   AddTokenParams,
@@ -43,12 +51,6 @@ import {
   sendAndConfirmWithRetry,
 } from "./utils";
 
-// TODO: Move this to somewhere else
-interface Token {
-  mint: PublicKey;
-  priceFeedId: string;
-}
-
 interface AccountMeta {
   pubkey: PublicKey;
   isWritable: boolean;
@@ -67,6 +69,7 @@ export class VaultsSDK {
     connection: Connection,
     keypair: Keypair,
     programId: PublicKey,
+    // TODO: This should be a part of the SDK and not a parameter to the constructor
     idl: Idl
   ) {
     this.provider = new AnchorProvider(
@@ -81,6 +84,88 @@ export class VaultsSDK {
     this.jup = createJupiterApiClient();
   }
 
+  // *** New methods ***
+  async fetchWhitelist(): Promise<Whitelist> {
+    try {
+      const whitelist: Whitelist =
+        // @ts-ignore
+        await this.program.account.tokenWhitelist.fetch(getWhitelistPda()[0]);
+      return whitelist;
+    } catch (e) {
+      if (e.toString().includes("Account does not exist")) {
+        throw new WhitelistNotInitializedError();
+      }
+      throw e;
+    }
+  }
+
+  async fetchWhitelistedTokens(mint: PublicKey): Promise<Token> {
+    const whitelist = await this.fetchWhitelist();
+    const token = whitelist.tokens.find(
+      (token) => token.mint.toBase58() === mint.toBase58()
+    );
+    if (!token) {
+      throw new TokenNotWhitelistedError(mint);
+    }
+    return token;
+  }
+
+  async initializeWhitelist(signers: (Keypair | Signer)[]): Promise<string> {
+    // Check if whitelist is already initialized
+    try {
+      await this.fetchWhitelist();
+      throw new WhitelistAlreadyInitializedError(getWhitelistPda()[0]);
+    } catch (e) {
+      if (!(e instanceof WhitelistNotInitializedError)) {
+        throw e;
+      }
+    }
+
+    const tx = await this.program.methods
+      .initializeWhitelist()
+      .accounts({
+        authority: getWhitelistPda()[0],
+      })
+      .signers(signers)
+      .transaction();
+
+    // TODO: Handle errors here for initializeWhitelist
+    return await sendAndConfirmWithRetry(this.provider, tx, signers);
+  }
+
+  async addTokenToWhitelist(
+    supportedToken: Token,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<string> {
+    const whitelist = await this.fetchWhitelist();
+    const tokenInWhitelist = whitelist.tokens.find(
+      (token) => token.mint.toBase58() === supportedToken.mint.toBase58()
+    );
+    if (tokenInWhitelist) {
+      throw new TokenAlreadyInWhitelistError(supportedToken.mint);
+    }
+
+    const tx = await this.program.methods
+      .addToken(
+        supportedToken.mint,
+        supportedToken.priceFeedId,
+        supportedToken.priceUpdate
+      )
+      .accounts({ authority: whitelist.authority })
+      .signers(signers)
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        throw new SignatureVerificationFailedError(whitelist.authority);
+      }
+      throw e;
+    }
+  }
+
+  // *** Old methods ***
   // Instruction methods
   async createVault(
     params: CreateVaultParams,
@@ -90,33 +175,17 @@ export class VaultsSDK {
     const vTokenMintPda = getVtokenMintPda(vaultPda)[0];
 
     const instruction = await this.program.methods
-      .createVault(params.name, params.symbol, params.uri, params.entryFee, params.exitFee)
+      .createVault(
+        params.name,
+        params.symbol,
+        params.uri,
+        params.entryFee,
+        params.exitFee
+      )
       .accounts({
         manager: accounts.manager,
         depositTokenMint: accounts.depositTokenMint,
         metadata: accounts.metadata,
-      })
-      .instruction();
-
-    return instruction;
-  }
-
-  async initializeWhitelist(): Promise<TransactionInstruction> {
-    const instruction = await this.program.methods
-      .initializeWhitelist()
-      .instruction();
-
-    return instruction;
-  }
-
-  async addToken(
-    params: AddTokenParams,
-    accounts: AddTokenAccounts
-  ): Promise<TransactionInstruction> {
-    const instruction = await this.program.methods
-      .addToken(params.token, params.priceFeedId)
-      .accounts({
-        authority: accounts.authority,
       })
       .instruction();
 
@@ -402,20 +471,13 @@ export class VaultsSDK {
     });
   }
 
-  // Fetch state methods
-  async fetchWhitelist() {
-    // @ts-ignore
-    return await this.program.account.tokenWhitelist.fetch(
-      getWhitelistPda()[0]
-    );
-  }
-
   async fetchVault(manager: PublicKey) {
     // @ts-ignore
     return await this.program.account.vault.fetch(getVaultPda(manager)[0]);
   }
 
   // Transaction methods
+  // TODO: This should be removed once the SDK is updated to use the new methods
   async sendTransaction(
     instructions: TransactionInstruction[],
     signers: (Keypair | Signer)[] = [],

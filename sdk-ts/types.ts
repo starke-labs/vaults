@@ -19,6 +19,7 @@ export interface CreateVaultAccounts {
 export interface AddTokenParams {
   token: PublicKey;
   priceFeedId: string;
+  priceUpdate: PublicKey;
 }
 
 export interface AddTokenAccounts {

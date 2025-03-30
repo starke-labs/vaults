@@ -7,4 +7,4 @@ if [ -z "$MAINNET_RPC" ]; then
     exit 1
 fi
 
-anchor test --skip-deploy --provider.cluster $MAINNET_RPC
+anchor test --skip-deploy --skip-local-validator --skip-build --provider.cluster $MAINNET_RPC

@@ -1,68 +1,32 @@
-import { AnchorProvider, BN, Wallet } from "@coral-xyz/anchor";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import fs from "fs";
+import { BN } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
 
-import { DEFAULT_COMMITMENT, DEFAULT_TIMEOUT } from "./constants";
-
-export function createConnection(
-  endpoint: string = process.env.ANCHOR_PROVIDER_URL!
-): Connection {
-  return new Connection(endpoint, {
-    commitment: DEFAULT_COMMITMENT,
-    confirmTransactionInitialTimeout: DEFAULT_TIMEOUT,
-  });
-}
+export * from "./provider";
+export * from "./keypairs";
+export * from "./airdrop";
+export * from "./constants";
 
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export function getProvider(keypair: Keypair): AnchorProvider {
-  return new AnchorProvider(
-    createConnection(),
-    new Wallet(keypair),
-    AnchorProvider.defaultOptions()
-  );
-}
-
-export async function requestAirdrop(
-  connection: Connection,
-  publicKey: PublicKey,
-  lamports: number = 10 * 10 ** 9
-): Promise<void> {
-  const signature = await connection.requestAirdrop(publicKey, lamports);
-  const latestBlockhash = await connection.getLatestBlockhash();
-  await connection.confirmTransaction({
-    signature,
-    ...latestBlockhash,
-  });
-}
-
-export async function requestAirdropIfNecessary(
-  connection: Connection,
-  publicKey: PublicKey,
-  lamports: number = 10 * 10 ** 9
-): Promise<void> {
-  const balance = await connection.getBalance(publicKey);
-  if (balance < lamports) {
-    await requestAirdrop(connection, publicKey, lamports);
-  }
 }
 
 export function toTokenAmount(amount: number, decimals: number = 6): BN {
   return new BN(amount * 10 ** decimals);
 }
 
-export function getAuthorityKeypair(): Keypair {
-  return Keypair.fromSecretKey(
-    new Uint8Array(
-      JSON.parse(fs.readFileSync("./deploy/authority.json", "utf8"))
-    )
-  );
+export interface WhitelistAccount {
+  // Whitelist
+  whitelist: PublicKey;
+  whitelistBump: number;
 }
 
-export function getTesterKeypair(): Keypair {
-  return Keypair.fromSecretKey(
-    new Uint8Array(JSON.parse(fs.readFileSync("./deploy/tester.json", "utf8")))
-  );
+export interface VaultAccount {
+  // Vault
+  vault: PublicKey;
+  vaultBump: number;
+  // Vtoken mint
+  vtokenMint: PublicKey;
+  vtokenMintBump: number;
+  // Deposit token mint
+  depositTokenMint: PublicKey;
 }

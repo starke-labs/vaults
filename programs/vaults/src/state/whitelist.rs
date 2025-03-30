@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct TokenWhitelist {
+    // TODO: Essentially the authority is the same as the program authority, and needs to be removed
     pub authority: Pubkey,
     pub program_authority: Pubkey,
     pub tokens: Vec<TokenInfo>,
