@@ -17,7 +17,8 @@ pub struct TokenInfo {
 }
 
 impl TokenWhitelist {
-    pub const MAX_TOKENS: usize = 100;
+    // NOTE: Had to limit this because max space is 10240
+    pub const MAX_TOKENS: usize = 75;
     pub const MAX_SPACE: usize = 8 + // discriminator
         32 + // authority pubkey
         32 + // program authority pubkey
@@ -26,7 +27,7 @@ impl TokenWhitelist {
         // - 32 for the mint pubkey
         // - 66 for the price feed id (eg: 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43)
         // - 32 for the price update pubkey
-        (32 + 66 + 32) * Self::MAX_TOKENS + // tokens (100 max)
+        (32 + 66 + 32) * Self::MAX_TOKENS + // tokens (75 max)
         1; // bump
 
     pub const SEED: &'static [u8] = b"STARKE_TOKEN_WHITELIST";
