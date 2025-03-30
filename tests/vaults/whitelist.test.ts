@@ -7,6 +7,7 @@ import { VaultsSDK } from "@starke/sdk";
 import {
   SignatureVerificationFailedError,
   TokenAlreadyInWhitelistError,
+  TokenNotWhitelistedError,
   WhitelistAlreadyInitializedError,
 } from "@starke/sdk/lib/errors";
 import { Token } from "@starke/sdk/lib/types";
@@ -24,6 +25,12 @@ describe("Whitelist Tests", () => {
   let provider: AnchorProvider;
   let tester: Keypair;
   let authority: Keypair;
+
+  const dummyToken: Token = {
+    mint: Keypair.generate().publicKey,
+    priceFeedId: "dummy_price_feed_id",
+    priceUpdate: Keypair.generate().publicKey,
+  };
 
   before(async () => {
     // Setup provider and authority
@@ -84,12 +91,6 @@ describe("Whitelist Tests", () => {
   });
 
   it("should not add token to whitelist without proper authority", async () => {
-    const dummyToken: Token = {
-      mint: Keypair.generate().publicKey,
-      priceFeedId: "dummy_price_feed_id",
-      priceUpdate: Keypair.generate().publicKey,
-    };
-
     // Check the length of the whitelist
     let whitelist = await vaults.fetchWhitelist();
     const initialLength = whitelist.tokens.length;
@@ -194,5 +195,59 @@ describe("Whitelist Tests", () => {
         token.priceUpdate.toBase58()
       );
     });
+  });
+
+  it("should not remove token from whitelist without proper authority", async () => {
+    // Try to remove token from whitelist without any signers
+    try {
+      await vaults.removeTokenFromWhitelist(USDC.mint, []);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      expect(e).to.be.instanceOf(SignatureVerificationFailedError);
+    }
+
+    // Try to remove token from whitelist with non-authority signer
+    try {
+      await vaults.removeTokenFromWhitelist(USDC.mint, [tester]);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      expect(e).to.be.instanceOf(SignatureVerificationFailedError);
+    }
+  });
+
+  it("should successfully remove token from whitelist", async () => {
+    // Add token to whitelist
+    await vaults.addTokenToWhitelist(dummyToken, [authority]);
+
+    // Verify token was added
+    let tokenInWhitelist = await vaults.fetchWhitelistedTokens(dummyToken.mint);
+    expect(tokenInWhitelist.mint.toBase58()).to.equal(
+      dummyToken.mint.toBase58()
+    );
+    expect(tokenInWhitelist.priceFeedId).to.equal(dummyToken.priceFeedId);
+    expect(tokenInWhitelist.priceUpdate.toBase58()).to.equal(
+      dummyToken.priceUpdate.toBase58()
+    );
+
+    // Remove token from whitelist
+    await vaults.removeTokenFromWhitelist(dummyToken.mint, [authority]);
+
+    // Verify token was removed
+    try {
+      tokenInWhitelist = await vaults.fetchWhitelistedTokens(dummyToken.mint);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      expect(e).to.be.instanceOf(TokenNotWhitelistedError);
+    }
+  });
+
+  it("should not remove token from whitelist if token is not in the whitelist", async () => {
+    // Try to remove token from whitelist without any signers
+    try {
+      await vaults.removeTokenFromWhitelist(dummyToken.mint, []);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      expect(e).to.be.instanceOf(TokenNotWhitelistedError);
+    }
   });
 });

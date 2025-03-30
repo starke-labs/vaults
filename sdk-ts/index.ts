@@ -165,6 +165,34 @@ export class VaultsSDK {
     }
   }
 
+  async removeTokenFromWhitelist(
+    mint: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<string> {
+    const whitelist = await this.fetchWhitelist();
+    const tokenInWhitelist = whitelist.tokens.find(
+      (t) => t.mint.toBase58() === mint.toBase58()
+    );
+    if (!tokenInWhitelist) {
+      throw new TokenNotWhitelistedError(mint);
+    }
+
+    const tx = await this.program.methods
+      .removeToken(mint)
+      .accounts({ authority: whitelist.authority })
+      .signers(signers)
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        throw new SignatureVerificationFailedError(whitelist.authority);
+      }
+      throw e;
+    }
+  }
+
   // *** Old methods ***
   // Instruction methods
   async createVault(
@@ -186,20 +214,6 @@ export class VaultsSDK {
         manager: accounts.manager,
         depositTokenMint: accounts.depositTokenMint,
         metadata: accounts.metadata,
-      })
-      .instruction();
-
-    return instruction;
-  }
-
-  async removeToken(
-    params: RemoveTokenParams,
-    accounts: RemoveTokenAccounts
-  ): Promise<TransactionInstruction> {
-    const instruction = await this.program.methods
-      .removeToken(params.token)
-      .accounts({
-        authority: accounts.authority,
       })
       .instruction();
 
