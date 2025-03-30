@@ -7,4 +7,7 @@ if [ -z "$MAINNET_RPC" ]; then
     exit 1
 fi
 
-solana -u $MAINNET_RPC program deploy target/verifiable/vaults.so -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id ./target/deploy/vaults-keypair.json
+# NOTE: Can not use verifiable build unless anchor fixes their issue
+#       https://github.com/coral-xyz/anchor/issues/3585
+# solana -u $MAINNET_RPC program deploy target/verifiable/vaults.so -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id ./target/deploy/vaults-keypair.json
+solana -u $MAINNET_RPC program deploy target/deploy/vaults.so -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id ./target/deploy/vaults-keypair.json

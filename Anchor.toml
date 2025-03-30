@@ -4,18 +4,21 @@
 resolution = true
 skip-lint = false
 
-[programs.localnet]
+[programs.mainnet]
 jupiter = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
-vaults = "STRK2VEGPAKstk6S6k5Cpin6uGtSDQkvanTaXUeaTNj"
+vaults = "Fe8j1bGgJfrdGGpiVa39cP98TvENbgmv95eYhvtiKVR5"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
-wallet = "./deploy/authority.json"
+cluster = "Mainnet"
+wallet = "./deploy/deployer.json"
 
 [scripts]
-test = "yarn setup:mainnet"
+# test = "yarn setup:mainnet"
+
+test = "yarn test:vaults"
+
 test-sdk = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:sdk; pkill solana-test-validator)"
 test-vaults = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:vaults; pkill solana-test-validator)"
