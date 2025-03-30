@@ -19,6 +19,8 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 
+import idl from "@starke/idl/vaults.json";
+
 import { EventHandler } from "./events";
 import {
   SignatureVerificationFailedError,
@@ -65,20 +67,14 @@ export class VaultsSDK {
   // Jup API client
   private jup: DefaultApi;
 
-  constructor(
-    connection: Connection,
-    keypair: Keypair,
-    programId: PublicKey,
-    // TODO: This should be a part of the SDK and not a parameter to the constructor
-    idl: Idl
-  ) {
+  constructor(connection: Connection, keypair: Keypair) {
     this.provider = new AnchorProvider(
       connection,
       new Wallet(keypair),
       AnchorProvider.defaultOptions()
     );
     this.program = new Program(idl, this.provider);
-    this.events = new EventHandler(connection, programId);
+    this.events = new EventHandler(connection, this.program.programId);
 
     // Jup API client
     this.jup = createJupiterApiClient();

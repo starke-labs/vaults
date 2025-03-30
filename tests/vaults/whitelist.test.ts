@@ -1,8 +1,6 @@
-import { AnchorProvider, Idl } from "@coral-xyz/anchor";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import { expect } from "chai";
 
-import idl from "@starke/idl/vaults.json";
 import { VaultsSDK } from "@starke/sdk";
 import {
   SignatureVerificationFailedError,
@@ -14,15 +12,13 @@ import { Token } from "@starke/sdk/lib/types";
 import { JUP, PYTH, USDC, USDT } from "@starke/sdk/whitelist";
 
 import {
-  USDC_PRICE_FEED_ID,
+  createConnection,
   getAuthorityKeypair,
-  getProvider,
   getTesterKeypair,
 } from "../utils.new";
 
 describe("Whitelist Tests", () => {
   let vaults: VaultsSDK;
-  let provider: AnchorProvider;
   let tester: Keypair;
   let authority: Keypair;
 
@@ -33,20 +29,12 @@ describe("Whitelist Tests", () => {
   };
 
   before(async () => {
-    // Setup provider and authority
+    // Get keypairs
     tester = getTesterKeypair();
-    provider = getProvider(tester);
-
-    // Get program authority keypair
     authority = getAuthorityKeypair();
 
     // Initialize SDK
-    vaults = new VaultsSDK(
-      provider.connection,
-      tester,
-      new PublicKey(idl.address),
-      idl as Idl
-    );
+    vaults = new VaultsSDK(createConnection(), tester);
   });
 
   // TODO: Enchance this test when sdk has error handling for initializeWhitelist
