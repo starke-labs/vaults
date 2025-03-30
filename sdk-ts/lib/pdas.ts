@@ -1,9 +1,15 @@
 import { PublicKey } from "@solana/web3.js";
 
+// export const PROGRAM_ID = new PublicKey(
+//   "STRK2VEGPAKstk6S6k5Cpin6uGtSDQkvanTaXUeaTNj"
+// );
+// TODO: Find a way to get the program id from the IDL
 export const PROGRAM_ID = new PublicKey(
-  "STRK2VEGPAKstk6S6k5Cpin6uGtSDQkvanTaXUeaTNj"
+  "Fe8j1bGgJfrdGGpiVa39cP98TvENbgmv95eYhvtiKVR5"
 );
-export const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+);
 
 // Seeds
 export const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
@@ -34,9 +40,15 @@ export function getVtokenMintPda(vault: PublicKey): [PublicKey, number] {
   );
 }
 
-export function getVtokenMetadataPda(vtokenMint: PublicKey): [PublicKey, number] {
+export function getVtokenMetadataPda(
+  vtokenMint: PublicKey
+): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(METADATA_SEED), TOKEN_METADATA_PROGRAM_ID.toBuffer(), vtokenMint.toBuffer()],
-    TOKEN_METADATA_PROGRAM_ID,
+    [
+      Buffer.from(METADATA_SEED),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      vtokenMint.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
   );
 }

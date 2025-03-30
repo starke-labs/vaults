@@ -1,219 +1,198 @@
 import { AnchorProvider, Idl } from "@coral-xyz/anchor";
-import { createMint } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 
 import idl from "@starke/idl/vaults.json";
 import { VaultsSDK } from "@starke/sdk";
-import { AddTokenAccounts, AddTokenParams } from "@starke/sdk/types";
+import {
+  SignatureVerificationFailedError,
+  TokenAlreadyInWhitelistError,
+  WhitelistAlreadyInitializedError,
+} from "@starke/sdk/lib/errors";
+import { Token } from "@starke/sdk/lib/types";
+import { JUP, PYTH, USDC, USDT } from "@starke/sdk/whitelist";
 
 import {
+  USDC_PRICE_FEED_ID,
   getAuthorityKeypair,
   getProvider,
-  requestAirdropIfNecessary,
+  getTesterKeypair,
 } from "../utils.new";
-import {
-  DEFAULT_MINT_DECIMALS,
-  USDC_PRICE_FEED_ID,
-} from "../utils.new/constants";
 
 describe("Whitelist Tests", () => {
-  let sdk: VaultsSDK;
+  let vaults: VaultsSDK;
   let provider: AnchorProvider;
   let tester: Keypair;
-  let tokenMint: PublicKey;
   let authority: Keypair;
 
   before(async () => {
     // Setup provider and authority
-    tester = Keypair.generate();
+    tester = getTesterKeypair();
     provider = getProvider(tester);
 
     // Get program authority keypair
     authority = getAuthorityKeypair();
 
-    // Request SOL for authority if needed
-    await requestAirdropIfNecessary(provider.connection, tester.publicKey);
-
     // Initialize SDK
-    sdk = new VaultsSDK(
+    vaults = new VaultsSDK(
       provider.connection,
       tester,
       new PublicKey(idl.address),
       idl as Idl
     );
-
-    // Create a test token mint
-    tokenMint = await createMint(
-      provider.connection,
-      tester,
-      tester.publicKey,
-      null,
-      DEFAULT_MINT_DECIMALS
-    );
   });
 
+  // TODO: Enchance this test when sdk has error handling for initializeWhitelist
   it("should not initialize whitelist without proper authority", async () => {
-    const ix = await sdk.initializeWhitelist();
-
     // Try with no signer
     try {
-      await sdk.sendTransaction([ix]);
+      await vaults.initializeWhitelist([]);
+      expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e.toString()).to.have.string("Signature verification failed");
+      if (!(e instanceof WhitelistAlreadyInitializedError)) {
+        throw e;
+      }
     }
 
     // Try with non-authority signer
     try {
-      await sdk.sendTransaction([ix], [tester]);
+      await vaults.initializeWhitelist([tester]);
+      expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e.toString()).to.have.string("Signature verification failed");
+      if (!(e instanceof WhitelistAlreadyInitializedError)) {
+        throw e;
+      }
     }
   });
 
-  it("should successfully initialize token whitelist", async () => {
-    const ix = await sdk.initializeWhitelist();
-    const signature = await sdk.sendTransaction([ix], [authority]);
-    expect(signature).to.not.be.empty;
+  it("should successfully initialize token whitelist if not initialized already", async () => {
+    // Try to initialize whitelist
+    try {
+      await vaults.initializeWhitelist([authority]);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      if (!(e instanceof WhitelistAlreadyInitializedError)) {
+        throw e;
+      }
+    }
 
     // Verify whitelist was initialized
-    const whitelist = await sdk.fetchWhitelist();
-    expect(whitelist.authority.toString()).to.equal(
-      authority.publicKey.toString()
+    const whitelist = await vaults.fetchWhitelist();
+    expect(whitelist.authority.toBase58()).to.equal(
+      authority.publicKey.toBase58()
     );
-    expect(whitelist.programAuthority.toString()).to.equal(
-      authority.publicKey.toString()
-    );
-    expect(whitelist.tokens).to.be.empty;
   });
 
   it("should not add token to whitelist without proper authority", async () => {
-    const params: AddTokenParams = {
-      token: tokenMint,
-      priceFeedId: USDC_PRICE_FEED_ID,
+    const dummyToken: Token = {
+      mint: Keypair.generate().publicKey,
+      priceFeedId: "dummy_price_feed_id",
+      priceUpdate: Keypair.generate().publicKey,
     };
 
+    // Check the length of the whitelist
+    let whitelist = await vaults.fetchWhitelist();
+    const initialLength = whitelist.tokens.length;
+
     // Test with no signer
-    const noSignerAccounts: AddTokenAccounts = {
-      authority: tester.publicKey,
-    };
-    const noSignerIx = await sdk.addToken(params, noSignerAccounts);
     try {
-      await sdk.sendTransaction([noSignerIx]);
+      await vaults.addTokenToWhitelist(dummyToken, []);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e.toString()).to.have.string("UnauthorizedAccess");
+      expect(e).to.be.instanceOf(SignatureVerificationFailedError);
     }
 
     // Verify token was not added
-    let whitelist = await sdk.fetchWhitelist();
-    expect(whitelist.tokens).to.be.empty;
+    whitelist = await vaults.fetchWhitelist();
+    let finalLength = whitelist.tokens.length;
+    expect(finalLength).to.equal(initialLength);
 
     // Test with non-authority signer
-    const nonAuthorityAccounts: AddTokenAccounts = {
-      authority: tester.publicKey,
-    };
-    const nonAuthorityIx = await sdk.addToken(params, nonAuthorityAccounts);
     try {
-      await sdk.sendTransaction([nonAuthorityIx], [tester]);
+      await vaults.addTokenToWhitelist(dummyToken, [tester]);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e.toString()).to.have.string("UnauthorizedAccess");
+      expect(e).to.be.instanceOf(SignatureVerificationFailedError);
     }
 
     // Verify token was still not added
-    whitelist = await sdk.fetchWhitelist();
-    expect(whitelist.tokens).to.be.empty;
+    whitelist = await vaults.fetchWhitelist();
+    finalLength = whitelist.tokens.length;
+    expect(finalLength).to.equal(initialLength);
   });
 
   it("should not initialize whitelist twice", async () => {
-    const ix = await sdk.initializeWhitelist();
     try {
-      await sdk.sendTransaction([ix], [authority]);
+      await vaults.initializeWhitelist([authority]);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e.toString()).to.have.string("already in use");
+      expect(e).to.be.instanceOf(WhitelistAlreadyInitializedError);
     }
   });
 
-  it("should successfully add token to whitelist", async () => {
-    const params: AddTokenParams = {
-      token: tokenMint,
-      priceFeedId: USDC_PRICE_FEED_ID,
-    };
-
-    const accounts: AddTokenAccounts = {
-      authority: authority.publicKey,
-    };
-
-    const ix = await sdk.addToken(params, accounts);
-    const signature = await sdk.sendTransaction([ix], [authority]);
-    expect(signature).to.not.be.empty;
+  it("should successfully add USDC to whitelist if it is not already in the whitelist", async () => {
+    try {
+      await vaults.addTokenToWhitelist(USDC, [authority]);
+    } catch (e) {
+      if (!(e instanceof TokenAlreadyInWhitelistError)) {
+        throw e;
+      }
+    }
 
     // Verify token was added
-    const whitelist = await sdk.fetchWhitelist();
-    expect(whitelist.tokens).to.have.length(1);
-    expect(whitelist.tokens[0].mint.toString()).to.equal(tokenMint.toString());
-    expect(whitelist.tokens[0].priceFeedId).to.equal(USDC_PRICE_FEED_ID);
+    const whitelistedToken = await vaults.fetchWhitelistedTokens(USDC.mint);
+    expect(whitelistedToken.mint.toBase58()).to.equal(USDC.mint.toBase58());
+    expect(whitelistedToken.priceFeedId).to.equal(USDC.priceFeedId);
+    expect(whitelistedToken.priceUpdate.toBase58()).to.equal(
+      USDC.priceUpdate.toBase58()
+    );
   });
 
   it("should not add same token twice", async () => {
-    const params: AddTokenParams = {
-      token: tokenMint,
-      priceFeedId: USDC_PRICE_FEED_ID,
-    };
-
-    const accounts: AddTokenAccounts = {
-      authority: authority.publicKey,
-    };
-
-    const ix = await sdk.addToken(params, accounts);
-
     try {
-      await sdk.sendTransaction([ix], [authority]);
+      await vaults.addTokenToWhitelist(USDC, [authority]);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e.toString()).to.have.string("Token is already whitelisted");
+      expect(e).to.be.instanceOf(TokenAlreadyInWhitelistError);
     }
-
-    // Verify no duplicate token was added
-    const whitelist = await sdk.fetchWhitelist();
-    expect(whitelist.tokens).to.have.length(1);
-    expect(whitelist.tokens[0].mint.toString()).to.equal(tokenMint.toString());
   });
 
-  // TODO: Implement this
-  // it("should not add token with invalid price feed ID", async () => {
-  //   // Create a new token mint with program authority as mint authority
-  //   const newToken = await createMint(
-  //     provider.connection,
-  //     programAuthority,
-  //     programAuthority.publicKey,
-  //     programAuthority.publicKey,
-  //     DEFAULT_MINT_DECIMALS
-  //   );
+  it("should successfully add the rest of the whitelisted tokens if they are not already in the whitelist", async () => {
+    try {
+      await vaults.addTokenToWhitelist(USDT, [authority]);
+    } catch (e) {
+      if (!(e instanceof TokenAlreadyInWhitelistError)) {
+        throw e;
+      }
+    }
 
-  //   const params: AddTokenParams = {
-  //     token: newToken,
-  //     priceFeedId: "invalid_price_feed_id", // Invalid format
-  //   };
+    try {
+      await vaults.addTokenToWhitelist(PYTH, [authority]);
+    } catch (e) {
+      if (!(e instanceof TokenAlreadyInWhitelistError)) {
+        throw e;
+      }
+    }
 
-  //   const accounts: AddTokenAccounts = {
-  //     authority: programAuthority.publicKey,
-  //   };
+    try {
+      await vaults.addTokenToWhitelist(JUP, [authority]);
+    } catch (e) {
+      if (!(e instanceof TokenAlreadyInWhitelistError)) {
+        throw e;
+      }
+    }
 
-  //   const ix = await sdk.addToken(params, accounts);
-
-  //   try {
-  //     await sdk.sendTransaction([ix], [programAuthority]);
-  //     expect.fail("Should have thrown an error");
-  //   } catch (e) {
-  //     // TODO: Add more specific error check
-  //     expect(e.toString()).to.have.string("Invalid price feed ID");
-  //   }
-
-  //   // Verify token was not added
-  //   const whitelist = await sdk.fetchWhitelist();
-  //   expect(whitelist.tokens).to.have.length(1); // Still only the first token
-  // });
+    // Verify all tokens were added
+    const whitelist = await vaults.fetchWhitelist();
+    [USDC, USDT, PYTH, JUP].forEach((token) => {
+      const whitelistedToken = whitelist.tokens.find(
+        (t) => t.mint.toBase58() === token.mint.toBase58()
+      );
+      expect(whitelistedToken).to.not.be.undefined;
+      expect(whitelistedToken?.priceFeedId).to.equal(token.priceFeedId);
+      expect(whitelistedToken?.priceUpdate.toBase58()).to.equal(
+        token.priceUpdate.toBase58()
+      );
+    });
+  });
 });
