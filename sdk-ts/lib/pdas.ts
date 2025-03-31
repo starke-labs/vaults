@@ -5,10 +5,14 @@ import { PublicKey } from "@solana/web3.js";
 // );
 // TODO: Find a way to get the program id from the IDL
 export const PROGRAM_ID = new PublicKey(
-  "Fe8j1bGgJfrdGGpiVa39cP98TvENbgmv95eYhvtiKVR5"
+  "HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28"
 );
 export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+);
+
+export const AUTHORITY_PROGRAM_ID = new PublicKey(
+  "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
 );
 
 // Seeds

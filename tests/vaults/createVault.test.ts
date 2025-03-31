@@ -18,9 +18,11 @@ import {
 
 describe("Create Vault", () => {
   let vaults: VaultsSDK;
-  let authorityVaults: VaultsSDK;
   let manager: Keypair;
+
+  // NOTE: Need to use another sdk instance to test this because the signer can not be the manager in some cases
   let authority: Keypair;
+  let authorityVaults: VaultsSDK;
 
   const VAULT_NAME = "rkShares Blue Chip";
   const VAULT_SYMBOL = "rkBlueChip";

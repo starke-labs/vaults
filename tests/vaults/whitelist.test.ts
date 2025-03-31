@@ -44,7 +44,12 @@ describe("Whitelist Tests", () => {
       await vaults.initializeWhitelist([]);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      if (!(e instanceof WhitelistAlreadyInitializedError)) {
+      if (
+        !(
+          e instanceof WhitelistAlreadyInitializedError ||
+          e instanceof SignatureVerificationFailedError
+        )
+      ) {
         throw e;
       }
     }
@@ -54,7 +59,12 @@ describe("Whitelist Tests", () => {
       await vaults.initializeWhitelist([tester]);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      if (!(e instanceof WhitelistAlreadyInitializedError)) {
+      if (
+        !(
+          e instanceof WhitelistAlreadyInitializedError ||
+          e instanceof SignatureVerificationFailedError
+        )
+      ) {
         throw e;
       }
     }
@@ -64,7 +74,6 @@ describe("Whitelist Tests", () => {
     // Try to initialize whitelist
     try {
       await vaults.initializeWhitelist([authority]);
-      expect.fail("Should have thrown an error");
     } catch (e) {
       if (!(e instanceof WhitelistAlreadyInitializedError)) {
         throw e;

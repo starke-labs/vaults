@@ -6,7 +6,7 @@ skip-lint = false
 
 [programs.mainnet]
 jupiter = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
-vaults = "Fe8j1bGgJfrdGGpiVa39cP98TvENbgmv95eYhvtiKVR5"
+vaults = "HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28"
 
 [registry]
 url = "https://api.apr.dev"
