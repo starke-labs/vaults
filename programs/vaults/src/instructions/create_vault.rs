@@ -28,12 +28,8 @@ pub fn _create_vault(
     msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
 
     // Initialize vtoken metadata
-    let vault = ctx.accounts.vault.key();
-    let vtoken_mint_seeds = &[
-        Vault::VTOKEN_MINT_SEED,
-        vault.as_ref(),
-        &[ctx.bumps.vtoken_mint],
-    ];
+    let manager = ctx.accounts.manager.key();
+    let vtoken_mint_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.bumps.vault]];
     let signer_seeds = &[&vtoken_mint_seeds[..]];
 
     initialize_token_metadata(
@@ -41,8 +37,9 @@ pub fn _create_vault(
         symbol,
         uri,
         &ctx.accounts.manager,
-        &ctx.accounts.vtoken_mint,
         &ctx.accounts.metadata,
+        &ctx.accounts.vtoken_mint,
+        &ctx.accounts.vault.to_account_info(),
         signer_seeds,
         &ctx.accounts.rent,
         &ctx.accounts.metadata_program,
@@ -112,7 +109,13 @@ pub struct CreateVault<'info> {
     pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Vtoken metadata
-    /// CHECK: This account will be initialized by the controller
+    /// CHECK: This account will be initialized by Metaplex
+    #[account(
+        mut,
+        seeds = [b"metadata", metadata_program.key().as_ref(), vtoken_mint.key().as_ref()],
+        bump,
+        seeds::program = metadata_program.key(),
+    )]
     pub metadata: UncheckedAccount<'info>,
 
     // Whitelist

@@ -12,8 +12,9 @@ pub fn initialize_token_metadata<'info>(
     symbol: &str,
     uri: &str,
     payer: &Signer<'info>,
-    mint: &InterfaceAccount<'info, Mint>,
     metadata: &AccountInfo<'info>,
+    mint: &InterfaceAccount<'info, Mint>,
+    mint_authority: &AccountInfo<'info>,
     signer_seeds: &[&[&[u8]]],
     rent: &Sysvar<'info, Rent>,
     metadata_program: &Program<'info, Metadata>,
@@ -29,15 +30,14 @@ pub fn initialize_token_metadata<'info>(
         uses: None,
     };
 
-    // NOTE: Setting the mint as the update authority gives the authority to the vault.
     let metadata_ctx = CpiContext::new_with_signer(
         metadata_program.to_account_info(),
         CreateMetadataAccountsV3 {
             payer: payer.to_account_info(),
-            update_authority: mint.to_account_info(),
+            update_authority: mint_authority.to_account_info(),
             mint: mint.to_account_info(),
             metadata: metadata.to_account_info(),
-            mint_authority: mint.to_account_info(),
+            mint_authority: mint_authority.to_account_info(),
             system_program: system_program.to_account_info(),
             rent: rent.to_account_info(),
         },
