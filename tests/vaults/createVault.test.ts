@@ -18,17 +18,15 @@ import {
 
 describe("Create Vault", () => {
   let vaults: VaultsSDK;
-  let otherVaults: VaultsSDK;
   let authorityVaults: VaultsSDK;
   let manager: Keypair;
   let authority: Keypair;
-  let other: Keypair;
 
   const VAULT_NAME = "rkShares Blue Chip";
   const VAULT_SYMBOL = "rkBlueChip";
   // TODO: Check if this needs to be the png or a json
   const VAULT_URI =
-    "https://starke-finance.fra1.cdn.digitaloceanspaces.com/vaults-v0/rkShares_Blue_Chip.png";
+    "https://starke-finance.fra1.cdn.digitaloceanspaces.com/vtoken-metadata/metadata/rkBlueChip.json";
   const ENTRY_FEE = 0;
   const EXIT_FEE = 0;
 
