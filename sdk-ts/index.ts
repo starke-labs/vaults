@@ -33,6 +33,7 @@ import {
   WhitelistNotInitializedError,
 } from "./lib/errors";
 import {
+  AUTHORITY_PROGRAM_ID,
   getVaultPda,
   getVtokenMetadataPda,
   getVtokenMintPda,
@@ -128,12 +129,18 @@ export class VaultsSDK {
     const tx = await this.program.methods
       .initializeWhitelist()
       .accounts({
-        authority: getWhitelistPda()[0],
+        authority: AUTHORITY_PROGRAM_ID,
       })
       .transaction();
 
-    // TODO: Handle errors here for initializeWhitelist
-    return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Missing signature")) {
+        throw new SignatureVerificationFailedError(getWhitelistPda()[0]);
+      }
+      throw e;
+    }
   }
 
   async addTokenToWhitelist(

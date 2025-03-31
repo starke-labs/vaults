@@ -9,5 +9,5 @@ fi
 
 # NOTE: Can not use verifiable build unless anchor fixes their issue
 #       https://github.com/coral-xyz/anchor/issues/3585
-# anchor upgrade -p Fe8j1bGgJfrdGGpiVa39cP98TvENbgmv95eYhvtiKVR5 ./target/verifiable/vaults.so --provider.cluster $MAINNET_RPC
-anchor upgrade -p Fe8j1bGgJfrdGGpiVa39cP98TvENbgmv95eYhvtiKVR5 ./target/deploy/vaults.so --provider.cluster $MAINNET_RPC
+# anchor upgrade -p HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28 ./target/verifiable/vaults.so --provider.cluster $MAINNET_RPC
+anchor upgrade -p HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28 ./target/deploy/vaults.so --provider.cluster $MAINNET_RPC
