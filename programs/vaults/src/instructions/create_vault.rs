@@ -28,9 +28,13 @@ pub fn _create_vault(
     msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
 
     // Initialize vtoken metadata
-    let manager = ctx.accounts.manager.key();
-    let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
-    let signer_seeds = &[&vault_seeds[..]];
+    let vault = ctx.accounts.vault.key();
+    let vtoken_mint_seeds = &[
+        Vault::VTOKEN_MINT_SEED,
+        vault.as_ref(),
+        &[ctx.bumps.vtoken_mint],
+    ];
+    let signer_seeds = &[&vtoken_mint_seeds[..]];
 
     initialize_token_metadata(
         name,
