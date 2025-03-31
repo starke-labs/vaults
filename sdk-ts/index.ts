@@ -23,13 +23,21 @@ import idl from "@starke/idl/vaults.json";
 
 import { EventHandler } from "./events";
 import {
+  InsufficientBalanceError,
+  InvalidTokenError,
   SignatureVerificationFailedError,
   TokenAlreadyInWhitelistError,
   TokenNotWhitelistedError,
+  VaultAlreadyCreatedError,
   WhitelistAlreadyInitializedError,
   WhitelistNotInitializedError,
 } from "./lib/errors";
-import { getVaultPda, getVtokenMintPda, getWhitelistPda } from "./lib/pdas";
+import {
+  getVaultPda,
+  getVtokenMetadataPda,
+  getVtokenMintPda,
+  getWhitelistPda,
+} from "./lib/pdas";
 import { Token, Whitelist } from "./lib/types";
 import {
   AddTokenAccounts,
@@ -122,7 +130,6 @@ export class VaultsSDK {
       .accounts({
         authority: getWhitelistPda()[0],
       })
-      .signers(signers)
       .transaction();
 
     // TODO: Handle errors here for initializeWhitelist
@@ -148,7 +155,6 @@ export class VaultsSDK {
         supportedToken.priceUpdate
       )
       .accounts({ authority: whitelist.authority })
-      .signers(signers)
       .transaction();
 
     try {
@@ -176,7 +182,6 @@ export class VaultsSDK {
     const tx = await this.program.methods
       .removeToken(mint)
       .accounts({ authority: whitelist.authority })
-      .signers(signers)
       .transaction();
 
     try {
@@ -189,33 +194,73 @@ export class VaultsSDK {
     }
   }
 
-  // *** Old methods ***
-  // Instruction methods
-  async createVault(
-    params: CreateVaultParams,
-    accounts: CreateVaultAccounts
-  ): Promise<TransactionInstruction> {
-    const vaultPda = getVaultPda(accounts.manager)[0];
-    const vTokenMintPda = getVtokenMintPda(vaultPda)[0];
-
-    const instruction = await this.program.methods
-      .createVault(
-        params.name,
-        params.symbol,
-        params.uri,
-        params.entryFee,
-        params.exitFee
+  async getTokenProgram(mint: PublicKey): Promise<PublicKey> {
+    // TODO: Should we check this at program level?
+    const tokenProgram = (await this.provider.connection.getAccountInfo(mint))
+      ?.owner;
+    if (
+      !tokenProgram ||
+      ![TOKEN_PROGRAM_ID.toBase58(), TOKEN_2022_PROGRAM_ID.toBase58()].includes(
+        tokenProgram.toBase58()
       )
-      .accounts({
-        manager: accounts.manager,
-        depositTokenMint: accounts.depositTokenMint,
-        metadata: accounts.metadata,
-      })
-      .instruction();
-
-    return instruction;
+    ) {
+      throw new InvalidTokenError(mint);
+    }
+    return tokenProgram;
   }
 
+  async createVault(
+    name: string,
+    symbol: string,
+    uri: string,
+    entryFee: number,
+    exitFee: number,
+    manager: PublicKey,
+    depositTokenMint: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<string> {
+    const [vault] = getVaultPda(manager);
+    const [vtokenMint] = getVtokenMintPda(vault);
+    const [metadata] = getVtokenMetadataPda(vtokenMint);
+    const tokenProgram = await this.getTokenProgram(depositTokenMint);
+
+    const tx = await this.program.methods
+      .createVault(name, symbol, uri, entryFee, exitFee)
+      .accounts({
+        manager,
+        depositTokenMint,
+        metadata,
+        tokenProgram,
+      })
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (
+        e.toString().includes("unauthorized") ||
+        e.toString().includes("Signature verification failed")
+      ) {
+        throw new SignatureVerificationFailedError(manager);
+      } else if (e.toString().includes("already in use")) {
+        throw new VaultAlreadyCreatedError(vault);
+      } else if (
+        e
+          .toString()
+          .includes(
+            "Attempt to debit an account but found no record of a prior credit"
+          )
+      ) {
+        throw new InsufficientBalanceError(manager);
+      } else if (e.toString().includes("Token is not whitelisted")) {
+        throw new TokenNotWhitelistedError(depositTokenMint);
+      }
+      throw e;
+    }
+  }
+
+  // *** Old methods ***
+  // Instruction methods
   async deposit(
     params: DepositParams,
     accounts: DepositAccounts,
