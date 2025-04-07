@@ -1,6 +1,6 @@
 # Starke Finance Vaults
 
-A secure and flexible Solana program for managing token vaults with advanced features for DeFi applications.
+A secure and flexible Solana program for managing token vaults with advanced features for trustless DeFi applications.
 
 ## Overview
 
@@ -8,7 +8,7 @@ Starke Finance Vaults is a Solana program that enables:
 
 - Creation and management of token vaults
 - Secure token deposits and withdrawals
-- Configurable entry/exit fees
+- Configurable fees (v0 do not charge fees for deposits/withdrawals)
 - Token whitelisting with price feed integration
 - Integration with Jupiter for token swaps
 - Advanced security features and access controls
@@ -70,6 +70,8 @@ cp <path-to-vaults-keypair> target/deploy/vaults-keypair.json
 
 ## Testing
 
+> NOTE: Tests are being refactored
+
 Run the test suite:
 
 ```bash
@@ -102,12 +104,10 @@ For reporting vulnerabilities, please see our [Security Policy](SECURITY.md).
 Current limitations and upcoming features:
 
 - Currently, each manager can only create one vault
-- Currently, the vault is owned by the program itself, and the vault token account is owned by the vault - so the manager should not have authority over the vault token account (TODO: verify and confirm this!)
-- Maximum number of tokens is currently set to 100
-- TODO: Add types for whitelist and vault accounts in sdk
-- TODO: Support for Token 2022
+- Maximum number of tokens is currently set to 75
 - TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
-- TODO: Fix tests (use mainnet)
+- WIP: Add types for whitelist and vault accounts in sdk
+- WIP: Refactor tests (use mainnet)
 
 ## Contributing
 
