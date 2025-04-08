@@ -1,26 +1,20 @@
 # Starke Finance Vaults
 
-A secure and flexible Solana program for managing token vaults with advanced features for trustless DeFi applications.
+A secure and flexible Solana program for trustless fund management with DeFi integrations.
 
 ## Overview
 
-Starke Finance Vaults is a Solana program that enables:
-
-- Creation and management of token vaults
-- Secure token deposits and withdrawals
-- Configurable fees (v0 do not charge fees for deposits/withdrawals)
-- Token whitelisting with price feed integration
-- Integration with Jupiter for token swaps
-- Advanced security features and access controls
+Starke Finance Vaults is a Solana program designed to bridge the gap between investors and fund managers by enabling the creation and management of token vaults (equivalent to traditional investment funds) in a trustless manner. The program allows fund managers to create and manage vaults while providing investors with secure, transparent, and verifiable investment opportunities through various DeFi integrations.
 
 ## Key Features
 
-- **Vault Management**: Create and manage vaults with customizable parameters
-- **Token Whitelisting**: Only approved tokens can be used with built-in Pyth price feed integration
-- **Fee Structure**: Configurable entry and exit fees with time-delayed updates
-- **Security**: Program-controlled authority and comprehensive access controls
-- **Event Emission**: Detailed events for all major operations
-- **Jupiter Integration**: Built-in support for token swaps (coming soon)
+- **Vault Management**: Create and manage vaults with customizable parameters including entry/exit fees and token whitelisting
+- **Token Operations**: Secure deposits and withdrawals with proportional vToken minting/burning based on NAV calculations
+- **Price Integration**: Pyth price feed integration for accurate NAV calculations and token valuation
+- **Security**: Program-controlled authority, comprehensive access controls, and time-delayed updates
+- **Event System**: Detailed event emission for all major operations (vault creation, deposits, withdrawals, fee updates)
+- **Swap Integration**: Built-in support for token swaps through Jupiter
+- **Fee System**: Configurable entry and exit fees with a 30-day delay for updates to protect users (yet to be implemented, not for v0)
 
 ## Architecture
 
@@ -30,6 +24,18 @@ The program is structured into several key components:
 - **State**: Account structures for vaults and whitelists
 - **Controllers**: Business logic for token management and pricing
 - **Constants**: Program-wide configuration values
+
+## Security
+
+Security is a top priority. The program includes:
+
+- Comprehensive access controls
+- Time-delayed fee updates
+- Token whitelisting
+- Program authority controls
+- Regular security audits
+
+For reporting vulnerabilities, please see our [Security Policy](SECURITY.md).
 
 ## Prerequisites
 
@@ -86,18 +92,6 @@ The tests cover:
 - Fee updates
 - Security controls
 - Event emission
-
-## Security
-
-Security is a top priority. The program includes:
-
-- Comprehensive access controls
-- Time-delayed fee updates
-- Token whitelisting
-- Program authority controls
-- Regular security audits
-
-For reporting vulnerabilities, please see our [Security Policy](SECURITY.md).
 
 ## Development Status
 
