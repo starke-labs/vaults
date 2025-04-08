@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-To report a vulnerability, please contact us at [contact@starkevalidator.com](mailto:contact@starkevalidator.com).
+To report a vulnerability, please contact us at [contact@starke.finance](mailto:contact@starke.finance).
