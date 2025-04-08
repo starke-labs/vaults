@@ -120,7 +120,7 @@ See [LICENSE.md](LICENSE.md) for more details.
 ## Contact
 
 - Discord: [Join our server](https://discord.gg/Kwvx8hcZBx)
-- Email: contact@starkevalidator.com
+- Email: contact@starke.finance
 - Website: https://starke.finance
 
 ## Acknowledgments
