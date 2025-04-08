@@ -1,4 +1,4 @@
-import { AnchorProvider, Idl, Program, Wallet } from "@coral-xyz/anchor";
+import { AnchorProvider, BN, Idl, Program, Wallet } from "@coral-xyz/anchor";
 import { DefaultApi, Instruction, createJupiterApiClient } from "@jup-ag/api";
 import {
   TOKEN_2022_PROGRAM_ID,
@@ -8,7 +8,6 @@ import {
 import {
   AddressLookupTableAccount,
   ComputeBudgetProgram,
-  ConfirmOptions,
   Connection,
   Keypair,
   PublicKey,
@@ -23,12 +22,14 @@ import idl from "@starke/idl/vaults.json";
 
 import { EventHandler } from "./events";
 import {
+  AccountNotInitializedError,
   InsufficientBalanceError,
   InvalidTokenError,
   SignatureVerificationFailedError,
   TokenAlreadyInWhitelistError,
   TokenNotWhitelistedError,
   VaultAlreadyCreatedError,
+  VaultNotFoundError,
   WhitelistAlreadyInitializedError,
   WhitelistNotInitializedError,
 } from "./lib/errors";
@@ -39,7 +40,7 @@ import {
   getVtokenMintPda,
   getWhitelistPda,
 } from "./lib/pdas";
-import { Token, Whitelist } from "./lib/types";
+import { Token, Vault, Whitelist } from "./lib/types";
 import {
   AddTokenAccounts,
   AddTokenParams,
@@ -92,10 +93,10 @@ export class VaultsSDK {
   // *** New methods ***
   async fetchWhitelist(): Promise<Whitelist> {
     try {
-      const whitelist: Whitelist =
-        // @ts-ignore
-        await this.program.account.tokenWhitelist.fetch(getWhitelistPda()[0]);
-      return whitelist;
+      // @ts-ignore
+      return (await this.program.account.tokenWhitelist.fetch(
+        getWhitelistPda()[0]
+      )) as Whitelist;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
         throw new WhitelistNotInitializedError();
@@ -266,83 +267,122 @@ export class VaultsSDK {
     }
   }
 
-  // *** Old methods ***
-  // Instruction methods
+  async fetchVault(manager: PublicKey): Promise<Vault> {
+    try {
+      // @ts-ignore
+      return (await this.program.account.vault.fetch(
+        getVaultPda(manager)[0]
+      )) as Vault;
+    } catch (e) {
+      console.log(e);
+      if (e.toString().includes("Account does not exist")) {
+        throw new VaultNotFoundError(manager);
+      }
+    }
+  }
+
   async deposit(
-    params: DepositParams,
-    accounts: DepositAccounts,
-    getPriceUpdateAccount: (priceFeedId: string) => PublicKey
-  ): Promise<TransactionInstruction> {
+    amount: BN,
+    depositor: PublicKey,
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<string> {
+    // Populate remaining accounts
     const tokenAccounts =
       await this.provider.connection.getParsedTokenAccountsByOwner(
-        getVaultPda(accounts.manager)[0],
+        getVaultPda(manager)[0],
         {
           programId: TOKEN_PROGRAM_ID,
         }
       );
-    // TODO: Enable 2022 tokens
-    // const token2022Accounts =
-    //   await this.provider.connection.getParsedTokenAccountsByOwner(
-    //     getVaultPda(accounts.manager)[0],
-    //     {
-    //       programId: TOKEN_2022_PROGRAM_ID,
-    //     }
-    //   );
+    const token2022Accounts =
+      await this.provider.connection.getParsedTokenAccountsByOwner(
+        getVaultPda(manager)[0],
+        {
+          programId: TOKEN_2022_PROGRAM_ID,
+        }
+      );
     const allTokenAccounts = [
       ...tokenAccounts.value,
-      // ...token2022Accounts.value,
+      ...token2022Accounts.value,
     ];
-    const whitelistedTokens = (await this.fetchWhitelist()).tokens as Token[];
-    const remainingAccounts = allTokenAccounts.reduce((prev, account) => {
-      const tokenMint = new PublicKey(account.account.data.parsed.info.mint);
+    const whitelistedTokens = (await this.fetchWhitelist()).tokens;
+    const remainingAccounts: AccountMeta[] = [];
+
+    for (const tokenAccount of allTokenAccounts) {
+      const tokenMint = new PublicKey(
+        tokenAccount.account.data.parsed.info.mint
+      );
       const token = whitelistedTokens.find(
         (token) => token.mint.toBase58() === tokenMint.toBase58()
       );
-      if (!token) {
-        return prev;
-      }
-      return [
-        ...prev,
-        // Token mint
+
+      remainingAccounts.push(
         {
           pubkey: tokenMint,
           isWritable: false,
           isSigner: false,
         },
-        // Token account
         {
-          pubkey: account.pubkey,
+          pubkey: tokenAccount.pubkey,
           isWritable: false,
           isSigner: false,
         },
-        // Price update account
         {
-          pubkey: getPriceUpdateAccount(token.priceFeedId),
+          pubkey: token.priceUpdate,
           isWritable: false,
           isSigner: false,
-        },
-      ];
-    }, []);
-
-    const depositTokenPriceFeedId = whitelistedTokens.find(
-      (token) => token.mint.toBase58() === accounts.depositTokenMint.toBase58()
-    )?.priceFeedId;
-    if (!depositTokenPriceFeedId) {
-      throw new Error("Deposit token not whitelisted");
+        }
+      );
     }
 
-    const instruction = await this.program.methods
-      .deposit(params.amount)
+    // Deposit token
+    const vault = await this.fetchVault(manager);
+    const depositTokenFromWhitelist = whitelistedTokens.find(
+      (token) => token.mint.toBase58() === vault.depositTokenMint.toBase58()
+    );
+    if (!depositTokenFromWhitelist) {
+      throw new TokenNotWhitelistedError(vault.depositTokenMint);
+    }
+    const tokenProgram = await this.getTokenProgram(vault.depositTokenMint);
+
+    // Tx
+    const tx = await this.program.methods
+      .deposit(amount)
       .accounts({
-        user: accounts.user,
-        manager: accounts.manager,
-        depositTokenMint: accounts.depositTokenMint,
-        depositTokenPriceUpdate: getPriceUpdateAccount(depositTokenPriceFeedId),
+        user: depositor,
+        manager,
+        authority: AUTHORITY_PROGRAM_ID,
+        depositTokenMint: vault.depositTokenMint,
+        depositTokenPriceUpdate: depositTokenFromWhitelist.priceUpdate,
+        tokenProgram,
       })
       .remainingAccounts(remainingAccounts)
-      .instruction();
+      .signers(signers)
+      .transaction();
 
-    return instruction;
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        if (e.toString().includes(depositor.toBase58())) {
+          throw new SignatureVerificationFailedError(depositor);
+        } else if (e.toString().includes(AUTHORITY_PROGRAM_ID.toBase58())) {
+          throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+        }
+      } else if (e.toString().includes("Attempt to debit an account")) {
+        throw new InsufficientBalanceError(depositor);
+      } else if (
+        e.toString().includes("AccountNotInitialized") &&
+        e.toString().includes("user_deposit_token_account")
+      ) {
+        // TODO: Send proper message through this error
+        throw new AccountNotInitializedError("user_deposit_token_account");
+      } else if (e.toString().includes("Error: insufficient funds")) {
+        throw new InsufficientBalanceError(depositor);
+      }
+      throw e;
+    }
   }
 
   async withdraw(
@@ -531,11 +571,6 @@ export class VaultsSDK {
       skipPreflight: true,
       maxRetries: 3, // Internal retries for network issues
     });
-  }
-
-  async fetchVault(manager: PublicKey) {
-    // @ts-ignore
-    return await this.program.account.vault.fetch(getVaultPda(manager)[0]);
   }
 
   // Transaction methods

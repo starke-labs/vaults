@@ -14,7 +14,7 @@ import { JUP, PYTH, USDC, USDT } from "@starke/sdk/whitelist";
 import {
   createConnection,
   getAuthorityKeypair,
-  getTesterKeypair,
+  getManagerKeypair,
 } from "../utils.new";
 
 describe("Whitelist Tests", () => {
@@ -30,7 +30,7 @@ describe("Whitelist Tests", () => {
 
   before(async () => {
     // Get keypairs
-    tester = getTesterKeypair();
+    tester = getManagerKeypair();
     authority = getAuthorityKeypair();
 
     // Initialize SDK

@@ -69,7 +69,7 @@ export async function sendAndConfirmWithRetry(
         maxRetries: 3, // Internal retries for network issues
       });
 
-      // console.log(`Transaction successful on attempt ${attempt}: ${signature}`);
+      console.log(`Transaction successful on attempt ${attempt}: ${signature}`);
       return signature;
     } catch (error) {
       lastError = error;
@@ -90,7 +90,8 @@ export async function sendAndConfirmWithRetry(
     }
   }
 
-  throw new Error(
-    `Transaction failed after ${finalConfig.maxRetries} attempts. Last error: ${lastError}`
-  );
+  throw lastError;
+  // throw new Error(
+  //   `Transaction failed after ${finalConfig.maxRetries} attempts. Last error: ${lastError}`
+  // );
 }

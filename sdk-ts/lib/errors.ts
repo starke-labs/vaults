@@ -69,3 +69,17 @@ function mapError(error: Error, kwargs: Record<string, any>): VaultsError {
   // TODO: Add more cases
   return new VaultsError(e);
 }
+
+export class VaultNotFoundError extends VaultsError {
+  constructor(manager: PublicKey) {
+    super(`No vault found for manager ${manager.toBase58()}`);
+    this.name = "VaultNotFoundError";
+  }
+}
+
+export class AccountNotInitializedError extends VaultsError {
+  constructor(accountName: string) {
+    super(`Account ${accountName} not initialized`);
+    this.name = "AccountNotInitializedError";
+  }
+}
