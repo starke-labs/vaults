@@ -11,3 +11,17 @@ export interface Whitelist {
   authority: PublicKey;
   bump: number;
 }
+
+export interface Vault {
+  manager: PublicKey;
+  depositTokenMint: PublicKey;
+  name: string;
+  bump: number;
+  mint: PublicKey;
+  mintBump: number;
+  entryFee: number;
+  exitFee: number;
+  pendingEntryFee: number | null;
+  pendingExitFee: number | null;
+  feeUpdateTimestamp: number;
+}

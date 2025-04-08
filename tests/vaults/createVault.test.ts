@@ -13,12 +13,12 @@ import { USDC } from "@starke/sdk/whitelist";
 import {
   createConnection,
   getAuthorityKeypair,
-  getTesterKeypair,
+  getManagerKeypair,
 } from "../utils.new";
 
 describe("Create Vault", () => {
-  let vaults: VaultsSDK;
   let manager: Keypair;
+  let vaults: VaultsSDK;
 
   // NOTE: Need to use another sdk instance to test this because the signer can not be the manager in some cases
   let authority: Keypair;
@@ -34,7 +34,7 @@ describe("Create Vault", () => {
 
   before(async () => {
     // Get keypairs
-    manager = getTesterKeypair();
+    manager = getManagerKeypair();
     authority = getAuthorityKeypair();
 
     // Initialize SDK
