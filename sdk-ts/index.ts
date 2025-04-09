@@ -1,4 +1,4 @@
-import { AnchorProvider, BN, Idl, Program, Wallet } from "@coral-xyz/anchor";
+import { AnchorProvider, BN, Program, Wallet } from "@coral-xyz/anchor";
 import { DefaultApi, Instruction, createJupiterApiClient } from "@jup-ag/api";
 import {
   TOKEN_2022_PROGRAM_ID,
@@ -40,34 +40,18 @@ import {
   getVtokenMintPda,
   getWhitelistPda,
 } from "./lib/pdas";
-import { Token, Vault, Whitelist } from "./lib/types";
+import { AccountMeta, Token, Vault, Whitelist } from "./lib/types";
 import {
-  AddTokenAccounts,
-  AddTokenParams,
-  CreateVaultAccounts,
-  CreateVaultParams,
-  DepositAccounts,
-  DepositParams,
-  RemoveTokenAccounts,
-  RemoveTokenParams,
   SwapOnJupiterAccounts,
   SwapOnJupiterParams,
   UpdateFeesAccounts,
   UpdateFeesParams,
-  WithdrawAccounts,
-  WithdrawParams,
 } from "./types";
 import {
   DEFAULT_RETRY_CONFIG,
   TransactionRetryConfig,
   sendAndConfirmWithRetry,
 } from "./utils";
-
-interface AccountMeta {
-  pubkey: PublicKey;
-  isWritable: boolean;
-  isSigner: boolean;
-}
 
 export class VaultsSDK {
   private program: Program;
@@ -281,42 +265,31 @@ export class VaultsSDK {
     }
   }
 
-  async deposit(
-    amount: BN,
-    depositor: PublicKey,
-    manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
-  ): Promise<string> {
-    // Populate remaining accounts
+  private async getDepositRemainingAccounts(
+    vault: PublicKey,
+    whitelistedTokens: Token[]
+  ): Promise<AccountMeta[]> {
     const tokenAccounts =
-      await this.provider.connection.getParsedTokenAccountsByOwner(
-        getVaultPda(manager)[0],
-        {
-          programId: TOKEN_PROGRAM_ID,
-        }
-      );
+      await this.provider.connection.getParsedTokenAccountsByOwner(vault, {
+        programId: TOKEN_PROGRAM_ID,
+      });
     const token2022Accounts =
-      await this.provider.connection.getParsedTokenAccountsByOwner(
-        getVaultPda(manager)[0],
-        {
-          programId: TOKEN_2022_PROGRAM_ID,
-        }
-      );
-    const allTokenAccounts = [
+      await this.provider.connection.getParsedTokenAccountsByOwner(vault, {
+        programId: TOKEN_2022_PROGRAM_ID,
+      });
+
+    const remainingAccounts: AccountMeta[] = [];
+    for (const tokenAccount of [
       ...tokenAccounts.value,
       ...token2022Accounts.value,
-    ];
-    const whitelistedTokens = (await this.fetchWhitelist()).tokens;
-    const remainingAccounts: AccountMeta[] = [];
-
-    for (const tokenAccount of allTokenAccounts) {
+    ]) {
       const tokenMint = new PublicKey(
         tokenAccount.account.data.parsed.info.mint
       );
       const token = whitelistedTokens.find(
         (token) => token.mint.toBase58() === tokenMint.toBase58()
       );
-
+      if (!token) continue;
       remainingAccounts.push(
         {
           pubkey: tokenMint,
@@ -335,6 +308,21 @@ export class VaultsSDK {
         }
       );
     }
+
+    return remainingAccounts;
+  }
+
+  async deposit(
+    amount: BN,
+    depositor: PublicKey,
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<string> {
+    const whitelistedTokens = (await this.fetchWhitelist()).tokens;
+    const remainingAccounts = await this.getDepositRemainingAccounts(
+      getVaultPda(manager)[0],
+      whitelistedTokens
+    );
 
     // Deposit token
     const vault = await this.fetchVault(manager);
@@ -385,85 +373,121 @@ export class VaultsSDK {
     }
   }
 
-  async withdraw(
-    params: WithdrawParams,
-    accounts: WithdrawAccounts
-  ): Promise<TransactionInstruction> {
-    const tokenAccounts =
-      await this.provider.connection.getParsedTokenAccountsByOwner(
-        getVaultPda(accounts.manager)[0],
-        {
-          programId: TOKEN_PROGRAM_ID,
-        }
-      );
-    // TODO: Enable 2022 tokens
-    // const token2022Accounts =
-    //   await this.provider.connection.getParsedTokenAccountsByOwner(
-    //     getVaultPda(accounts.manager)[0],
-    //     {
-    //       programId: TOKEN_2022_PROGRAM_ID,
-    //     }
-    //   );
-    const allTokenAccounts = [
-      ...tokenAccounts.value,
-      // ...token2022Accounts.value,
-    ];
+  async getVtokenBalance(vault: PublicKey, user: PublicKey): Promise<BN> {
+    const [vtokenMint] = getVtokenMintPda(vault);
+    const vtokenAta = await getAssociatedTokenAddress(vtokenMint, user);
+    const vtokenBalance = await this.provider.connection.getTokenAccountBalance(
+      vtokenAta
+    );
+    return new BN(vtokenBalance.value.amount);
+  }
 
-    const whitelistedTokens = (await this.fetchWhitelist()).tokens as Token[];
+  private async getWithdrawRemainingAccounts(
+    vault: PublicKey,
+    withdrawer: PublicKey,
+    whitelistedTokens: Token[]
+  ): Promise<AccountMeta[]> {
+    const tokenAccounts =
+      await this.provider.connection.getParsedTokenAccountsByOwner(vault, {
+        programId: TOKEN_PROGRAM_ID,
+      });
+    const token2022Accounts =
+      await this.provider.connection.getParsedTokenAccountsByOwner(vault, {
+        programId: TOKEN_2022_PROGRAM_ID,
+      });
 
     const remainingAccounts: AccountMeta[] = [];
-
-    for (const vaultTokenAccount of allTokenAccounts) {
-      const tokenMint = new PublicKey(
-        vaultTokenAccount.account.data.parsed.info.mint
-      );
-
-      const token = whitelistedTokens.find(
-        (token) => token.mint.toBase58() === tokenMint.toBase58()
-      );
-      if (!token) {
+    let programId = TOKEN_PROGRAM_ID;
+    for (const vaultTokenAccount of [
+      ...tokenAccounts.value,
+      null,
+      ...token2022Accounts.value,
+    ]) {
+      if (vaultTokenAccount === null) {
+        programId = TOKEN_2022_PROGRAM_ID;
         continue;
       }
 
+      const tokenMint = new PublicKey(
+        vaultTokenAccount.account.data.parsed.info.mint
+      );
+      const token = whitelistedTokens.find(
+        (token) => token.mint.toBase58() === tokenMint.toBase58()
+      );
+      if (!token) continue;
       const userTokenAccount = await getAssociatedTokenAddress(
         tokenMint,
-        accounts.user
+        withdrawer
       );
 
-      // Token mint
-      remainingAccounts.push({
-        pubkey: tokenMint,
-        isWritable: false,
-        isSigner: false,
-      });
-
-      // Vault token account
-      remainingAccounts.push({
-        pubkey: vaultTokenAccount.pubkey,
-        isWritable: true,
-        isSigner: false,
-      });
-
-      // User token account
-      remainingAccounts.push({
-        pubkey: userTokenAccount,
-        isWritable: true,
-        isSigner: false,
-      });
+      remainingAccounts.push(
+        {
+          pubkey: tokenMint,
+          isWritable: false,
+          isSigner: false,
+        },
+        {
+          pubkey: vaultTokenAccount.pubkey,
+          isWritable: true,
+          isSigner: false,
+        },
+        {
+          pubkey: userTokenAccount,
+          isWritable: true,
+          isSigner: false,
+        },
+        {
+          pubkey: programId,
+          isWritable: false,
+          isSigner: false,
+        }
+      );
     }
 
-    const instruction = await this.program.methods
-      .withdraw(params.amount)
-      .accounts({
-        user: accounts.user,
-        manager: accounts.manager,
-      })
-      .remainingAccounts(remainingAccounts)
-      .instruction();
-
-    return instruction;
+    return remainingAccounts;
   }
 
+  async withdraw(
+    amount: BN,
+    withdrawer: PublicKey,
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<string> {
+    const whitelistedTokens = (await this.fetchWhitelist()).tokens;
+    const remainingAccounts = await this.getWithdrawRemainingAccounts(
+      getVaultPda(manager)[0],
+      withdrawer,
+      whitelistedTokens
+    );
+
+    const tx = await this.program.methods
+      .withdraw(amount)
+      .accounts({
+        user: withdrawer,
+        manager,
+      })
+      .remainingAccounts(remainingAccounts)
+      .signers(signers)
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      // console.log(e);
+      if (e.toString().includes("Signature verification failed")) {
+        if (e.toString().includes(withdrawer.toBase58())) {
+          throw new SignatureVerificationFailedError(withdrawer);
+        } else if (e.toString().includes(AUTHORITY_PROGRAM_ID.toBase58())) {
+          throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+        }
+      } else if (e.toString().includes("insufficient funds")) {
+        throw new InsufficientBalanceError(withdrawer);
+      }
+      throw e;
+    }
+  }
+
+  // *** Old methods ***
   async updateVaultFees(
     params: UpdateFeesParams,
     accounts: UpdateFeesAccounts
