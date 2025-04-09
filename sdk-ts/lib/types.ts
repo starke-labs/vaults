@@ -1,5 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 
+export interface AccountMeta {
+  pubkey: PublicKey;
+  isWritable: boolean;
+  isSigner: boolean;
+}
+
 export interface Token {
   mint: PublicKey;
   priceFeedId: string;
