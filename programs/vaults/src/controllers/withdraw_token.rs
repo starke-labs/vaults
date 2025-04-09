@@ -112,7 +112,7 @@ fn parse_withdrawal_accounts<'info>(
 ) -> Result<Vec<WithdrawalAccounts<'info>>> {
     let mut withdrawal_accounts = Vec::new();
 
-    for chunk in remaining_accounts.chunks(3) {
+    for chunk in remaining_accounts.chunks(4) {
         // Each chunk must contain 3 accounts in this order:
         // 1. Token mint
         // 2. Vault token account
