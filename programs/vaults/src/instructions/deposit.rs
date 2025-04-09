@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token::Token;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
@@ -69,7 +70,7 @@ pub fn _deposit<'info>(
         &ctx.accounts.vtoken_account,
         vtokens_to_mint,
         signer_seeds,
-        &ctx.accounts.token_program,
+        &ctx.accounts.vtoken_program,
     )?;
     msg!("{} vtokens minted to user successfully", vtokens_to_mint);
 
@@ -148,12 +149,16 @@ pub struct Deposit<'info> {
         bump = vault.mint_bump,
     )]
     pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
+    // Token program (not Token2022 yet, but might need it for using the extensions)
+    pub vtoken_program: Program<'info, Token>,
 
     // Deposit token mint
     #[account(
         constraint = deposit_token_mint.key() == vault.deposit_token_mint,
     )]
     pub deposit_token_mint: Box<InterfaceAccount<'info, Mint>>,
+    // NOTE: Changing this name to `deposit_token_program` will break the constraint for `vault_deposit_token_account`
+    pub token_program: Interface<'info, TokenInterface>,
 
     // Deposit token price update
     pub deposit_token_price_update: Box<Account<'info, PriceUpdateV2>>,
@@ -166,7 +171,6 @@ pub struct Deposit<'info> {
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
 
     pub clock: Sysvar<'info, Clock>,
-    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
