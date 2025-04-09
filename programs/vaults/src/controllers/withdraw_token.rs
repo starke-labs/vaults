@@ -17,7 +17,6 @@ pub fn withdraw_all_tokens<'info>(
     vtoken_amount: u64,
     whitelist: &Account<'info, TokenWhitelist>,
     signer_seeds: &[&[&[u8]]],
-    token_program: &Interface<'info, TokenInterface>,
     associated_token_program: &Program<'info, AssociatedToken>,
     system_program: &Program<'info, System>,
 ) -> Result<()> {
@@ -37,7 +36,6 @@ pub fn withdraw_all_tokens<'info>(
         user,
         whitelist,
         &vault.key(),
-        token_program,
         system_program,
         associated_token_program,
     )?;
@@ -60,7 +58,7 @@ pub fn withdraw_all_tokens<'info>(
             withdrawal_ratio,
             vault,
             signer_seeds,
-            token_program,
+            &withdrawal_account.token_program,
         )?;
         msg!("Successfully processed withdrawal {}", i + 1);
     }
@@ -100,6 +98,7 @@ struct WithdrawalAccounts<'info> {
     pub mint: InterfaceAccount<'info, Mint>,
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
     pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 /// Parse withdrawal accounts from remaining accounts
@@ -108,7 +107,6 @@ fn parse_withdrawal_accounts<'info>(
     user: &Signer<'info>,
     whitelist: &Account<'info, TokenWhitelist>,
     vault_key: &Pubkey,
-    token_program: &Interface<'info, TokenInterface>,
     system_program: &Program<'info, System>,
     associated_token_program: &Program<'info, AssociatedToken>,
 ) -> Result<Vec<WithdrawalAccounts<'info>>> {
@@ -119,9 +117,11 @@ fn parse_withdrawal_accounts<'info>(
         // 1. Token mint
         // 2. Vault token account
         // 3. User token account
+        // 4. Token program
         let mint = InterfaceAccount::<'info, Mint>::try_from(&chunk[0])?;
         let vault_token_account: InterfaceAccount<'info, TokenAccount> =
             InterfaceAccount::try_from(&chunk[1])?;
+        let token_program = Interface::<'info, TokenInterface>::try_from(&chunk[3])?;
 
         msg!("Trying to parse user token account");
         if chunk[2].data_is_empty() {
@@ -130,7 +130,7 @@ fn parse_withdrawal_accounts<'info>(
                 user,
                 &mint,
                 &chunk[2],
-                token_program,
+                &token_program,
                 system_program,
                 associated_token_program,
             )?;
@@ -173,6 +173,7 @@ fn parse_withdrawal_accounts<'info>(
             mint,
             vault_token_account,
             user_token_account,
+            token_program,
         });
     }
 
