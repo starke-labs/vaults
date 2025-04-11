@@ -118,6 +118,7 @@ pub struct SwapOnJupiter<'info> {
     pub output_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub jupiter_program: Program<'info, Jupiter>,
+    // Token program for output token
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,

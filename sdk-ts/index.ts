@@ -1,19 +1,16 @@
 import { AnchorProvider, BN, Program, Wallet } from "@coral-xyz/anchor";
-import { DefaultApi, Instruction, createJupiterApiClient } from "@jup-ag/api";
+import { DefaultApi, createJupiterApiClient } from "@jup-ag/api";
 import {
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import {
-  AddressLookupTableAccount,
   ComputeBudgetProgram,
   Connection,
   Keypair,
   PublicKey,
   Signer,
-  Transaction,
-  TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
@@ -33,6 +30,7 @@ import {
   WhitelistAlreadyInitializedError,
   WhitelistNotInitializedError,
 } from "./lib/errors";
+import { constructSwapInstruction } from "./lib/jupiter";
 import {
   AUTHORITY_PROGRAM_ID,
   getVaultPda,
@@ -40,18 +38,9 @@ import {
   getVtokenMintPda,
   getWhitelistPda,
 } from "./lib/pdas";
+import { getAddressLookupTables } from "./lib/solana";
 import { AccountMeta, Token, Vault, Whitelist } from "./lib/types";
-import {
-  SwapOnJupiterAccounts,
-  SwapOnJupiterParams,
-  UpdateFeesAccounts,
-  UpdateFeesParams,
-} from "./types";
-import {
-  DEFAULT_RETRY_CONFIG,
-  TransactionRetryConfig,
-  sendAndConfirmWithRetry,
-} from "./utils";
+import { DEFAULT_RETRY_CONFIG, sendAndConfirmWithRetry } from "./utils";
 
 export class VaultsSDK {
   private program: Program;
@@ -487,33 +476,20 @@ export class VaultsSDK {
     }
   }
 
-  // *** Old methods ***
-  async updateVaultFees(
-    params: UpdateFeesParams,
-    accounts: UpdateFeesAccounts
-  ): Promise<TransactionInstruction> {
-    const instruction = await this.program.methods
-      .updateVaultFees(params.newEntryFee, params.newExitFee)
-      .accounts({
-        manager: accounts.manager,
-      })
-      .instruction();
-
-    return instruction;
-  }
-
   async swapOnJupiter(
-    params: SwapOnJupiterParams,
-    accounts: SwapOnJupiterAccounts,
-    signers: Signer[]
+    inputMint: PublicKey,
+    outputMint: PublicKey,
+    amount: BN,
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
   ): Promise<string> {
     const quoteResponse = await this.jup.quoteGet({
-      inputMint: accounts.inputMint.toBase58(),
-      outputMint: accounts.outputMint.toBase58(),
-      amount: params.amount.toNumber(),
+      inputMint: inputMint.toBase58(),
+      outputMint: outputMint.toBase58(),
+      amount: amount.toNumber(),
     });
 
-    const vault = getVaultPda(accounts.manager)[0];
+    const [vault] = getVaultPda(manager);
 
     const swapIxsResponse = await this.jup.swapInstructionsPost({
       swapRequest: {
@@ -522,50 +498,20 @@ export class VaultsSDK {
       },
     });
 
-    function constructIxPayloadToTxIx(ixPayload: Instruction) {
-      return new TransactionInstruction({
-        programId: new PublicKey(ixPayload.programId),
-        keys: ixPayload.accounts.map((account) => ({
-          pubkey: new PublicKey(account.pubkey),
-          isSigner: false,
-          isWritable: account.isWritable,
-        })),
-        data: Buffer.from(ixPayload.data, "base64"),
-      });
-    }
-
-    const swapIx = constructIxPayloadToTxIx(swapIxsResponse.swapInstruction);
+    const swapInstruction = constructSwapInstruction(
+      swapIxsResponse.swapInstruction
+    );
 
     const instruction = await this.program.methods
-      .swapOnJupiter(swapIx.data)
+      .swapOnJupiter(swapInstruction.data)
       .accounts({
-        manager: accounts.manager,
-        inputTokenMint: accounts.inputMint,
-        outputTokenMint: accounts.outputMint,
+        manager,
+        inputTokenMint: inputMint,
+        outputTokenMint: outputMint,
+        tokenProgram: await this.getTokenProgram(outputMint),
       })
-      .remainingAccounts(swapIx.keys)
+      .remainingAccounts(swapInstruction.keys)
       .instruction();
-
-    async function getAddressLookupTables(
-      connection: Connection,
-      addressLookupTableAddresses: string[]
-    ): Promise<AddressLookupTableAccount[]> {
-      const keys = addressLookupTableAddresses.map(
-        (address) => new PublicKey(address)
-      );
-      const addressLookupTableAccountInfos =
-        await connection.getMultipleAccountsInfo(keys);
-
-      return addressLookupTableAccountInfos.map((info, index) => {
-        const key = keys[index];
-        if (info) {
-          return new AddressLookupTableAccount({
-            key,
-            state: AddressLookupTableAccount.deserialize(info.data),
-          });
-        }
-      });
-    }
 
     const modifyComputeUnitsIx = ComputeBudgetProgram.setComputeUnitLimit({
       units: 1_400_000,
@@ -573,13 +519,14 @@ export class VaultsSDK {
 
     const addPriorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
       // Does not work with 50k micro lamports, works with 100k
-      microLamports: 100_000,
+      microLamports: 150_000,
     });
 
     let recentBlockhash = (await this.provider.connection.getLatestBlockhash())
       .blockhash;
+
     const messageV0 = new TransactionMessage({
-      payerKey: accounts.manager,
+      payerKey: manager,
       recentBlockhash,
       instructions: [modifyComputeUnitsIx, addPriorityFeeIx, instruction],
     }).compileToV0Message(
@@ -588,29 +535,15 @@ export class VaultsSDK {
         swapIxsResponse.addressLookupTableAddresses
       )
     );
-    const tx = new VersionedTransaction(messageV0);
-    tx.sign(signers);
-    return await this.provider.sendAndConfirm(tx, signers, {
-      ...DEFAULT_RETRY_CONFIG,
-      skipPreflight: true,
-      maxRetries: 3, // Internal retries for network issues
-    });
-  }
 
-  // Transaction methods
-  // TODO: This should be removed once the SDK is updated to use the new methods
-  async sendTransaction(
-    instructions: TransactionInstruction[],
-    signers: (Keypair | Signer)[] = [],
-    retryConfig?: TransactionRetryConfig
-  ): Promise<string> {
-    const transaction = new Transaction();
-    transaction.add(...instructions);
-    return sendAndConfirmWithRetry(
-      this.provider,
-      transaction,
+    return await this.provider.sendAndConfirm(
+      new VersionedTransaction(messageV0),
       signers,
-      retryConfig
+      {
+        ...DEFAULT_RETRY_CONFIG,
+        skipPreflight: true,
+        maxRetries: 3, // Internal retries for network issues
+      }
     );
   }
 }
