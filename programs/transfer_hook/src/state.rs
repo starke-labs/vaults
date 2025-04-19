@@ -5,7 +5,7 @@ use anchor_lang::prelude::*;
 pub struct VaultConfig {
     pub key: Pubkey,
     pub manager: Pubkey,
-    // do we need to store the vtoken mint?
+    // Do we need to store the vtoken mint?
     pub vtoken_mint: Pubkey,
     pub vtoken_is_transferrable: bool,
     pub bump: u8,
@@ -13,7 +13,7 @@ pub struct VaultConfig {
 
 impl VaultConfig {
     pub const SEED: &'static [u8] = b"STARKE_TRANSFER_HOOK_VAULT_CONFIG";
-    pub const MAX_SPACE: usize = 8 + // discriminator
+    pub const MAX_SPACE: usize = 8 + // Discriminator
         VaultConfig::INIT_SPACE;
 
     pub fn initialize(

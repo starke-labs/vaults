@@ -1,7 +1,7 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 
-import { VaultsSDK } from "@starke/sdk";
+import { VaultsSdk } from "@starke/sdk";
 import {
   InvalidTokenError,
   SignatureVerificationFailedError,
@@ -18,11 +18,11 @@ import {
 
 describe("Create Vault", () => {
   let manager: Keypair;
-  let vaults: VaultsSDK;
+  let vaults: VaultsSdk;
 
   // NOTE: Need to use another sdk instance to test this because the signer can not be the manager in some cases
   let authority: Keypair;
-  let authorityVaults: VaultsSDK;
+  let authorityVaults: VaultsSdk;
 
   const VAULT_NAME = "rkShares Blue Chip";
   const VAULT_SYMBOL = "rkBlueChip";
@@ -38,8 +38,8 @@ describe("Create Vault", () => {
     authority = getAuthorityKeypair();
 
     // Initialize SDK
-    vaults = new VaultsSDK(createConnection(), manager);
-    authorityVaults = new VaultsSDK(createConnection(), authority);
+    vaults = new VaultsSdk(createConnection(), manager);
+    authorityVaults = new VaultsSdk(createConnection(), authority);
   });
 
   it("should fail creating a vault without a valid signer", async () => {

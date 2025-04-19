@@ -2,7 +2,7 @@ import { BN } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 
-import { VaultsSDK } from "@starke/sdk";
+import { VaultsSdk } from "@starke/sdk";
 import {
   InsufficientBalanceError,
   SignatureVerificationFailedError,
@@ -20,24 +20,24 @@ import {
 describe("Withdraw", () => {
   let connection: Connection;
   let withdrawer: Keypair;
-  let vaults: VaultsSDK;
+  let vaults: VaultsSdk;
   let manager: PublicKey;
   let vaultPda: PublicKey;
   let vault: Vault;
   let authority: Keypair;
   let randomKeypair: Keypair;
-  let randomVaults: VaultsSDK;
+  let randomVaults: VaultsSdk;
 
   before(async () => {
     connection = createConnection();
     withdrawer = getTesterKeypair();
-    vaults = new VaultsSDK(connection, withdrawer);
+    vaults = new VaultsSdk(connection, withdrawer);
     manager = getManagerKeypair().publicKey;
     [vaultPda] = getVaultPda(manager);
     vault = await vaults.fetchVault(manager);
     authority = getAuthorityKeypair();
     randomKeypair = Keypair.generate();
-    randomVaults = new VaultsSDK(connection, randomKeypair);
+    randomVaults = new VaultsSdk(connection, randomKeypair);
   });
 
   it("should not be able to withdraw without the withdrawer's or the authority's signature", async () => {
