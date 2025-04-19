@@ -5,20 +5,20 @@ resolution = true
 skip-lint = false
 
 [programs.mainnet]
+# NOTE: Running anchor keys sync updates this ID, which is not
+#       correct as this needs to track the Jupiter mainnet program ID
 jupiter = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+transfer_hook = "3Mbtr8yzqLUuBZVSefrVtAPmgNLFutEXeRWJNATsKU5z"
 vaults = "HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Mainnet"
+cluster = "mainnet"
 wallet = "./deploy/deployer.json"
 
 [scripts]
-# test = "yarn setup:mainnet"
-
 test = "yarn test:vaults"
-
 test-sdk = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:sdk; pkill solana-test-validator)"
 test-vaults = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:vaults; pkill solana-test-validator)"
