@@ -4,7 +4,7 @@ import { expect } from "chai";
 import fs from "fs";
 
 import idl from "@starke/idl/vaults.json";
-import { VaultsSDK } from "@starke/sdk";
+import { VaultsSdk } from "@starke/sdk";
 import {
   AddTokenAccounts,
   AddTokenParams,
@@ -24,7 +24,7 @@ describe("VaultsSDK Unit Tests", () => {
   const priceFeedId =
     "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
 
-  let sdk: VaultsSDK;
+  let sdk: VaultsSdk;
   let provider: AnchorProvider;
   let authority: Keypair;
   let manager: Keypair;
@@ -46,7 +46,7 @@ describe("VaultsSDK Unit Tests", () => {
 
     // Initialize SDK
     const programId = new PublicKey(idl.address);
-    sdk = new VaultsSDK(provider.connection, tester, programId, idl as Idl);
+    sdk = new VaultsSdk(provider.connection, tester, programId, idl as Idl);
   });
 
   describe("Instruction Generation", () => {

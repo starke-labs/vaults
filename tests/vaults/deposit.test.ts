@@ -2,7 +2,7 @@ import { BN } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 
-import { VaultsSDK } from "@starke/sdk";
+import { VaultsSdk } from "@starke/sdk";
 import {
   InsufficientBalanceError,
   SignatureVerificationFailedError,
@@ -18,21 +18,21 @@ import {
 
 describe("Deposit", () => {
   let depositor: Keypair;
-  let vaults: VaultsSDK;
+  let vaults: VaultsSdk;
   let manager: PublicKey;
   let vault: Vault;
   let authority: Keypair;
   let randomKeypair: Keypair;
-  let randomVaults: VaultsSDK;
+  let randomVaults: VaultsSdk;
 
   before(async () => {
     depositor = getTesterKeypair();
-    vaults = new VaultsSDK(createConnection(), depositor);
+    vaults = new VaultsSdk(createConnection(), depositor);
     manager = getManagerKeypair().publicKey;
     vault = await vaults.fetchVault(manager);
     authority = getAuthorityKeypair();
     randomKeypair = Keypair.generate();
-    randomVaults = new VaultsSDK(createConnection(), randomKeypair);
+    randomVaults = new VaultsSdk(createConnection(), randomKeypair);
   });
 
   it("should not be able to deposit without the depositor's or the authority's signature", async () => {

@@ -31,3 +31,11 @@ export interface Vault {
   pendingExitFee: number | null;
   feeUpdateTimestamp: number;
 }
+
+export interface VaultConfig {
+  key: PublicKey;
+  manager: PublicKey;
+  vtokenMint: PublicKey;
+  vtokenIsTransferrable: boolean;
+  bump: number;
+}

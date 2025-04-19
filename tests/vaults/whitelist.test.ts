@@ -1,7 +1,7 @@
 import { Keypair } from "@solana/web3.js";
 import { expect } from "chai";
 
-import { VaultsSDK } from "@starke/sdk";
+import { VaultsSdk } from "@starke/sdk";
 import {
   SignatureVerificationFailedError,
   TokenAlreadyInWhitelistError,
@@ -18,7 +18,7 @@ import {
 } from "../utils.new";
 
 describe("Whitelist Tests", () => {
-  let vaults: VaultsSDK;
+  let vaults: VaultsSdk;
   let tester: Keypair;
   let authority: Keypair;
 
@@ -34,7 +34,7 @@ describe("Whitelist Tests", () => {
     authority = getAuthorityKeypair();
 
     // Initialize SDK
-    vaults = new VaultsSDK(createConnection(), tester);
+    vaults = new VaultsSdk(createConnection(), tester);
   });
 
   // TODO: Enchance this test when sdk has error handling for initializeWhitelist

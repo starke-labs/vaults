@@ -42,7 +42,7 @@ import { getAddressLookupTables } from "./lib/solana";
 import { AccountMeta, Token, Vault, Whitelist } from "./lib/types";
 import { DEFAULT_RETRY_CONFIG, sendAndConfirmWithRetry } from "./utils";
 
-export class VaultsSDK {
+export class VaultsSdk {
   private program: Program;
   private provider: AnchorProvider;
   public events: EventHandler;

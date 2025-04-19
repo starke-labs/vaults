@@ -118,7 +118,7 @@ impl<'info> InitializeExtraAccountMetasAccounts<'info> {
     }
 }
 
-// Order of accounts matters for this struct.
+// Order of accounts matters for this struct
 // The first 4 accounts are the accounts required for token transfer (source, mint, destination, owner)
 // Remaining accounts are the extra accounts required from the ExtraAccountMetaList account
 // These accounts are provided via CPI to this program from the Token2022 program
