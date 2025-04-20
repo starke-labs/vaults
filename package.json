@@ -3,9 +3,8 @@
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-    "test:sdk": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/sdk/instructions.test.ts",
     "test:vaults": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/swap.test.ts",
-    "setup:mainnet": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/mainnet.setup.ts"
+    "test:transferHook": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/transferHook/temp.test.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.0",
