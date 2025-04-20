@@ -22,7 +22,7 @@ export const AUTHORITY_PROGRAM_ID = new PublicKey(
 export const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
 export const VAULT_SEED = "STARKE_VAULT";
 export const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
-export const VAULT_CONFIG_SEED = "STARKE_TRANSFER_HOOK_VAULT_CONFIG";
+export const VAULT_CONFIG_SEED = "STARKE_VAULT_CONFIG";
 export const METADATA_SEED = "metadata";
 
 // PDAs

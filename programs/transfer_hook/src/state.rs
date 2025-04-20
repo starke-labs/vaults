@@ -12,7 +12,7 @@ pub struct VaultConfig {
 }
 
 impl VaultConfig {
-    pub const SEED: &'static [u8] = b"STARKE_TRANSFER_HOOK_VAULT_CONFIG";
+    pub const SEED: &'static [u8] = b"STARKE_VAULT_CONFIG";
     pub const MAX_SPACE: usize = 8 + // Discriminator
         VaultConfig::INIT_SPACE;
 

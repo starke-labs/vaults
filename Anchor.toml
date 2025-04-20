@@ -15,10 +15,10 @@ vaults = "HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "mainnet"
+cluster = "localnet"
 wallet = "./deploy/deployer.json"
 
 [scripts]
-test = "yarn test:vaults"
-test-sdk = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:sdk; pkill solana-test-validator)"
+test = "yarn test:transferHook"
 test-vaults = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:vaults; pkill solana-test-validator)"
+test-transferHook = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:transferHook; pkill solana-test-validator)"
