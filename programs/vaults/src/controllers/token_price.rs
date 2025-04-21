@@ -15,6 +15,17 @@ pub fn get_token_price_from_pyth_feed<'info>(
         &feed_id,
     )?;
 
+    // The price is in the range (p-c, p+c), where p is `price.price` and c is `price.conf`.
+    // We want to check if c / p is less than 0.01 (1%)
+    // Scale up by 10000 to handle 4 decimal places in the percentage calculation
+    let conf_ratio = price
+        .conf
+        .checked_mul(10u64.pow(4))
+        .ok_or(VaultError::NumericOverflow)?
+        .checked_div(price.price.abs() as u64)
+        .ok_or(VaultError::NumericOverflow)?;
+    require!(conf_ratio < 100, VaultError::PriceConfidenceTooLow); // 100 basis points = 1%
+
     Ok(price)
 }
 
