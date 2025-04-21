@@ -173,4 +173,6 @@ pub enum VaultError {
     UserAndTokenAccountMismatch,
     #[msg("Invalid amount")]
     InvalidAmount,
+    #[msg("Price confidence too low")]
+    PriceConfidenceTooLow,
 }
