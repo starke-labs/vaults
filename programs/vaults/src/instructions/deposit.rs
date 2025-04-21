@@ -4,16 +4,23 @@ use anchor_spl::token::Token;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
-use crate::constants::PROGRAM_AUTHORITY;
+use crate::constants::STARKE_AUTHORITY;
 use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
-use crate::state::{Deposited, TokenWhitelist, Vault, VaultError, WhitelistError};
+use crate::state::{
+    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultError, WhitelistError,
+};
 
 pub fn _deposit<'info>(
     ctx: Context<'_, '_, 'info, 'info, Deposit<'info>>,
     amount: u64,
 ) -> Result<()> {
+    require!(
+        !ctx.accounts.starke_config.is_paused,
+        StarkeConfigError::StarkePaused
+    );
+
     msg!("Processing deposit request of {} tokens", amount);
     msg!("User: {}", ctx.accounts.user.key());
     msg!("Vault: {}", ctx.accounts.vault.key());
@@ -104,7 +111,7 @@ pub struct Deposit<'info> {
     //       the remaining accounts needs to be verified
     #[account(
         mut,
-        address = PROGRAM_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+        address = STARKE_AUTHORITY @ WhitelistError::UnauthorizedAccess,
     )]
     pub authority: Signer<'info>,
 
@@ -172,6 +179,13 @@ pub struct Deposit<'info> {
         bump = whitelist.bump,
     )]
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
+
+    // Starke config
+    #[account(
+        seeds = [StarkeConfig::SEED],
+        bump = starke_config.bump,
+    )]
+    pub starke_config: Box<Account<'info, StarkeConfig>>,
 
     pub clock: Sysvar<'info, Clock>,
     pub associated_token_program: Program<'info, AssociatedToken>,

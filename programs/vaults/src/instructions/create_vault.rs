@@ -7,7 +7,7 @@ use anchor_spl::{
 use crate::{
     constants::NAV_DECIMALS,
     controllers::initialize_token_metadata,
-    state::{TokenWhitelist, Vault, VaultCreated, WhitelistError},
+    state::{StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultCreated, WhitelistError},
 };
 
 pub fn _create_vault(
@@ -18,6 +18,11 @@ pub fn _create_vault(
     entry_fee: u16,
     exit_fee: u16,
 ) -> Result<()> {
+    require!(
+        !ctx.accounts.starke_config.is_paused,
+        StarkeConfigError::StarkePaused
+    );
+
     msg!("Processing vault creation request");
     msg!("Manager: {}", ctx.accounts.manager.key());
     msg!(
@@ -130,6 +135,13 @@ pub struct CreateVault<'info> {
         constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
     )]
     pub deposit_token_mint: Box<InterfaceAccount<'info, Mint>>,
+
+    // Starke config
+    #[account(
+        seeds = [StarkeConfig::SEED],
+        bump = starke_config.bump,
+    )]
+    pub starke_config: Box<Account<'info, StarkeConfig>>,
 
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,

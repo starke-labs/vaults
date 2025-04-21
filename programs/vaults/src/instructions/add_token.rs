@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::PROGRAM_AUTHORITY;
+use crate::constants::STARKE_AUTHORITY;
 use crate::state::{TokenWhitelist, WhitelistError, WhitelistTokenAdded};
 
 pub fn _add_token(
@@ -32,7 +32,7 @@ pub fn _add_token(
 #[derive(Accounts)]
 pub struct ModifyWhitelist<'info> {
     #[account(
-        address = PROGRAM_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+        address = STARKE_AUTHORITY @ WhitelistError::UnauthorizedAccess,
     )]
     pub authority: Signer<'info>,
 
