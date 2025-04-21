@@ -8,7 +8,7 @@ use crate::constants::PROGRAM_AUTHORITY;
 use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
-use crate::state::{Deposited, TokenWhitelist, Vault, WhitelistError};
+use crate::state::{Deposited, TokenWhitelist, Vault, VaultError, WhitelistError};
 
 pub fn _deposit<'info>(
     ctx: Context<'_, '_, 'info, 'info, Deposit<'info>>,
@@ -21,6 +21,9 @@ pub fn _deposit<'info>(
         "Deposit token mint: {}",
         ctx.accounts.deposit_token_mint.key()
     );
+
+    // Amount should be greater than 0
+    require!(amount > 0, VaultError::InvalidAmount);
 
     // Calculate the total NAV using vault's get_nav function
     let total_nav = ctx.accounts.vault.get_nav(

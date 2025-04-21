@@ -5,7 +5,7 @@ use anchor_spl::token_interface::{Mint, TokenAccount};
 
 use crate::constants::PROGRAM_AUTHORITY;
 use crate::controllers::{burn_vtoken, withdraw_all_tokens};
-use crate::state::{TokenWhitelist, Vault, WhitelistError, Withdrawn};
+use crate::state::{TokenWhitelist, Vault, VaultError, WhitelistError, Withdrawn};
 
 pub fn _withdraw<'info>(
     ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
@@ -15,6 +15,9 @@ pub fn _withdraw<'info>(
     msg!("User: {}", ctx.accounts.user.key());
     msg!("Vault: {}", ctx.accounts.vault.key());
     msg!("Vtoken mint: {}", ctx.accounts.vtoken_mint.key());
+
+    // Amount should be greater than 0
+    require!(amount > 0, VaultError::InvalidAmount);
 
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
