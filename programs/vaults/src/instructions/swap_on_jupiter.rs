@@ -7,10 +7,15 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::jupiter::Jupiter;
-use crate::state::{TokenWhitelist, Vault, WhitelistError};
+use crate::state::{StarkeConfigError, TokenWhitelist, Vault, WhitelistError};
+use crate::{jupiter::Jupiter, state::StarkeConfig};
 
 pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
+    require!(
+        !ctx.accounts.starke_config.is_paused,
+        StarkeConfigError::StarkePaused
+    );
+
     msg!("Processing Jupiter swap request");
     msg!("Manager: {}", ctx.accounts.manager.key());
     msg!("Vault: {}", ctx.accounts.vault.key());
@@ -116,6 +121,13 @@ pub struct SwapOnJupiter<'info> {
         associated_token::mint = output_token_mint
     )]
     pub output_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    // Starke config
+    #[account(
+        seeds = [StarkeConfig::SEED],
+        bump = starke_config.bump,
+    )]
+    pub starke_config: Box<Account<'info, StarkeConfig>>,
 
     pub jupiter_program: Program<'info, Jupiter>,
     // Token program for output token

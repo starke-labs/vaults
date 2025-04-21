@@ -14,8 +14,16 @@ declare_id!("HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28");
 pub mod vaults {
     use super::*;
 
-    pub fn initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
-        _initialize_whitelist(ctx)
+    pub fn initialize_starke(ctx: Context<InitializeStarke>) -> Result<()> {
+        _initialize_starke(ctx)
+    }
+
+    pub fn pause_starke(ctx: Context<PauseOrResumeStarke>) -> Result<()> {
+        _pause_starke(ctx)
+    }
+
+    pub fn resume_starke(ctx: Context<PauseOrResumeStarke>) -> Result<()> {
+        _resume_starke(ctx)
     }
 
     pub fn add_token(

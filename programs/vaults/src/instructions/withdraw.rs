@@ -3,14 +3,21 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::Token;
 use anchor_spl::token_interface::{Mint, TokenAccount};
 
-use crate::constants::PROGRAM_AUTHORITY;
+use crate::constants::STARKE_AUTHORITY;
 use crate::controllers::{burn_vtoken, withdraw_all_tokens};
-use crate::state::{TokenWhitelist, Vault, VaultError, WhitelistError, Withdrawn};
+use crate::state::{
+    StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultError, WhitelistError, Withdrawn,
+};
 
 pub fn _withdraw<'info>(
     ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
     amount: u64,
 ) -> Result<()> {
+    require!(
+        !ctx.accounts.starke_config.is_paused,
+        StarkeConfigError::StarkePaused
+    );
+
     msg!("Processing withdrawal request of {} vtokens", amount);
     msg!("User: {}", ctx.accounts.user.key());
     msg!("Vault: {}", ctx.accounts.vault.key());
@@ -73,7 +80,7 @@ pub struct Withdraw<'info> {
     //       the remaining accounts needs to be verified
     #[account(
         mut,
-        address = PROGRAM_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+        address = STARKE_AUTHORITY @ WhitelistError::UnauthorizedAccess,
     )]
     pub authority: Signer<'info>,
 
@@ -112,6 +119,13 @@ pub struct Withdraw<'info> {
         bump = whitelist.bump,
     )]
     pub whitelist: Box<Account<'info, TokenWhitelist>>,
+
+    // Starke config
+    #[account(
+        seeds = [StarkeConfig::SEED],
+        bump = starke_config.bump,
+    )]
+    pub starke_config: Box<Account<'info, StarkeConfig>>,
 
     pub clock: Sysvar<'info, Clock>,
     pub associated_token_program: Program<'info, AssociatedToken>,
