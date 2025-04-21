@@ -62,7 +62,7 @@ pub fn _withdraw<'info>(
         vtoken_mint: ctx.accounts.vtoken_mint.key(),
         vtoken_burned_amount: amount,
         // TODO: Check if this is correct
-        new_vtoken_supply: ctx.accounts.vtoken_mint.supply - amount,
+        new_vtoken_supply: ctx.accounts.vtoken_mint.supply.checked_sub(amount).unwrap(),
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 
