@@ -41,7 +41,7 @@ impl TokenWhitelist {
     ) -> Result<()> {
         require!(
             authority == program_authority,
-            WhitelistError::UnauthorizedAccess
+            TokenWhitelistError::UnauthorizedAccess
         );
 
         self.authority = *authority;
@@ -59,11 +59,11 @@ impl TokenWhitelist {
     ) -> Result<()> {
         require!(
             !self.tokens.iter().any(|t| t.mint == *token_mint),
-            WhitelistError::TokenAlreadyWhitelisted
+            TokenWhitelistError::TokenAlreadyWhitelisted
         );
         require!(
             self.tokens.len() < Self::MAX_TOKENS,
-            WhitelistError::WhitelistFull
+            TokenWhitelistError::WhitelistFull
         );
 
         self.tokens.push(TokenInfo {
@@ -79,7 +79,7 @@ impl TokenWhitelist {
             self.tokens.remove(index);
             Ok(())
         } else {
-            err!(WhitelistError::TokenNotWhitelisted)
+            err!(TokenWhitelistError::TokenNotWhitelisted)
         }
     }
 
@@ -92,7 +92,7 @@ impl TokenWhitelist {
             .tokens
             .iter()
             .find(|t| t.mint == *token_mint)
-            .ok_or(WhitelistError::TokenNotWhitelisted)?;
+            .ok_or(TokenWhitelistError::TokenNotWhitelisted)?;
         Ok(token_info.price_feed_id.as_str())
     }
 
@@ -101,17 +101,17 @@ impl TokenWhitelist {
             .tokens
             .iter()
             .find(|t| t.mint == *token_mint)
-            .ok_or(WhitelistError::TokenNotWhitelisted)?;
+            .ok_or(TokenWhitelistError::TokenNotWhitelisted)?;
         require!(
             token_info.price_update == *price_update,
-            WhitelistError::PriceUpdateNotVerified
+            TokenWhitelistError::PriceUpdateNotVerified
         );
         Ok(())
     }
 }
 
 #[error_code]
-pub enum WhitelistError {
+pub enum TokenWhitelistError {
     #[msg("Token is already whitelisted")]
     TokenAlreadyWhitelisted,
     #[msg("Token is not whitelisted")]
