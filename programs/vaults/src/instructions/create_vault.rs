@@ -7,7 +7,10 @@ use anchor_spl::{
 use crate::{
     constants::NAV_DECIMALS,
     controllers::initialize_token_metadata,
-    state::{StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultCreated, WhitelistError},
+    state::{
+        ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
+        TokenWhitelistError, Vault, VaultCreated,
+    },
 };
 
 pub fn _create_vault(
@@ -83,7 +86,10 @@ pub fn _create_vault(
 #[derive(Accounts)]
 pub struct CreateVault<'info> {
     // Vault manager
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = manager_whitelist.is_whitelisted(&manager.key()) @ ManagerWhitelistError::ManagerNotWhitelisted
+    )]
     pub manager: Signer<'info>,
 
     // Vault (PDA)
@@ -123,16 +129,23 @@ pub struct CreateVault<'info> {
     )]
     pub metadata: UncheckedAccount<'info>,
 
-    // Whitelist
+    // Token Whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
-        bump = whitelist.bump,
+        bump = token_whitelist.bump,
     )]
-    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+    pub token_whitelist: Box<Account<'info, TokenWhitelist>>,
+
+    // Manager Whitelist
+    #[account(
+        seeds = [ManagerWhitelist::SEED],
+        bump = manager_whitelist.bump,
+    )]
+    pub manager_whitelist: Box<Account<'info, ManagerWhitelist>>,
 
     // Deposit token mint
     #[account(
-        constraint = whitelist.is_whitelisted(&deposit_token_mint.key()) @ WhitelistError::TokenNotWhitelisted,
+        constraint = token_whitelist.is_whitelisted(&deposit_token_mint.key()) @ TokenWhitelistError::TokenNotWhitelisted,
     )]
     pub deposit_token_mint: Box<InterfaceAccount<'info, Mint>>,
 

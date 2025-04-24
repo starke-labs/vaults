@@ -9,7 +9,8 @@ use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
 use crate::state::{
-    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultError, WhitelistError,
+    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault,
+    VaultError,
 };
 
 pub fn _deposit<'info>(
@@ -35,14 +36,14 @@ pub fn _deposit<'info>(
     // Calculate the total NAV using vault's get_nav function
     let total_nav = ctx.accounts.vault.get_nav(
         ctx.remaining_accounts,
-        &ctx.accounts.whitelist,
+        &ctx.accounts.token_whitelist,
         &ctx.accounts.vault.key(),
     )?;
     msg!("Vault NAV: {}", total_nav);
 
     // Calculate the USD value of deposit tokens
     let deposit_value = calculate_deposit_token_value(
-        &ctx.accounts.whitelist,
+        &ctx.accounts.token_whitelist,
         ctx.accounts.deposit_token_mint.key(),
         ctx.accounts.deposit_token_mint.decimals,
         amount,
@@ -111,7 +112,7 @@ pub struct Deposit<'info> {
     //       the remaining accounts needs to be verified
     #[account(
         mut,
-        address = STARKE_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+        address = STARKE_AUTHORITY @ TokenWhitelistError::UnauthorizedAccess,
     )]
     pub authority: Signer<'info>,
 
@@ -176,9 +177,9 @@ pub struct Deposit<'info> {
     // Token whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
-        bump = whitelist.bump,
+        bump = token_whitelist.bump,
     )]
-    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+    pub token_whitelist: Box<Account<'info, TokenWhitelist>>,
 
     // Starke config
     #[account(

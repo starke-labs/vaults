@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::STARKE_AUTHORITY;
-use crate::state::{TokenWhitelist, WhitelistError, WhitelistTokenAdded};
+use crate::state::{TokenWhitelist, TokenWhitelistError, WhitelistTokenAdded};
 
 pub fn _add_token(
-    ctx: Context<ModifyWhitelist>,
+    ctx: Context<ModifyTokenWhitelist>,
     token: &Pubkey,
     price_feed_id: &str,
     price_update: &Pubkey,
@@ -14,7 +14,7 @@ pub fn _add_token(
     msg!("Price update pubkey: {}", price_update);
 
     ctx.accounts
-        .whitelist
+        .token_whitelist
         .add_token(&token, price_feed_id, &price_update)?;
 
     msg!("Successfully added token to whitelist");
@@ -30,18 +30,18 @@ pub fn _add_token(
 }
 
 #[derive(Accounts)]
-pub struct ModifyWhitelist<'info> {
+pub struct ModifyTokenWhitelist<'info> {
     #[account(
-        address = STARKE_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+        address = STARKE_AUTHORITY @ TokenWhitelistError::UnauthorizedAccess,
     )]
     pub authority: Signer<'info>,
 
     #[account(
         mut,
         seeds = [TokenWhitelist::SEED],
-        bump = whitelist.bump,
+        bump = token_whitelist.bump,
     )]
-    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+    pub token_whitelist: Box<Account<'info, TokenWhitelist>>,
 
     pub clock: Sysvar<'info, Clock>,
 }

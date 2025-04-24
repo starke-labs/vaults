@@ -1,13 +1,21 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::STARKE_AUTHORITY;
-use crate::state::{StarkeConfig, TokenWhitelist, WhitelistError};
+use crate::state::{ManagerWhitelist, StarkeConfig, TokenWhitelist, TokenWhitelistError};
 
 pub fn _initialize_starke(ctx: Context<InitializeStarke>) -> Result<()> {
     msg!("Initializing token whitelist");
     msg!("Authority: {}", ctx.accounts.authority.key());
-    msg!("Whitelist account: {}", ctx.accounts.whitelist.key());
-    msg!("Whitelist bump: {}", ctx.bumps.whitelist);
+    msg!(
+        "Token whitelist account: {}",
+        ctx.accounts.token_whitelist.key()
+    );
+    msg!("Token whitelist bump: {}", ctx.bumps.token_whitelist);
+    msg!(
+        "Manager whitelist account: {}",
+        ctx.accounts.manager_whitelist.key()
+    );
+    msg!("Manager whitelist bump: {}", ctx.bumps.manager_whitelist);
     msg!(
         "Starke config account: {}",
         ctx.accounts.starke_config.key()
@@ -15,11 +23,18 @@ pub fn _initialize_starke(ctx: Context<InitializeStarke>) -> Result<()> {
     msg!("Starke config bump: {}", ctx.bumps.starke_config);
 
     let authority_key = ctx.accounts.authority.key();
-    ctx.accounts
-        .whitelist
-        .initialize(&authority_key, &STARKE_AUTHORITY, ctx.bumps.whitelist)?;
-    msg!("Whitelist initialized successfully");
+    ctx.accounts.token_whitelist.initialize(
+        &authority_key,
+        &STARKE_AUTHORITY,
+        ctx.bumps.token_whitelist,
+    )?;
+    msg!("Token whitelist initialized successfully");
 
+    ctx.accounts
+        .manager_whitelist
+        .initialize(ctx.bumps.manager_whitelist)?;
+
+    msg!("Manager whitelist initialized successfully");
     ctx.accounts
         .starke_config
         .initialize(ctx.bumps.starke_config)?;
@@ -32,7 +47,7 @@ pub fn _initialize_starke(ctx: Context<InitializeStarke>) -> Result<()> {
 pub struct InitializeStarke<'info> {
     #[account(
         mut,
-        address = STARKE_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+        address = STARKE_AUTHORITY @ TokenWhitelistError::UnauthorizedAccess,
     )]
     pub authority: Signer<'info>,
 
@@ -43,7 +58,16 @@ pub struct InitializeStarke<'info> {
         seeds = [TokenWhitelist::SEED],
         bump,
     )]
-    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+    pub token_whitelist: Box<Account<'info, TokenWhitelist>>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = ManagerWhitelist::MAX_SPACE,
+        seeds = [ManagerWhitelist::SEED],
+        bump,
+    )]
+    pub manager_whitelist: Box<Account<'info, ManagerWhitelist>>,
 
     #[account(
         init,
