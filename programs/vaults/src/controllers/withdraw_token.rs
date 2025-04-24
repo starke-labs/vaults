@@ -6,7 +6,7 @@ use anchor_spl::{
 
 use super::{create_associated_token_account, transfer_token_with_signer};
 use crate::constants::PRECISION;
-use crate::state::{TokenWhitelist, Vault, VaultError, WhitelistError};
+use crate::state::{TokenWhitelist, Vault, VaultError, TokenWhitelistError};
 
 /// Withdraw all tokens from the vault token account to a user token account based on the withdrawal ratio
 pub fn withdraw_all_tokens<'info>(
@@ -143,7 +143,7 @@ fn parse_withdrawal_accounts<'info>(
         msg!("Checking if mint and token account match");
         require!(
             whitelist.is_whitelisted(&mint.key()),
-            WhitelistError::TokenNotWhitelisted
+            TokenWhitelistError::TokenNotWhitelisted
         );
 
         msg!("Checking if mint and vault token account match");

@@ -6,7 +6,8 @@ use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::STARKE_AUTHORITY;
 use crate::controllers::{burn_vtoken, withdraw_all_tokens};
 use crate::state::{
-    StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultError, WhitelistError, Withdrawn,
+    StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault, VaultError,
+    Withdrawn,
 };
 
 pub fn _withdraw<'info>(
@@ -48,7 +49,7 @@ pub fn _withdraw<'info>(
         &ctx.accounts.vault,
         &ctx.accounts.vtoken_mint,
         amount,
-        &ctx.accounts.whitelist,
+        &ctx.accounts.token_whitelist,
         signer_seeds,
         &ctx.accounts.associated_token_program,
         &ctx.accounts.system_program,
@@ -80,7 +81,7 @@ pub struct Withdraw<'info> {
     //       the remaining accounts needs to be verified
     #[account(
         mut,
-        address = STARKE_AUTHORITY @ WhitelistError::UnauthorizedAccess,
+        address = STARKE_AUTHORITY @ TokenWhitelistError::UnauthorizedAccess,
     )]
     pub authority: Signer<'info>,
 
@@ -116,9 +117,9 @@ pub struct Withdraw<'info> {
     // Token whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
-        bump = whitelist.bump,
+        bump = token_whitelist.bump,
     )]
-    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+    pub token_whitelist: Box<Account<'info, TokenWhitelist>>,
 
     // Starke config
     #[account(

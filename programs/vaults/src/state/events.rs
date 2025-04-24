@@ -64,3 +64,15 @@ pub struct WhitelistTokenRemoved {
     pub mint: Pubkey,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct WhitelistManagerAdded {
+    pub manager: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct WhitelistManagerRemoved {
+    pub manager: Pubkey,
+    pub timestamp: i64,
+}

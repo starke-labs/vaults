@@ -7,7 +7,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::state::{StarkeConfigError, TokenWhitelist, Vault, WhitelistError};
+use crate::state::{StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault};
 use crate::{jupiter::Jupiter, state::StarkeConfig};
 
 pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
@@ -86,22 +86,22 @@ pub struct SwapOnJupiter<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
-    // Whitelist
+    // Token whitelist
     #[account(
         seeds = [TokenWhitelist::SEED],
-        bump = whitelist.bump,
+        bump = token_whitelist.bump,
     )]
-    pub whitelist: Box<Account<'info, TokenWhitelist>>,
+    pub token_whitelist: Box<Account<'info, TokenWhitelist>>,
 
     // Token input mint
     #[account(
-        constraint = whitelist.is_whitelisted(&input_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
+        constraint = token_whitelist.is_whitelisted(&input_token_mint.key()) @ TokenWhitelistError::TokenNotWhitelisted
     )]
     pub input_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     // Token output mint
     #[account(
-        constraint = whitelist.is_whitelisted(&output_token_mint.key()) @ WhitelistError::TokenNotWhitelisted
+        constraint = token_whitelist.is_whitelisted(&output_token_mint.key()) @ TokenWhitelistError::TokenNotWhitelisted
     )]
     pub output_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
