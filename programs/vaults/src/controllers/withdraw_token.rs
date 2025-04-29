@@ -6,7 +6,7 @@ use anchor_spl::{
 
 use super::{create_associated_token_account, transfer_token_with_signer};
 use crate::constants::PRECISION;
-use crate::state::{TokenWhitelist, Vault, VaultError, TokenWhitelistError};
+use crate::state::{TokenWhitelist, TokenWhitelistError, Vault, VaultError};
 
 /// Withdraw all tokens from the vault token account to a user token account based on the withdrawal ratio
 pub fn withdraw_all_tokens<'info>(
@@ -227,11 +227,12 @@ fn calculate_token_withdrawal_amount(token_balance: u64, withdrawal_ratio: u64) 
         token_balance,
         withdrawal_ratio
     );
-    let amount = token_balance
-        .checked_mul(withdrawal_ratio)
+    let amount = (token_balance as u128)
+        .checked_mul(withdrawal_ratio as u128)
         .ok_or(error!(VaultError::NumericOverflow))?
-        .checked_div(PRECISION)
-        .ok_or(error!(VaultError::NumericOverflow))?;
+        .checked_div(PRECISION as u128)
+        .ok_or(error!(VaultError::NumericOverflow))
+        .map(|amount| amount as u64)?;
     msg!("Calculated withdrawal amount: {}", amount);
     Ok(amount)
 }

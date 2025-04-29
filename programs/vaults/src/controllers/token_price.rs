@@ -31,11 +31,10 @@ pub fn get_token_price_from_pyth_feed<'info>(
 
 pub fn transform_price_to_nav_decimals(price: &Price) -> Result<u64> {
     // TODO: Handle case when exponent is positive or check if that is possible in pyth price feeds?
-    Ok(price
-        .price
-        .unsigned_abs()
-        .checked_mul(PRECISION)
-        .ok_or(VaultError::NumericOverflow)?
-        .checked_div(10u64.pow((-price.exponent) as u32))
-        .ok_or(VaultError::NumericOverflow)?)
+    (price.price.unsigned_abs() as u128)
+        .checked_mul(PRECISION as u128)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div(10u128.pow((-price.exponent) as u32))
+        .ok_or(error!(VaultError::NumericOverflow))
+        .map(|value| value as u64)
 }
