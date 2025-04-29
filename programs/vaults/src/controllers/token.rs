@@ -46,8 +46,8 @@ fn _transfer_token<'info>(
 ) -> Result<()> {
     let transfer_accounts = TransferChecked {
         from: from.to_account_info().clone(),
-        to: to.to_account_info().clone(),
         mint: mint.to_account_info().clone(),
+        to: to.to_account_info().clone(),
         authority: (*authority).clone(),
     };
     let cpi_ctx: CpiContext<'_, '_, '_, 'info, TransferChecked<'info>>;
