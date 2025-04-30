@@ -113,7 +113,7 @@ fn parse_withdrawal_accounts<'info>(
     let mut withdrawal_accounts = Vec::new();
 
     for chunk in remaining_accounts.chunks(4) {
-        // Each chunk must contain 3 accounts in this order:
+        // Each chunk must contain 4 accounts in this order:
         // 1. Token mint
         // 2. Vault token account
         // 3. User token account
