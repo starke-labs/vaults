@@ -157,7 +157,7 @@ fn parse_withdrawal_accounts<'info>(
             VaultError::VaultAndTokenAccountMismatch
         );
 
-        // TODO: What happens if the user token account doesn't exist yet?
+        // User token account is created if it doesn't exist
         msg!("Checking if mint and user token account match");
         require!(
             mint.key() == user_token_account.mint,
