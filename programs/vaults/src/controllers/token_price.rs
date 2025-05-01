@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, Price, PriceUpdateV2};
 
-use crate::constants::{PRECISION, PYTH_PRICE_FEED_MAX_AGE_SECONDS};
+use crate::constants::{PRECISION, PYTH_CONFIDENCE_THRESHOLD_BPS, PYTH_PRICE_FEED_MAX_AGE_SECONDS};
 use crate::state::VaultError;
 
 pub fn get_token_price_from_pyth_feed<'info>(
@@ -24,7 +24,10 @@ pub fn get_token_price_from_pyth_feed<'info>(
         .ok_or(VaultError::NumericOverflow)?
         .checked_div(price.price.abs() as u64)
         .ok_or(VaultError::NumericOverflow)?;
-    require!(conf_ratio < 100, VaultError::PriceConfidenceTooLow); // 100 basis points = 1%
+    require!(
+        conf_ratio < PYTH_CONFIDENCE_THRESHOLD_BPS,
+        VaultError::PriceConfidenceTooLow
+    );
 
     Ok(price)
 }
