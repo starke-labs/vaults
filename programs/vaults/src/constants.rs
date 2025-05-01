@@ -5,6 +5,9 @@ pub static STARKE_AUTHORITY: Pubkey = pubkey!("STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GD
 // Can be as low as 15 seconds because we are using the Pyth sponsored price feed
 pub static PYTH_PRICE_FEED_MAX_AGE_SECONDS: u64 = 15;
 
+// 100 basis points = 1%
+pub static PYTH_CONFIDENCE_THRESHOLD_BPS: u64 = 100;
+
 pub static NAV_DECIMALS: u8 = 9;
 
 pub static PRECISION: u64 = 10u64.pow(NAV_DECIMALS as u32);
