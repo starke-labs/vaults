@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 
 pub static STARKE_AUTHORITY: Pubkey = pubkey!("STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS");
 
-// TODO: 30 fails, need to check if 60 is good enough to be safe
-pub static PYTH_PRICE_FEED_MAX_AGE_SECONDS: u64 = 60;
+// Can be as low as 15 seconds because we are using the Pyth sponsored price feed
+pub static PYTH_PRICE_FEED_MAX_AGE_SECONDS: u64 = 15;
 
 pub static NAV_DECIMALS: u8 = 9;
 
