@@ -41,7 +41,7 @@ describe("Whitelist Tests", () => {
   it("should not initialize whitelist without proper authority", async () => {
     // Try with no signer
     try {
-      await vaults.initializeWhitelist([]);
+      await vaults.initializeStarke([]);
       expect.fail("Should have thrown an error");
     } catch (e) {
       if (
@@ -56,7 +56,7 @@ describe("Whitelist Tests", () => {
 
     // Try with non-authority signer
     try {
-      await vaults.initializeWhitelist([tester]);
+      await vaults.initializeStarke([tester]);
       expect.fail("Should have thrown an error");
     } catch (e) {
       if (
@@ -73,7 +73,7 @@ describe("Whitelist Tests", () => {
   it("should successfully initialize token whitelist if not initialized already", async () => {
     // Try to initialize whitelist
     try {
-      await vaults.initializeWhitelist([authority]);
+      await vaults.initializeStarke([authority]);
     } catch (e) {
       if (!(e instanceof WhitelistAlreadyInitializedError)) {
         throw e;
@@ -121,7 +121,7 @@ describe("Whitelist Tests", () => {
 
   it("should not initialize whitelist twice", async () => {
     try {
-      await vaults.initializeWhitelist([authority]);
+      await vaults.initializeStarke([authority]);
       expect.fail("Should have thrown an error");
     } catch (e) {
       expect(e).to.be.instanceOf(WhitelistAlreadyInitializedError);
