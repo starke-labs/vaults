@@ -83,3 +83,10 @@ export class AccountNotInitializedError extends VaultsError {
     this.name = "AccountNotInitializedError";
   }
 }
+
+export class VaultConfigNotInitializedError extends VaultsError {
+  constructor(vaultConfig: PublicKey) {
+    super(`Vault config ${vaultConfig.toBase58()} not initialized`);
+    this.name = "VaultConfigNotInitializedError";
+  }
+}

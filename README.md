@@ -114,8 +114,8 @@ Current limitations and upcoming features:
 - Currently, each manager can only create one vault
 - Maximum number of tokens is currently set to 75
 - TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
-- WIP: Add types for whitelist and vault accounts in sdk
-- WIP: Refactor tests (use mainnet)
+- WIP: Refactor tests (use mainnet / devnet)
+- TODO: Update sdk to new programs
 
 ## Contributing
 

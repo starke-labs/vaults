@@ -89,7 +89,8 @@ export class VaultsSdk {
     return token;
   }
 
-  async initializeWhitelist(signers: (Keypair | Signer)[]): Promise<string> {
+  async initializeStarke(signers: (Keypair | Signer)[]): Promise<string> {
+    // TODO: Add more checks for the starke config
     // Check if whitelist is already initialized
     try {
       await this.fetchWhitelist();
@@ -101,7 +102,7 @@ export class VaultsSdk {
     }
 
     const tx = await this.program.methods
-      .initializeWhitelist()
+      .initializeStarke()
       .accounts({
         authority: AUTHORITY_PROGRAM_ID,
       })
