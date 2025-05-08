@@ -1,6 +1,25 @@
-import { createMint } from "@solana/spl-token";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Program, Wallet } from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  ExtensionType,
+  TOKEN_2022_PROGRAM_ID,
+  createInitializeMint2Instruction,
+  createInitializeMintInstruction,
+  createInitializeTransferHookInstruction,
+  createMint,
+  getAssociatedTokenAddressSync,
+  getMintLen,
+} from "@solana/spl-token";
+import {
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
+import { sendAndConfirmTransaction } from "@solana/web3.js";
 import { expect } from "chai";
+import { TransferHook } from "target/types/transfer_hook";
 import {
   createConnection,
   getAuthorityKeypair,
@@ -15,77 +34,99 @@ import { getVaultPda, getVtokenMintPda } from "@starke/sdk/lib/pdas";
 import { TransferHookSdk } from "@starke/sdk/transferHook";
 
 describe("Transfer Hook", () => {
-  let tester: Keypair;
-  let manager: Keypair;
-  let authority: Keypair;
+  const program = anchor.workspace.TransferHook as Program<TransferHook>;
 
-  let transferHook: TransferHookSdk;
-  let vaults: VaultsSdk;
-  let vaultsAuthority: VaultsSdk;
+  const tester = getTesterKeypair();
 
-  let depositTokenMint: PublicKey;
+  const mint: Keypair = Keypair.generate();
+  const decimals = 9;
+
+  // Sender
+  const sourceTokenAccount = getAssociatedTokenAddressSync(
+    mint.publicKey,
+    tester.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+
+  // Receiver
+  const receiver = Keypair.generate();
+  const receiverTokenAccount = getAssociatedTokenAddressSync(
+    mint.publicKey,
+    receiver.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+
+  // Connection
+  const connection = createConnection();
 
   before(async () => {
-    tester = getTesterKeypair();
-    manager = getManagerKeypair();
-    authority = getAuthorityKeypair();
-    transferHook = new TransferHookSdk(createConnection(), tester);
-
-    const connection = createConnection();
-    vaults = new VaultsSdk(createConnection(), manager);
-    vaultsAuthority = new VaultsSdk(createConnection(), authority);
-
-    await requestAirdropIfNecessary(connection, manager.publicKey);
-    await requestAirdropIfNecessary(connection, authority.publicKey);
-    depositTokenMint = await createMint(
-      connection,
-      manager,
-      manager.publicKey,
-      manager.publicKey,
-      6
-    );
+    await requestAirdropIfNecessary(connection, tester.publicKey);
   });
 
-  it("should not be able to fetch the vault config before it is initialized", async () => {
-    const [vault] = getVaultPda(manager.publicKey);
-    const [vtokenMint] = getVtokenMintPda(vault);
+  it("should create a mint account with transfer hook extension", async () => {
+    const extensions = [ExtensionType.TransferHook];
+    const mintLen = getMintLen(extensions);
+    const lamports = await connection.getMinimumBalanceForRentExemption(
+      mintLen
+    );
 
+    const tx = new Transaction().add(
+      SystemProgram.createAccount({
+        fromPubkey: tester.publicKey,
+        newAccountPubkey: mint.publicKey,
+        space: mintLen,
+        lamports: lamports,
+        programId: TOKEN_2022_PROGRAM_ID,
+      }),
+      createInitializeTransferHookInstruction(
+        mint.publicKey,
+        tester.publicKey,
+        program.programId,
+        TOKEN_2022_PROGRAM_ID
+      ),
+      createInitializeMintInstruction(
+        mint.publicKey,
+        decimals,
+        tester.publicKey,
+        null,
+        TOKEN_2022_PROGRAM_ID
+      )
+    );
+
+    const txSig = await sendAndConfirmTransaction(connection, tx, [
+      tester,
+      mint,
+    ]);
+  });
+
+  it("should add a vault config", async () => {
+    const [extraAccountMetaList] = PublicKey.findProgramAddressSync(
+      [Buffer.from("extra-account-metas"), mint.publicKey.toBuffer()],
+      program.programId
+    );
+
+    const addVaultConfigInstruction = await program.methods
+      .addVaultConfig(true)
+      .accounts({
+        manager: tester.publicKey,
+        mint: mint.publicKey,
+      })
+      .instruction();
+
+    const tx = new Transaction().add(addVaultConfigInstruction);
     try {
-      const vaultConfig = await transferHook.fetchVaultConfig(vtokenMint);
-    } catch (e) {
-      expect(e).to.be.instanceOf(VaultConfigNotInitializedError);
+      const txSig = await sendAndConfirmTransaction(connection, tx, [tester], {
+        skipPreflight: true,
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
-  });
 
-  it("should create a whitelist and add the deposit token mint to the whitelist", async () => {
-    const txHash = await vaultsAuthority.initializeStarke([]);
-    expect(txHash).to.not.be.undefined;
-
-    const txHash2 = await vaultsAuthority.addTokenToWhitelist({
-      mint: depositTokenMint,
-      priceFeedId: "dummy_price_feed_id",
-      priceUpdate: Keypair.generate().publicKey,
-    });
-    expect(txHash2).to.not.be.undefined;
-  });
-
-  it("should create a vault", async () => {
-    const txHash = await vaults.createVault(
-      "Test Vault",
-      "TEST",
-      "https://test.com",
-      // TODO: Hardcode entry/exit fee to 0 in the sdk method
-      0,
-      0,
-      manager.publicKey,
-      depositTokenMint
-    );
-    expect(txHash).to.not.be.undefined;
-
-    const vault = await vaults.fetchVault(manager.publicKey);
-    expect(vault.name).to.equal("Test Vault");
-    expect(vault.depositTokenMint.toBase58()).to.equal(
-      depositTokenMint.toBase58()
-    );
+    // Check if the extra account meta list was created
   });
 });
