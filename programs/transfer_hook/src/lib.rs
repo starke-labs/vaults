@@ -64,12 +64,12 @@ pub mod transfer_hook {
         // AnchorError caused by account: vault_config. Error Code: AccountDiscriminatorMismatch.
         // Error Number: 3002. Error Message: Account discriminator did not match what was expected.
 
-        // let vault_config = &ctx.accounts.vault_config;
-        // let vtoken_is_transferrable = vault_config.check_if_vtoken_is_transferrable()?;
-        // require!(
-        //     vtoken_is_transferrable,
-        //     TransferHookError::TokenNonTransferrable
-        // );
+        let vault_config = &ctx.accounts.vault_config;
+        let vtoken_is_transferrable = vault_config.check_if_vtoken_is_transferrable()?;
+        require!(
+            vtoken_is_transferrable,
+            TransferHookError::TokenNonTransferrable
+        );
 
         Ok(())
     }
@@ -170,6 +170,14 @@ pub struct ExecuteAccounts<'info> {
 
     /// CHECK: Source token account owner, can be SystemAccount or PDA owned by another program
     pub owner: UncheckedAccount<'info>,
+
+    /// CHECK: ExtraAccountMetaList Account, must use these seeds
+    #[account(
+        seeds = [EXTRA_ACCOUNT_METAS_SEED, mint.key().as_ref()],
+        bump
+    )]
+    pub extra_account_metas: UncheckedAccount<'info>,
+
     #[account(
         // We do not mutate the vault_config account in the ExecuteAccounts context
         // mut,
