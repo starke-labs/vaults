@@ -3,7 +3,7 @@ use anchor_spl::token_interface::{Mint, TokenAccount};
 use spl_tlv_account_resolution::{
     account::ExtraAccountMeta, seeds::Seed, state::ExtraAccountMetaList,
 };
-use spl_transfer_hook_interface::instruction::ExecuteInstruction;
+use spl_transfer_hook_interface::instruction::{ExecuteInstruction, TransferHookInstruction};
 // use vaults::state::Vault;
 
 pub mod constants;
@@ -26,8 +26,6 @@ pub enum TransferHookError {
 
 #[program]
 pub mod transfer_hook {
-    use spl_transfer_hook_interface::instruction::TransferHookInstruction;
-
     use super::*;
 
     // #[instruction(discriminator = b"spl-transfer-hook-interface:initialize-extra-account-metas")]
