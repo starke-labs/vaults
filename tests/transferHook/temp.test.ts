@@ -9,16 +9,13 @@ import {
   createInitializeTransferHookInstruction,
   createMintToInstruction,
   createTransferCheckedWithTransferHookInstruction,
-  getAssociatedTokenAddressSync,
-  getExtraAccountMetaAddress,
-  getExtraAccountMetas,
-  getMint,
-  getMintLen,
-  getTransferHook,
+  getAssociatedTokenAddressSync, // getExtraAccountMetaAddress,
+  // getExtraAccountMetas,
+  // getMint,
+  getMintLen, // getTransferHook,
 } from "@solana/spl-token";
 import {
-  Keypair,
-  PublicKey,
+  Keypair, // PublicKey,
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
