@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount};
-use spl_tlv_account_resolution::{
-    account::ExtraAccountMeta, seeds::Seed, state::ExtraAccountMetaList,
-};
+use spl_tlv_account_resolution::{account::ExtraAccountMeta, state::ExtraAccountMetaList};
 use spl_transfer_hook_interface::instruction::{ExecuteInstruction, TransferHookInstruction};
 // use vaults::state::Vault;
 
@@ -46,7 +44,7 @@ pub mod transfer_hook {
         )?;
 
         let extra_account_metas = InitializeExtraAccountMetasAccounts::extra_account_metas(
-            // &ctx.accounts.vault.mint.key(),
+            &ctx.accounts.vault_config.key(),
         )?;
         ExtraAccountMetaList::init::<ExecuteInstruction>(
             &mut ctx.accounts.extra_account_metas.try_borrow_mut_data()?,
@@ -114,7 +112,7 @@ pub struct InitializeExtraAccountMetasAccounts<'info> {
         seeds = [EXTRA_ACCOUNT_METAS_SEED, mint.key().as_ref()],
         bump,
         space = ExtraAccountMetaList::size_of(
-            InitializeExtraAccountMetasAccounts::extra_account_metas()?.len()
+            InitializeExtraAccountMetasAccounts::extra_account_metas(&vault_config.key())?.len()
         )?,
         payer = manager
     )]
@@ -128,8 +126,7 @@ pub struct InitializeExtraAccountMetasAccounts<'info> {
 
     #[account(
         init,
-        // seeds = [VaultConfig::SEED, mint.key().as_ref()],
-        seeds = [VaultConfig::SEED],
+        seeds = [VaultConfig::SEED, mint.key().as_ref()],
         bump,
         payer = manager,
         space = VaultConfig::MAX_SPACE
@@ -141,11 +138,9 @@ pub struct InitializeExtraAccountMetasAccounts<'info> {
 
 // Define extra account metas to store on extra_account_meta_list account
 impl<'info> InitializeExtraAccountMetasAccounts<'info> {
-    pub fn extra_account_metas() -> Result<Vec<ExtraAccountMeta>> {
-        Ok(vec![ExtraAccountMeta::new_with_seeds(
-            &[Seed::Literal {
-                bytes: VaultConfig::SEED.to_vec(),
-            }],
+    pub fn extra_account_metas(vault_config_key: &Pubkey) -> Result<Vec<ExtraAccountMeta>> {
+        Ok(vec![ExtraAccountMeta::new_with_pubkey(
+            vault_config_key,
             false, // is_signer
             false, // is_writable
         )?])
@@ -177,11 +172,8 @@ pub struct ExecuteAccounts<'info> {
     pub extra_account_metas: UncheckedAccount<'info>,
 
     #[account(
-        // We do not mutate the vault_config account in the ExecuteAccounts context
-        // mut,
-        // seeds = [VaultConfig::SEED, mint.key().as_ref()],
-        seeds = [VaultConfig::SEED],
-        bump = vault_config.bump
+        seeds = [VaultConfig::SEED, mint.key().as_ref()],
+        bump
     )]
     pub vault_config: Account<'info, VaultConfig>,
 }
@@ -199,9 +191,8 @@ pub struct SetVtokenIsTransferrableAccounts<'info> {
 
     #[account(
         mut,
-        // seeds = [VaultConfig::SEED, mint.key().as_ref()],
-        seeds = [VaultConfig::SEED],
-        bump = vault_config.bump
+        seeds = [VaultConfig::SEED, mint.key().as_ref()],
+        bump
     )]
     vault_config: Account<'info, VaultConfig>,
 }
