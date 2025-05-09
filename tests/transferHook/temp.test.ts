@@ -133,8 +133,8 @@ describe("Transfer Hook", () => {
 
     // Get the vault config account
     const [vaultConfig] = PublicKey.findProgramAddressSync(
-      // [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
-      [Buffer.from("STARKE_VAULT_CONFIG")],
+      [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
+      // [Buffer.from("STARKE_VAULT_CONFIG")],
       program.programId
     );
 
@@ -155,8 +155,8 @@ describe("Transfer Hook", () => {
   it("should set the vtoken is transferrable to false", async () => {
     // Get the vault config account
     let [vaultConfig] = PublicKey.findProgramAddressSync(
-      // [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
-      [Buffer.from("STARKE_VAULT_CONFIG")],
+      [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
+      // [Buffer.from("STARKE_VAULT_CONFIG")],
       program.programId
     );
 
@@ -179,8 +179,8 @@ describe("Transfer Hook", () => {
 
     // Get the vault config account
     [vaultConfig] = PublicKey.findProgramAddressSync(
-      // [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
-      [Buffer.from("STARKE_VAULT_CONFIG")],
+      [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
+      // [Buffer.from("STARKE_VAULT_CONFIG")],
       program.programId
     );
 
