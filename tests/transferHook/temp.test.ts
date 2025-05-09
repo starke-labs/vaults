@@ -28,8 +28,7 @@ import { TransferHook } from "target/types/transfer_hook";
 import {
   createConnection,
   getManagerKeypair,
-  getTesterKeypair,
-  requestAirdropIfNecessary,
+  getTesterKeypair, // requestAirdropIfNecessary,
 } from "tests/utils.new";
 
 describe("Transfer Hook", () => {
@@ -39,12 +38,20 @@ describe("Transfer Hook", () => {
 
   const tester = getTesterKeypair();
   const receiver = getManagerKeypair();
-  const mint: Keypair = Keypair.generate();
+  const mint1: Keypair = Keypair.generate();
+  const mint2: Keypair = Keypair.generate();
   const decimals = 9;
 
   // Sender
-  const sourceTokenAccount = getAssociatedTokenAddressSync(
-    mint.publicKey,
+  const sourceTokenAccount1 = getAssociatedTokenAddressSync(
+    mint1.publicKey,
+    tester.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  const sourceTokenAccount2 = getAssociatedTokenAddressSync(
+    mint2.publicKey,
     tester.publicKey,
     false,
     TOKEN_2022_PROGRAM_ID,
@@ -53,8 +60,15 @@ describe("Transfer Hook", () => {
 
   // Receiver
   // const receiver = Keypair.generate();
-  const receiverTokenAccount = getAssociatedTokenAddressSync(
-    mint.publicKey,
+  const receiverTokenAccount1 = getAssociatedTokenAddressSync(
+    mint1.publicKey,
+    receiver.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  const receiverTokenAccount2 = getAssociatedTokenAddressSync(
+    mint2.publicKey,
     receiver.publicKey,
     false,
     TOKEN_2022_PROGRAM_ID,
@@ -68,7 +82,7 @@ describe("Transfer Hook", () => {
     // await requestAirdropIfNecessary(connection, tester.publicKey);
   });
 
-  it("should create a mint account with transfer hook extension", async () => {
+  it("should create mint1 account with transfer hook extension", async () => {
     const extensions = [ExtensionType.TransferHook];
     const mintLen = getMintLen(extensions);
     const lamports = await connection.getMinimumBalanceForRentExemption(
@@ -78,19 +92,19 @@ describe("Transfer Hook", () => {
     const tx = new Transaction().add(
       SystemProgram.createAccount({
         fromPubkey: tester.publicKey,
-        newAccountPubkey: mint.publicKey,
+        newAccountPubkey: mint1.publicKey,
         space: mintLen,
         lamports: lamports,
         programId: TOKEN_2022_PROGRAM_ID,
       }),
       createInitializeTransferHookInstruction(
-        mint.publicKey,
+        mint1.publicKey,
         tester.publicKey,
         program.programId,
         TOKEN_2022_PROGRAM_ID
       ),
       createInitializeMintInstruction(
-        mint.publicKey,
+        mint1.publicKey,
         decimals,
         tester.publicKey,
         null,
@@ -100,12 +114,49 @@ describe("Transfer Hook", () => {
 
     const txSig = await sendAndConfirmTransaction(connection, tx, [
       tester,
-      mint,
+      mint1,
     ]);
     console.log("txSig", txSig);
   });
 
-  it("should add a vault config", async () => {
+  it("should create mint2 account with transfer hook extension", async () => {
+    const extensions = [ExtensionType.TransferHook];
+    const mintLen = getMintLen(extensions);
+    const lamports = await connection.getMinimumBalanceForRentExemption(
+      mintLen
+    );
+
+    const tx = new Transaction().add(
+      SystemProgram.createAccount({
+        fromPubkey: tester.publicKey,
+        newAccountPubkey: mint2.publicKey,
+        space: mintLen,
+        lamports: lamports,
+        programId: TOKEN_2022_PROGRAM_ID,
+      }),
+      createInitializeTransferHookInstruction(
+        mint2.publicKey,
+        tester.publicKey,
+        program.programId,
+        TOKEN_2022_PROGRAM_ID
+      ),
+      createInitializeMintInstruction(
+        mint2.publicKey,
+        decimals,
+        tester.publicKey,
+        null,
+        TOKEN_2022_PROGRAM_ID
+      )
+    );
+
+    const txSig = await sendAndConfirmTransaction(connection, tx, [
+      tester,
+      mint2,
+    ]);
+    console.log("txSig", txSig);
+  });
+
+  it("should add a vault config for mint1 with true", async () => {
     // // Check if the extra account metas was created
     // const [extraAccountMetas] = PublicKey.findProgramAddressSync(
     //   [Buffer.from("extra-account-metas"), mint.publicKey.toBuffer()],
@@ -122,7 +173,7 @@ describe("Transfer Hook", () => {
       .initializeExtraAccountMetas(true)
       .accounts({
         manager: tester.publicKey,
-        mint: mint.publicKey,
+        mint: mint1.publicKey,
       })
       .instruction();
 
@@ -157,67 +208,88 @@ describe("Transfer Hook", () => {
     // expect(extraAccountMetasAccount).to.not.equal(null);
   });
 
-  it("should set the vtoken is transferrable to false", async () => {
-    // // Get the vault config account
-    // let [vaultConfig] = PublicKey.findProgramAddressSync(
-    //   [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
-    //   // [Buffer.from("STARKE_VAULT_CONFIG")],
-    //   program.programId
-    // );
-
-    // // Get the vault config account
-    // let vaultConfigAccount = await program.account.vaultConfig.fetch(
-    //   vaultConfig
-    // );
-    // expect(vaultConfigAccount.vtokenIsTransferrable).to.equal(true);
-
-    const setVtokenIsTransferrableInstruction = await program.methods
-      .setVtokenIsTransferrable(false)
+  it("should add a vault config for mint2 with false", async () => {
+    const addVaultConfigInstruction = await program.methods
+      .initializeExtraAccountMetas(false)
       .accounts({
         manager: tester.publicKey,
-        mint: mint.publicKey,
+        mint: mint2.publicKey,
       })
       .instruction();
 
-    const tx = new Transaction().add(setVtokenIsTransferrableInstruction);
-    const txSig = await sendAndConfirmTransaction(connection, tx, [tester]);
-    console.log("txSig", txSig);
-
-    // // Get the vault config account
-    // [vaultConfig] = PublicKey.findProgramAddressSync(
-    //   [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
-    //   // [Buffer.from("STARKE_VAULT_CONFIG")],
-    //   program.programId
-    // );
-
-    // vaultConfigAccount = await program.account.vaultConfig.fetch(vaultConfig);
-    // expect(vaultConfigAccount.vtokenIsTransferrable).to.equal(false);
+    const tx = new Transaction().add(addVaultConfigInstruction);
+    try {
+      const txSig = await sendAndConfirmTransaction(connection, tx, [tester], {
+        skipPreflight: false,
+      });
+      console.log("txSig", txSig);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   });
 
-  it("should create associated token accounts and mint tokens", async () => {
+  // it("should set the vtoken is transferrable to false", async () => {
+  //   // // Get the vault config account
+  //   // let [vaultConfig] = PublicKey.findProgramAddressSync(
+  //   //   [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
+  //   //   // [Buffer.from("STARKE_VAULT_CONFIG")],
+  //   //   program.programId
+  //   // );
+
+  //   // // Get the vault config account
+  //   // let vaultConfigAccount = await program.account.vaultConfig.fetch(
+  //   //   vaultConfig
+  //   // );
+  //   // expect(vaultConfigAccount.vtokenIsTransferrable).to.equal(true);
+
+  //   const setVtokenIsTransferrableInstruction = await program.methods
+  //     .setVtokenIsTransferrable(false)
+  //     .accounts({
+  //       manager: tester.publicKey,
+  //       mint: mint1.publicKey,
+  //     })
+  //     .instruction();
+
+  //   const tx = new Transaction().add(setVtokenIsTransferrableInstruction);
+  //   const txSig = await sendAndConfirmTransaction(connection, tx, [tester]);
+  //   console.log("txSig", txSig);
+
+  //   // // Get the vault config account
+  //   // [vaultConfig] = PublicKey.findProgramAddressSync(
+  //   //   [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
+  //   //   // [Buffer.from("STARKE_VAULT_CONFIG")],
+  //   //   program.programId
+  //   // );
+
+  //   // vaultConfigAccount = await program.account.vaultConfig.fetch(vaultConfig);
+  //   // expect(vaultConfigAccount.vtokenIsTransferrable).to.equal(false);
+  // });
+
+  it("should create associated token accounts and mint tokens for mint1", async () => {
     // 100 tokens
     const amount = 100 * 10 ** decimals;
 
     const transaction = new Transaction().add(
       createAssociatedTokenAccountInstruction(
         tester.publicKey,
-        sourceTokenAccount,
+        sourceTokenAccount1,
         tester.publicKey,
-        mint.publicKey,
+        mint1.publicKey,
         TOKEN_2022_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       ),
       createAssociatedTokenAccountInstruction(
         tester.publicKey,
-        receiverTokenAccount,
+        receiverTokenAccount1,
         receiver.publicKey,
-        mint.publicKey,
+        mint1.publicKey,
         TOKEN_2022_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       ),
       createMintToInstruction(
-        mint.publicKey,
-        sourceTokenAccount,
+        mint1.publicKey,
+        sourceTokenAccount1,
         tester.publicKey,
         amount,
         [],
@@ -236,7 +308,67 @@ describe("Transfer Hook", () => {
     // expect(sourceTokenAccountBalance.value.amount).to.equal(amount.toString());
   });
 
-  it("should not transfer tokens from the source token account to the receiver token account", async () => {
+  it("should create associated token accounts and mint tokens for mint2", async () => {
+    // 100 tokens
+    const amount = 100 * 10 ** decimals;
+
+    const transaction = new Transaction().add(
+      createAssociatedTokenAccountInstruction(
+        tester.publicKey,
+        sourceTokenAccount2,
+        tester.publicKey,
+        mint2.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      ),
+      createAssociatedTokenAccountInstruction(
+        tester.publicKey,
+        receiverTokenAccount2,
+        receiver.publicKey,
+        mint2.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      ),
+      createMintToInstruction(
+        mint2.publicKey,
+        sourceTokenAccount2,
+        tester.publicKey,
+        amount,
+        [],
+        TOKEN_2022_PROGRAM_ID
+      )
+    );
+    const txSig = await sendAndConfirmTransaction(connection, transaction, [
+      tester,
+    ]);
+    console.log("txSig", txSig);
+  });
+
+  it("should transfer tokens from the source token account to the receiver token account for mint1", async () => {
+    const amount = 1 * 10 ** decimals;
+
+    const transferCheckedInstruction =
+      await createTransferCheckedWithTransferHookInstruction(
+        connection,
+        sourceTokenAccount1,
+        mint1.publicKey,
+        receiverTokenAccount1,
+        tester.publicKey,
+        BigInt(amount),
+        decimals,
+        [tester.publicKey],
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+
+    const tx = new Transaction().add(transferCheckedInstruction);
+    const txSig = await sendAndConfirmTransaction(connection, tx, [tester], {
+      skipPreflight: false,
+    });
+    console.log("txSig", txSig);
+  });
+
+  it("should not transfer mint2 tokens from the source token account to the receiver token account", async () => {
     const amount = 1 * 10 ** decimals;
 
     // const mintInfo = await getMint(
@@ -251,9 +383,9 @@ describe("Transfer Hook", () => {
     const transferCheckedInstruction =
       await createTransferCheckedWithTransferHookInstruction(
         connection,
-        sourceTokenAccount,
-        mint.publicKey,
-        receiverTokenAccount,
+        sourceTokenAccount2,
+        mint2.publicKey,
+        receiverTokenAccount2,
         tester.publicKey,
         BigInt(amount),
         decimals,
@@ -275,45 +407,72 @@ describe("Transfer Hook", () => {
     }
   });
 
-  it("should set the vtoken is transferrable to true", async () => {
-    // // Get the vault config account
-    // let [vaultConfig] = PublicKey.findProgramAddressSync(
-    //   [Buffer.from("STARKE_VAULT_CONFIG"), mint.publicKey.toBuffer()],
-    //   program.programId
-    // );
-
-    // // Get the vault config account
-    // let vaultConfigAccount = await program.account.vaultConfig.fetch(
-    //   vaultConfig
-    // );
-    // expect(vaultConfigAccount.vtokenIsTransferrable).to.equal(false);
-
+  it("should set the vtoken is transferrable to false for mint1", async () => {
     const setVtokenIsTransferrableInstruction = await program.methods
-      .setVtokenIsTransferrable(true)
+      .setVtokenIsTransferrable(false)
       .accounts({
         manager: tester.publicKey,
-        mint: mint.publicKey,
+        mint: mint1.publicKey,
       })
       .instruction();
 
     const tx = new Transaction().add(setVtokenIsTransferrableInstruction);
     const txSig = await sendAndConfirmTransaction(connection, tx, [tester]);
     console.log("txSig", txSig);
-
-    // // Get the vault config account
-    // vaultConfigAccount = await program.account.vaultConfig.fetch(vaultConfig);
-    // expect(vaultConfigAccount.vtokenIsTransferrable).to.equal(true);
   });
 
-  it("should transfer tokens from the source token account to the receiver token account", async () => {
+  it("should not transfer tokens from the source token account to the receiver token account for mint1", async () => {
     const amount = 1 * 10 ** decimals;
 
     const transferCheckedInstruction =
       await createTransferCheckedWithTransferHookInstruction(
         connection,
-        sourceTokenAccount,
-        mint.publicKey,
-        receiverTokenAccount,
+        sourceTokenAccount1,
+        mint1.publicKey,
+        receiverTokenAccount1,
+        tester.publicKey,
+        BigInt(amount),
+        decimals,
+        [tester.publicKey],
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+
+    const tx = new Transaction().add(transferCheckedInstruction);
+    try {
+      const txSig = await sendAndConfirmTransaction(connection, tx, [tester], {
+        skipPreflight: false,
+      });
+      expect.fail("Transaction should have failed");
+    } catch (error) {
+      console.log("error", error.toString());
+      expect(error.toString()).to.include("TokenNonTransferrable");
+    }
+  });
+
+  it("should set the vtoken is transferrable to true for mint2", async () => {
+    const setVtokenIsTransferrableInstruction = await program.methods
+      .setVtokenIsTransferrable(true)
+      .accounts({
+        manager: tester.publicKey,
+        mint: mint2.publicKey,
+      })
+      .instruction();
+
+    const tx = new Transaction().add(setVtokenIsTransferrableInstruction);
+    const txSig = await sendAndConfirmTransaction(connection, tx, [tester]);
+    console.log("txSig", txSig);
+  });
+
+  it("should transfer tokens from the source token account to the receiver token account for mint2", async () => {
+    const amount = 1 * 10 ** decimals;
+
+    const transferCheckedInstruction =
+      await createTransferCheckedWithTransferHookInstruction(
+        connection,
+        sourceTokenAccount2,
+        mint2.publicKey,
+        receiverTokenAccount2,
         tester.publicKey,
         BigInt(amount),
         decimals,
@@ -327,13 +486,5 @@ describe("Transfer Hook", () => {
       skipPreflight: false,
     });
     console.log("txSig", txSig);
-
-    // // Check if the receiver token account has the correct amount
-    // const receiverTokenAccountBalance = await connection.getTokenAccountBalance(
-    //   receiverTokenAccount
-    // );
-    // expect(receiverTokenAccountBalance.value.amount).to.equal(
-    //   amount.toString()
-    // );
   });
 });
