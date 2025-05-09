@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ -z "$1" ]; then
+    echo "Usage: $0 <program-name>"
+    exit 1
+fi
+
 # Check if RPC endpoint is provided
 if [ -z "$MAINNET_RPC" ]; then
     echo "Error: MAINNET_RPC environment variable is not set"
@@ -10,4 +15,4 @@ fi
 # NOTE: Can not use verifiable build unless anchor fixes their issue
 #       https://github.com/coral-xyz/anchor/issues/3585
 # anchor deploy -p vaults -v --provider.cluster $MAINNET_RPC
-anchor deploy -p vaults --provider.cluster $MAINNET_RPC
+anchor deploy -p $1 --provider.cluster $MAINNET_RPC
