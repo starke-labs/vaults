@@ -1,5 +1,5 @@
 [package]
-name = "transfer_hook"
+name = "transfer-hook"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
@@ -16,7 +16,6 @@ no-idl = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
-
 [dependencies]
 anchor-lang = { version = "0.31.0", features = [
     "interface-instructions",
@@ -25,4 +24,3 @@ anchor-lang = { version = "0.31.0", features = [
 anchor-spl = "0.31.0"
 spl-transfer-hook-interface = "0.10.0"
 spl-tlv-account-resolution = "0.10.0"
-vaults = { path = "../vaults", features = ["no-entrypoint"] }

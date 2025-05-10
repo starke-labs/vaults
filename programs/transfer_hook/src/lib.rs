@@ -4,13 +4,12 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount};
 use spl_tlv_account_resolution::{account::ExtraAccountMeta, state::ExtraAccountMetaList};
 use spl_transfer_hook_interface::instruction::{ExecuteInstruction, TransferHookInstruction};
-// use vaults::state::Vault;
 
 pub mod constants;
 pub mod state;
 
 use constants::EXTRA_ACCOUNT_METAS_SEED;
-use state::VaultConfig;
+use state::VtokenConfig;
 
 declare_id!("3Mbtr8yzqLUuBZVSefrVtAPmgNLFutEXeRWJNATsKU5z");
 
@@ -28,25 +27,20 @@ pub enum TransferHookError {
 pub mod transfer_hook {
     use super::*;
 
-    // #[instruction(discriminator = b"spl-transfer-hook-interface:initialize-extra-account-metas")]
     pub fn initialize_extra_account_metas(
         ctx: Context<InitializeExtraAccountMetasAccounts>,
         vtoken_is_transferrable: bool,
     ) -> Result<()> {
-        let vault_config = &mut ctx.accounts.vault_config;
-        vault_config.initialize(
-            // &ctx.accounts.vault.key(),
-            // &ctx.accounts.vault.manager,
-            // &ctx.accounts.vault.mint.key(),
-            &ctx.accounts.mint.key(),
+        let vtoken_config = &mut ctx.accounts.vtoken_config;
+        vtoken_config.initialize(
             &ctx.accounts.manager.key(),
             &ctx.accounts.mint.key(),
             vtoken_is_transferrable,
-            ctx.bumps.vault_config,
+            ctx.bumps.vtoken_config,
         )?;
 
         let extra_account_metas = InitializeExtraAccountMetasAccounts::extra_account_metas(
-            &ctx.accounts.vault_config.key(),
+            &ctx.accounts.vtoken_config.key(),
         )?;
         ExtraAccountMetaList::init::<ExecuteInstruction>(
             &mut ctx.accounts.extra_account_metas.try_borrow_mut_data()?,
@@ -56,13 +50,8 @@ pub mod transfer_hook {
         Ok(())
     }
 
-    // #[instruction(discriminator = b"spl-transfer-hook-interface:execute")]
     pub fn execute(ctx: Context<ExecuteAccounts>, _amount: u64) -> Result<()> {
-        // TODO: Uncomment this once we have fixed error:
-        // AnchorError caused by account: vault_config. Error Code: AccountDiscriminatorMismatch.
-        // Error Number: 3002. Error Message: Account discriminator did not match what was expected.
-
-        let vault_config = &ctx.accounts.vault_config;
+        let vault_config = &ctx.accounts.vtoken_config;
         let vtoken_is_transferrable = vault_config.check_if_vtoken_is_transferrable()?;
         require!(
             vtoken_is_transferrable,
@@ -95,7 +84,7 @@ pub mod transfer_hook {
         ctx: Context<SetVtokenIsTransferrableAccounts>,
         vtoken_is_transferrable: bool,
     ) -> Result<()> {
-        let vault_config = &mut ctx.accounts.vault_config;
+        let vault_config = &mut ctx.accounts.vtoken_config;
         vault_config.set_vtoken_is_transferrable(vtoken_is_transferrable)?;
 
         Ok(())
@@ -104,36 +93,33 @@ pub mod transfer_hook {
 
 #[derive(Accounts)]
 pub struct InitializeExtraAccountMetasAccounts<'info> {
-    // Payer is the manager of the vault
     #[account(mut)]
-    manager: Signer<'info>,
+    pub manager: Signer<'info>,
 
-    /// CHECK: ExtraAccountMetaList Account, must use these seeds
+    /// CHECK: This account is initialized in the initialize_extra_account_metas instruction
+    /// and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.
+    /// The Token2022 program validates this account during CPI.
     #[account(
         init,
         seeds = [EXTRA_ACCOUNT_METAS_SEED, mint.key().as_ref()],
         bump,
         space = ExtraAccountMetaList::size_of(
-            InitializeExtraAccountMetasAccounts::extra_account_metas(&vault_config.key())?.len()
+            InitializeExtraAccountMetasAccounts::extra_account_metas(&vtoken_config.key())?.len()
         )?,
         payer = manager
     )]
-    pub extra_account_metas: UncheckedAccount<'info>,
+    pub extra_account_metas: AccountInfo<'info>,
 
-    // #[account(
-    //     constraint = vault.manager == manager.key() @ TransferHookError::Unauthorized,
-    // )]
-    // pub vault: Account<'info, Vault>,
     pub mint: InterfaceAccount<'info, Mint>,
 
     #[account(
         init,
-        seeds = [VaultConfig::SEED, mint.key().as_ref()],
+        seeds = [VtokenConfig::SEED, mint.key().as_ref()],
         bump,
         payer = manager,
-        space = VaultConfig::MAX_SPACE
+        space = VtokenConfig::MAX_SPACE
     )]
-    pub vault_config: Account<'info, VaultConfig>,
+    pub vtoken_config: Account<'info, VtokenConfig>,
 
     pub system_program: Program<'info, System>,
 }
@@ -166,35 +152,33 @@ pub struct ExecuteAccounts<'info> {
     /// CHECK: Source token account owner, can be SystemAccount or PDA owned by another program
     pub owner: UncheckedAccount<'info>,
 
-    /// CHECK: ExtraAccountMetaList Account, must use these seeds
+    /// CHECK: This account is initialized in the initialize_extra_account_metas instruction
+    /// and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.
+    /// The Token2022 program validates this account during CPI.
     #[account(
         seeds = [EXTRA_ACCOUNT_METAS_SEED, mint.key().as_ref()],
         bump
     )]
-    pub extra_account_metas: UncheckedAccount<'info>,
+    pub extra_account_metas: AccountInfo<'info>,
 
     #[account(
-        seeds = [VaultConfig::SEED, mint.key().as_ref()],
+        seeds = [VtokenConfig::SEED, mint.key().as_ref()],
         bump
     )]
-    pub vault_config: Account<'info, VaultConfig>,
+    pub vtoken_config: Account<'info, VtokenConfig>,
 }
 
 #[derive(Accounts)]
 pub struct SetVtokenIsTransferrableAccounts<'info> {
     #[account(mut)]
-    manager: Signer<'info>,
+    pub manager: Signer<'info>,
 
-    // #[account(
-    //     constraint = vault.manager == manager.key() @ TransferHookError::Unauthorized,
-    // )]
-    // pub vault: Account<'info, Vault>,
     pub mint: InterfaceAccount<'info, Mint>,
 
     #[account(
         mut,
-        seeds = [VaultConfig::SEED, mint.key().as_ref()],
+        seeds = [VtokenConfig::SEED, mint.key().as_ref()],
         bump
     )]
-    vault_config: Account<'info, VaultConfig>,
+    pub vtoken_config: Account<'info, VtokenConfig>,
 }
