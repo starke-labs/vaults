@@ -2883,14 +2883,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "transfer_hook"
+name = "transfer-hook"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "spl-tlv-account-resolution 0.10.0",
  "spl-transfer-hook-interface 0.10.0",
- "vaults",
 ]
 
 [[package]]
@@ -2940,6 +2939,7 @@ dependencies = [
  "jupiter",
  "pyth-solana-receiver-sdk",
  "solana-security-txt",
+ "transfer-hook",
 ]
 
 [[package]]

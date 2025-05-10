@@ -3,10 +3,13 @@ use anchor_spl::{
     metadata::Metadata,
     token_interface::{Mint, TokenInterface},
 };
+use transfer_hook::{
+    constants::EXTRA_ACCOUNT_METAS_SEED, program::TransferHook, state::VtokenConfig,
+};
 
 use crate::{
     constants::NAV_DECIMALS,
-    controllers::initialize_token_metadata,
+    controllers::{initialize_token_metadata, initialize_transfer_hook, initialize_vtoken_config},
     state::{
         ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
         TokenWhitelistError, Vault, VaultCreated,
@@ -20,6 +23,7 @@ pub fn _create_vault(
     uri: &str,
     entry_fee: u16,
     exit_fee: u16,
+    vtoken_is_transferrable: bool,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -35,11 +39,34 @@ pub fn _create_vault(
     msg!("Name: {}", name);
     msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
 
-    // Initialize vtoken metadata
+    // Vault seeds
     let manager = ctx.accounts.manager.key();
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.bumps.vault]];
     let signer_seeds = &[&vault_seeds[..]];
 
+    // Initialize vtoken transfer hook
+    initialize_transfer_hook(
+        &ctx.accounts.vtoken_mint,
+        &ctx.accounts.transfer_hook_program,
+        &ctx.accounts.vault.to_account_info(),
+        &ctx.accounts.token_program,
+        signer_seeds,
+    )?;
+    msg!("Successfully initialized vtoken transfer hook");
+
+    // Initialize vtoken config
+    initialize_vtoken_config(
+        vtoken_is_transferrable,
+        &ctx.accounts.manager,
+        &ctx.accounts.vtoken_mint,
+        &ctx.accounts.extra_account_metas,
+        &ctx.accounts.vtoken_config,
+        &ctx.accounts.transfer_hook_program,
+        &ctx.accounts.system_program,
+    )?;
+    msg!("Successfully initialized vtoken config");
+
+    // Initialize vtoken metadata
     initialize_token_metadata(
         name,
         symbol,
@@ -155,6 +182,28 @@ pub struct CreateVault<'info> {
         bump = starke_config.bump,
     )]
     pub starke_config: Box<Account<'info, StarkeConfig>>,
+
+    // Extra account metas
+    /// CHECK: This account is initialized in the initialize_extra_account_metas instruction
+    /// and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.
+    /// The Token2022 program validates this account during CPI.
+    #[account(
+        seeds = [EXTRA_ACCOUNT_METAS_SEED, vtoken_mint.key().as_ref()],
+        bump,
+        seeds::program = transfer_hook_program.key(),
+    )]
+    pub extra_account_metas: AccountInfo<'info>,
+
+    // Vtoken config
+    #[account(
+        seeds = [VtokenConfig::SEED, vtoken_mint.key().as_ref()],
+        bump,
+        seeds::program = transfer_hook_program.key(),
+    )]
+    pub vtoken_config: Box<Account<'info, VtokenConfig>>,
+
+    // Transfer hook program
+    pub transfer_hook_program: Program<'info, TransferHook>,
 
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
