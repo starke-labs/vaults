@@ -5,7 +5,6 @@ use anchor_lang::prelude::*;
 pub mod constants;
 pub mod controllers;
 mod instructions;
-pub mod jupiter;
 pub mod state;
 
 use instructions::*;
@@ -56,8 +55,17 @@ pub mod vaults {
         uri: String,
         entry_fee: u16,
         exit_fee: u16,
+        vtoken_is_transferrable: bool,
     ) -> Result<()> {
-        _create_vault(ctx, &name, &symbol, &uri, entry_fee, exit_fee)
+        _create_vault(
+            ctx,
+            &name,
+            &symbol,
+            &uri,
+            entry_fee,
+            exit_fee,
+            vtoken_is_transferrable,
+        )
     }
 
     pub fn update_vault_fees(
