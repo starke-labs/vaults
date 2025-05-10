@@ -6,9 +6,9 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
+use jupiter::program::Jupiter;
 
-use crate::state::{StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault};
-use crate::{jupiter::Jupiter, state::StarkeConfig};
+use crate::state::{StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault};
 
 pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
     require!(
