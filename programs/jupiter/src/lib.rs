@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use anchor_lang::prelude::*;
 
 // NOTE: Running anchor keys sync updates this ID, which is not
