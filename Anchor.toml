@@ -10,8 +10,8 @@ skip-lint = false
 # NOTE: Running anchor keys sync updates this ID, which is not
 #       correct as this needs to track the Jupiter mainnet program ID
 jupiter = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
-transfer_hook = "3Mbtr8yzqLUuBZVSefrVtAPmgNLFutEXeRWJNATsKU5z"
-vaults = "HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28"
+transfer_hook = "FJ6KWvqGqJJuXmdhrrxpRidYQpfP9CqPQcQqkZJRj9gw"
+vaults = "7BEEntBTABgKumVMdc8Qm7UymNBv6UExjgdQgz9SppaK"
 
 [registry]
 url = "https://api.apr.dev"
@@ -21,6 +21,6 @@ cluster = "localnet"
 wallet = "./deploy/deployer.json"
 
 [scripts]
-test = "yarn test:transferHook"
+test = "yarn test:vaults"
 test-vaults = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:vaults; pkill solana-test-validator)"
 test-transferHook = "(anchor localnet > /dev/null &) && sleep 2 && (yarn test:transferHook; pkill solana-test-validator)"
