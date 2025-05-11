@@ -1,7 +1,27 @@
 #!/bin/sh
 
+# Parse command line arguments
+VERIFIABLE=false
+PROGRAM_NAME=""
+
+while getopts "v" opt; do
+  case $opt in
+    v)
+      VERIFIABLE=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Shift the options out of the argument list
+shift $((OPTIND-1))
+
 if [ -z "$1" ]; then
-    echo "Usage: $0 <program-name>"
+    echo "Usage: $0 [-v] <program-name>"
+    echo "  -v: Deploy in verifiable mode"
     exit 1
 fi
 
@@ -12,7 +32,12 @@ if [ -z "$MAINNET_RPC" ]; then
     exit 1
 fi
 
-# NOTE: Can not use verifiable build unless anchor fixes their issue
-#       https://github.com/coral-xyz/anchor/issues/3585
-# anchor deploy -p vaults -v --provider.cluster $MAINNET_RPC
-anchor deploy -p $1 --provider.cluster $MAINNET_RPC
+PROGRAM_NAME=$1
+
+if [ "$VERIFIABLE" = true ]; then
+    echo "Deploying in verifiable mode..."
+    anchor deploy -p $PROGRAM_NAME -v --provider.cluster $MAINNET_RPC
+else
+    echo "Deploying in standard mode..."
+    anchor deploy -p $PROGRAM_NAME --provider.cluster $MAINNET_RPC
+fi
