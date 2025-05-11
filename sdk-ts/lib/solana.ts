@@ -4,6 +4,7 @@ import {
   PublicKey,
 } from "@solana/web3.js";
 
+// TODO: Consider moving this to the transaction.ts file
 export async function getAddressLookupTables(
   connection: Connection,
   addressLookupTableAddresses: string[]

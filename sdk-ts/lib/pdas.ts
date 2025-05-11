@@ -3,7 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 // export const PROGRAM_ID = new PublicKey(
 //   "STRK2VEGPAKstk6S6k5Cpin6uGtSDQkvanTaXUeaTNj"
 // );
-// TODO: Find a way to get the program id from the IDL
+// !!TODO: Find a way to get the program id from the IDL
 export const VAULTS_PROGRAM_ID = new PublicKey(
   "7BEEntBTABgKumVMdc8Qm7UymNBv6UExjgdQgz9SppaK"
 );

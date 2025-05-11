@@ -42,6 +42,10 @@ import {
 } from "./lib/pdas";
 import { getAddressLookupTables } from "./lib/solana";
 import {
+  DEFAULT_RETRY_CONFIG,
+  sendAndConfirmWithRetry,
+} from "./lib/transaction";
+import {
   AccountMeta,
   ManagerWhitelist,
   StarkeConfig,
@@ -49,7 +53,6 @@ import {
   TokenWhitelist,
   Vault,
 } from "./lib/types";
-import { DEFAULT_RETRY_CONFIG, sendAndConfirmWithRetry } from "./utils";
 
 export class VaultsSdk {
   private program: Program;
