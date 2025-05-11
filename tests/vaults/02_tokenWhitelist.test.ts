@@ -17,7 +17,7 @@ import {
   getManagerKeypair,
 } from "../utils.new";
 
-describe("Whitelist Tests", () => {
+describe("Token Whitelist Tests", () => {
   let vaults: VaultsSdk;
   let tester: Keypair;
   let authority: Keypair;

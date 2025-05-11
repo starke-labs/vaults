@@ -23,6 +23,9 @@ run_test() {
         "vaults:tokenWhitelist")
             yarn test:vaults:tokenWhitelist
             ;;
+        "vaults:managerWhitelist")
+            yarn test:vaults:managerWhitelist
+            ;;
         *)
             echo "Unknown test: $test_name"
             exit 1
@@ -39,4 +42,5 @@ else
     yarn test:transferHook
     yarn test:vaults:initialize
     yarn test:vaults:tokenWhitelist
+    yarn test:vaults:managerWhitelist
 fi
