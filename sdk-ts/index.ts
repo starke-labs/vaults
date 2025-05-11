@@ -12,6 +12,7 @@ import {
   PublicKey,
   Signer,
   TransactionMessage,
+  TransactionSignature,
   VersionedTransaction,
 } from "@solana/web3.js";
 
@@ -22,6 +23,8 @@ import {
   AccountNotInitializedError,
   InsufficientBalanceError,
   InvalidTokenError,
+  ManagerAlreadyInWhitelistError,
+  ManagerNotInWhitelistError,
   SignatureVerificationFailedError,
   StarkeAlreadyInitializedError,
   StarkeNotInitializedError,
@@ -129,7 +132,9 @@ export class VaultsSdk {
     return token;
   }
 
-  async initializeStarke(signers: (Keypair | Signer)[]): Promise<string> {
+  async initializeStarke(
+    signers: (Keypair | Signer)[]
+  ): Promise<TransactionSignature> {
     // Check if starke config is already initialized
     try {
       const starkeConfig = await this.fetchStarkeConfig();
@@ -162,7 +167,7 @@ export class VaultsSdk {
   async addTokenToWhitelist(
     supportedToken: Token,
     signers: (Keypair | Signer)[] = []
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const whitelist = await this.fetchTokenWhitelist();
     const tokenInWhitelist = whitelist.tokens.find(
       (token) => token.mint.toBase58() === supportedToken.mint.toBase58()
@@ -177,14 +182,14 @@ export class VaultsSdk {
         supportedToken.priceFeedId,
         supportedToken.priceUpdate
       )
-      .accounts({ authority: whitelist.authority })
+      .accounts({ authority: AUTHORITY_PROGRAM_ID })
       .transaction();
 
     try {
       return await sendAndConfirmWithRetry(this.provider, tx, signers);
     } catch (e) {
       if (e.toString().includes("Signature verification failed")) {
-        throw new SignatureVerificationFailedError(whitelist.authority);
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
       }
       throw e;
     }
@@ -193,7 +198,7 @@ export class VaultsSdk {
   async removeTokenFromWhitelist(
     mint: PublicKey,
     signers: (Keypair | Signer)[] = []
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const whitelist = await this.fetchTokenWhitelist();
     const tokenInWhitelist = whitelist.tokens.find(
       (t) => t.mint.toBase58() === mint.toBase58()
@@ -204,14 +209,68 @@ export class VaultsSdk {
 
     const tx = await this.program.methods
       .removeToken(mint)
-      .accounts({ authority: whitelist.authority })
+      .accounts({ authority: AUTHORITY_PROGRAM_ID })
       .transaction();
 
     try {
       return await sendAndConfirmWithRetry(this.provider, tx, signers);
     } catch (e) {
       if (e.toString().includes("Signature verification failed")) {
-        throw new SignatureVerificationFailedError(whitelist.authority);
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+      }
+      throw e;
+    }
+  }
+
+  async addManagerToWhitelist(
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    const whitelist = await this.fetchManagerWhitelist();
+    const managerInWhitelist = whitelist.managers.find(
+      (m) => m.toBase58() === manager.toBase58()
+    );
+    if (managerInWhitelist) {
+      throw new ManagerAlreadyInWhitelistError(manager);
+    }
+
+    const tx = await this.program.methods
+      .addManager(manager)
+      .accounts({ authority: AUTHORITY_PROGRAM_ID })
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+      }
+      throw e;
+    }
+  }
+
+  async removeManagerFromWhitelist(
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    const whitelist = await this.fetchManagerWhitelist();
+    const managerInWhitelist = whitelist.managers.find(
+      (m) => m.toBase58() === manager.toBase58()
+    );
+    if (!managerInWhitelist) {
+      throw new ManagerNotInWhitelistError(manager);
+    }
+
+    const tx = await this.program.methods
+      .removeManager(manager)
+      .accounts({ authority: AUTHORITY_PROGRAM_ID })
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
       }
       throw e;
     }
@@ -241,7 +300,7 @@ export class VaultsSdk {
     manager: PublicKey,
     depositTokenMint: PublicKey,
     signers: (Keypair | Signer)[] = []
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const [vault] = getVaultPda(manager);
     const [vtokenMint] = getVtokenMintPda(vault);
     const [metadata] = getVtokenMetadataPda(vtokenMint);
@@ -348,7 +407,7 @@ export class VaultsSdk {
     depositor: PublicKey,
     manager: PublicKey,
     signers: (Keypair | Signer)[] = []
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const whitelistedTokens = (await this.fetchTokenWhitelist()).tokens;
     const remainingAccounts = await this.getDepositRemainingAccounts(
       getVaultPda(manager)[0],
@@ -483,7 +542,7 @@ export class VaultsSdk {
     withdrawer: PublicKey,
     manager: PublicKey,
     signers: (Keypair | Signer)[] = []
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const whitelistedTokens = (await this.fetchTokenWhitelist()).tokens;
     const remainingAccounts = await this.getWithdrawRemainingAccounts(
       getVaultPda(manager)[0],
@@ -524,7 +583,7 @@ export class VaultsSdk {
     amount: BN,
     manager: PublicKey,
     signers: (Keypair | Signer)[] = []
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const quoteResponse = await this.jup.quoteGet({
       inputMint: inputMint.toBase58(),
       outputMint: outputMint.toBase58(),

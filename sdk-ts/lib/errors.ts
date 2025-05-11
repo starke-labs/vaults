@@ -42,6 +42,19 @@ export class TokenNotWhitelistedError extends VaultsError {
   }
 }
 
+export class ManagerAlreadyInWhitelistError extends VaultsError {
+  constructor(manager: PublicKey) {
+    super(`Manager ${manager.toBase58()} is already in whitelist`);
+    this.name = "ManagerAlreadyInWhitelistError";
+  }
+}
+
+export class ManagerNotInWhitelistError extends VaultsError {
+  constructor(manager: PublicKey) {
+    super(`Manager ${manager.toBase58()} is not in whitelist`);
+    this.name = "ManagerNotInWhitelistError";
+  }
+}
 export class InvalidTokenError extends VaultsError {
   constructor(mint: PublicKey) {
     super(`Token ${mint.toBase58()} is not a valid SPL token`);

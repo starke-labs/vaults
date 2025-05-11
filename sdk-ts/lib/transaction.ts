@@ -1,5 +1,5 @@
 import { AnchorProvider } from "@coral-xyz/anchor";
-import { Signer } from "@solana/web3.js";
+import { Signer, TransactionSignature } from "@solana/web3.js";
 import { Keypair, Transaction } from "@solana/web3.js";
 
 export async function sleep(ms: number): Promise<void> {
@@ -29,7 +29,7 @@ export async function sendAndConfirmWithRetry(
   tx: Transaction,
   signers: (Keypair | Signer)[],
   config: TransactionRetryConfig = {}
-): Promise<string> {
+): Promise<TransactionSignature> {
   const finalConfig = { ...DEFAULT_RETRY_CONFIG, ...config };
   let lastError: Error;
 
