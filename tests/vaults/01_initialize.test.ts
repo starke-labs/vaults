@@ -84,4 +84,13 @@ describe("Initialize Starke Tests", () => {
     const managerWhitelist = await vaults.fetchManagerWhitelist();
     expect(managerWhitelist.managers.length).to.equal(0);
   });
+
+  it("should not initialize whitelist twice", async () => {
+    try {
+      await vaults.initializeStarke([authority]);
+      expect.fail("Should have thrown an error");
+    } catch (e) {
+      expect(e).to.be.instanceOf(StarkeAlreadyInitializedError);
+    }
+  });
 });

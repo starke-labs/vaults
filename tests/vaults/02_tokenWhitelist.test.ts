@@ -37,56 +37,6 @@ describe("Whitelist Tests", () => {
     vaults = new VaultsSdk(createConnection(), tester);
   });
 
-  // TODO: Enchance this test when sdk has error handling for initializeWhitelist
-  it("should not initialize whitelist without proper authority", async () => {
-    // Try with no signer
-    try {
-      await vaults.initializeStarke([]);
-      expect.fail("Should have thrown an error");
-    } catch (e) {
-      if (
-        !(
-          e instanceof StarkeAlreadyInitializedError ||
-          e instanceof SignatureVerificationFailedError
-        )
-      ) {
-        throw e;
-      }
-    }
-
-    // Try with non-authority signer
-    try {
-      await vaults.initializeStarke([tester]);
-      expect.fail("Should have thrown an error");
-    } catch (e) {
-      if (
-        !(
-          e instanceof StarkeAlreadyInitializedError ||
-          e instanceof SignatureVerificationFailedError
-        )
-      ) {
-        throw e;
-      }
-    }
-  });
-
-  it("should successfully initialize token whitelist if not initialized already", async () => {
-    // Try to initialize whitelist
-    try {
-      await vaults.initializeStarke([authority]);
-    } catch (e) {
-      if (!(e instanceof StarkeAlreadyInitializedError)) {
-        throw e;
-      }
-    }
-
-    // Verify whitelist was initialized
-    const whitelist = await vaults.fetchTokenWhitelist();
-    expect(whitelist.authority.toBase58()).to.equal(
-      authority.publicKey.toBase58()
-    );
-  });
-
   it("should not add token to whitelist without proper authority", async () => {
     // Check the length of the whitelist
     let whitelist = await vaults.fetchTokenWhitelist();
@@ -117,15 +67,6 @@ describe("Whitelist Tests", () => {
     whitelist = await vaults.fetchTokenWhitelist();
     finalLength = whitelist.tokens.length;
     expect(finalLength).to.equal(initialLength);
-  });
-
-  it("should not initialize whitelist twice", async () => {
-    try {
-      await vaults.initializeStarke([authority]);
-      expect.fail("Should have thrown an error");
-    } catch (e) {
-      expect(e).to.be.instanceOf(StarkeAlreadyInitializedError);
-    }
   });
 
   it("should successfully add USDC to whitelist if it is not already in the whitelist", async () => {
