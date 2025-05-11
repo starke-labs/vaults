@@ -3,8 +3,8 @@ import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 
 import idl from "@starke/idl/transfer_hook.json";
 
-import { VaultConfigNotInitializedError } from "./lib/errors";
-import { getVaultConfigPda } from "./lib/pdas";
+import { VtokenConfigNotInitializedError } from "./lib/errors";
+import { getVtokenConfigPda } from "./lib/pdas";
 import { VaultConfig } from "./lib/types";
 
 export class TransferHookSdk {
@@ -20,16 +20,16 @@ export class TransferHookSdk {
     this.program = new Program(idl, this.provider);
   }
 
-  async fetchVaultConfig(vTokenMint: PublicKey): Promise<VaultConfig> {
-    const [vaultConfigPda] = getVaultConfigPda(vTokenMint);
+  async fetchVtokenConfig(vTokenMint: PublicKey): Promise<VaultConfig> {
+    const [vtokenConfigPda] = getVtokenConfigPda(vTokenMint);
     try {
       // @ts-ignore
-      return (await this.program.account.vaultConfig.fetch(
-        vaultConfigPda
+      return (await this.program.account.vtokenConfig.fetch(
+        vtokenConfigPda
       )) as VaultConfig;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
-        throw new VaultConfigNotInitializedError(vaultConfigPda);
+        throw new VtokenConfigNotInitializedError(vtokenConfigPda);
       }
       throw e;
     }

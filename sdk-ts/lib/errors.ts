@@ -7,17 +7,17 @@ export class VaultsError extends Error {
   }
 }
 
-export class WhitelistNotInitializedError extends VaultsError {
+export class StarkeNotInitializedError extends VaultsError {
   constructor() {
-    super("Whitelist not initialized");
-    this.name = "WhitelistNotInitializedError";
+    super("Starke not initialized");
+    this.name = "StarkeNotInitializedError";
   }
 }
 
-export class WhitelistAlreadyInitializedError extends VaultsError {
-  constructor(whitelist: PublicKey) {
-    super(`Whitelist ${whitelist.toBase58()} already initialized`);
-    this.name = "WhitelistAlreadyInitializedError";
+export class StarkeAlreadyInitializedError extends VaultsError {
+  constructor() {
+    super(`Starke already initialized`);
+    this.name = "StarkeAlreadyInitializedError";
   }
 }
 
@@ -84,9 +84,9 @@ export class AccountNotInitializedError extends VaultsError {
   }
 }
 
-export class VaultConfigNotInitializedError extends VaultsError {
-  constructor(vaultConfig: PublicKey) {
-    super(`Vault config ${vaultConfig.toBase58()} not initialized`);
-    this.name = "VaultConfigNotInitializedError";
+export class VtokenConfigNotInitializedError extends VaultsError {
+  constructor(vtokenConfig: PublicKey) {
+    super(`Vtoken config ${vtokenConfig.toBase58()} not initialized`);
+    this.name = "VtokenConfigNotInitializedError";
   }
 }

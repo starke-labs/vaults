@@ -5,10 +5,10 @@ import { PublicKey } from "@solana/web3.js";
 // );
 // TODO: Find a way to get the program id from the IDL
 export const VAULTS_PROGRAM_ID = new PublicKey(
-  "HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28"
+  "7BEEntBTABgKumVMdc8Qm7UymNBv6UExjgdQgz9SppaK"
 );
 export const TRANSFER_HOOK_PROGRAM_ID = new PublicKey(
-  "3Mbtr8yzqLUuBZVSefrVtAPmgNLFutEXeRWJNATsKU5z"
+  "FJ6KWvqGqJJuXmdhrrxpRidYQpfP9CqPQcQqkZJRj9gw"
 );
 export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -19,16 +19,32 @@ export const AUTHORITY_PROGRAM_ID = new PublicKey(
 );
 
 // Seeds
-export const WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
+export const TOKEN_WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
+export const MANAGER_WHITELIST_SEED = "STARKE_MANAGER_WHITELIST";
+export const STARKE_CONFIG_SEED = "STARKE_CONFIG";
 export const VAULT_SEED = "STARKE_VAULT";
 export const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
-export const VAULT_CONFIG_SEED = "STARKE_VAULT_CONFIG";
+export const VTOKEN_CONFIG_SEED = "STARKE_VTOKEN_CONFIG";
 export const METADATA_SEED = "metadata";
 
 // PDAs
-export function getWhitelistPda(): [PublicKey, number] {
+export function getTokenWhitelistPda(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(WHITELIST_SEED)],
+    [Buffer.from(TOKEN_WHITELIST_SEED)],
+    VAULTS_PROGRAM_ID
+  );
+}
+
+export function getManagerWhitelistPda(): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(MANAGER_WHITELIST_SEED)],
+    VAULTS_PROGRAM_ID
+  );
+}
+
+export function getStarkeConfigPda(): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(STARKE_CONFIG_SEED)],
     VAULTS_PROGRAM_ID
   );
 }
@@ -60,9 +76,9 @@ export function getVtokenMetadataPda(
   );
 }
 
-export function getVaultConfigPda(vTokenMint: PublicKey): [PublicKey, number] {
+export function getVtokenConfigPda(vTokenMint: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(VAULT_CONFIG_SEED), vTokenMint.toBuffer()],
+    [Buffer.from(VTOKEN_CONFIG_SEED), vTokenMint.toBuffer()],
     TRANSFER_HOOK_PROGRAM_ID
   );
 }

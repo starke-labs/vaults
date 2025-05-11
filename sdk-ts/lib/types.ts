@@ -12,9 +12,19 @@ export interface Token {
   priceUpdate: PublicKey;
 }
 
-export interface Whitelist {
+export interface TokenWhitelist {
   tokens: Token[];
   authority: PublicKey;
+  bump: number;
+}
+
+export interface ManagerWhitelist {
+  managers: PublicKey[];
+  bump: number;
+}
+
+export interface StarkeConfig {
+  isPaused: boolean;
   bump: number;
 }
 

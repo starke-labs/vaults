@@ -4,9 +4,9 @@ import { expect } from "chai";
 import { VaultsSdk } from "@starke/sdk";
 import {
   SignatureVerificationFailedError,
+  StarkeAlreadyInitializedError,
   TokenAlreadyInWhitelistError,
   TokenNotWhitelistedError,
-  WhitelistAlreadyInitializedError,
 } from "@starke/sdk/lib/errors";
 import { Token } from "@starke/sdk/lib/types";
 import { JUP, PYTH, USDC, USDT } from "@starke/sdk/whitelist";
@@ -46,7 +46,7 @@ describe("Whitelist Tests", () => {
     } catch (e) {
       if (
         !(
-          e instanceof WhitelistAlreadyInitializedError ||
+          e instanceof StarkeAlreadyInitializedError ||
           e instanceof SignatureVerificationFailedError
         )
       ) {
@@ -61,7 +61,7 @@ describe("Whitelist Tests", () => {
     } catch (e) {
       if (
         !(
-          e instanceof WhitelistAlreadyInitializedError ||
+          e instanceof StarkeAlreadyInitializedError ||
           e instanceof SignatureVerificationFailedError
         )
       ) {
@@ -75,13 +75,13 @@ describe("Whitelist Tests", () => {
     try {
       await vaults.initializeStarke([authority]);
     } catch (e) {
-      if (!(e instanceof WhitelistAlreadyInitializedError)) {
+      if (!(e instanceof StarkeAlreadyInitializedError)) {
         throw e;
       }
     }
 
     // Verify whitelist was initialized
-    const whitelist = await vaults.fetchWhitelist();
+    const whitelist = await vaults.fetchTokenWhitelist();
     expect(whitelist.authority.toBase58()).to.equal(
       authority.publicKey.toBase58()
     );
@@ -89,7 +89,7 @@ describe("Whitelist Tests", () => {
 
   it("should not add token to whitelist without proper authority", async () => {
     // Check the length of the whitelist
-    let whitelist = await vaults.fetchWhitelist();
+    let whitelist = await vaults.fetchTokenWhitelist();
     const initialLength = whitelist.tokens.length;
 
     // Test with no signer
@@ -101,7 +101,7 @@ describe("Whitelist Tests", () => {
     }
 
     // Verify token was not added
-    whitelist = await vaults.fetchWhitelist();
+    whitelist = await vaults.fetchTokenWhitelist();
     let finalLength = whitelist.tokens.length;
     expect(finalLength).to.equal(initialLength);
 
@@ -114,7 +114,7 @@ describe("Whitelist Tests", () => {
     }
 
     // Verify token was still not added
-    whitelist = await vaults.fetchWhitelist();
+    whitelist = await vaults.fetchTokenWhitelist();
     finalLength = whitelist.tokens.length;
     expect(finalLength).to.equal(initialLength);
   });
@@ -124,7 +124,7 @@ describe("Whitelist Tests", () => {
       await vaults.initializeStarke([authority]);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e).to.be.instanceOf(WhitelistAlreadyInitializedError);
+      expect(e).to.be.instanceOf(StarkeAlreadyInitializedError);
     }
   });
 
@@ -181,7 +181,7 @@ describe("Whitelist Tests", () => {
     }
 
     // Verify all tokens were added
-    const whitelist = await vaults.fetchWhitelist();
+    const whitelist = await vaults.fetchTokenWhitelist();
     [USDC, USDT, PYTH, JUP].forEach((token) => {
       const whitelistedToken = whitelist.tokens.find(
         (t) => t.mint.toBase58() === token.mint.toBase58()
