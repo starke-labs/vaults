@@ -61,8 +61,6 @@ describe("Initialize Starke Tests", () => {
   });
 
   it("should successfully initialize starke if not initialized already", async () => {
-    const starkeConfig1 = await vaults.fetchStarkeConfig();
-
     // Try to initialize starke
     try {
       await vaults.initializeStarke([authority]);

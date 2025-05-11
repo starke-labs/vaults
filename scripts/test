@@ -7,4 +7,36 @@ if [ -z "$MAINNET_RPC" ]; then
     exit 1
 fi
 
-anchor test --skip-deploy --skip-local-validator --skip-build --provider.cluster $MAINNET_RPC
+# Set ANCHOR_PROVIDER_URL to MAINNET_RPC
+export ANCHOR_PROVIDER_URL=$MAINNET_RPC
+
+# Function to run a specific test
+run_test() {
+    local test_name=$1
+    case $test_name in
+        "transferHook")
+            yarn test:transferHook
+            ;;
+        "vaults:initialize")
+            yarn test:vaults:initialize
+            ;;
+        "vaults:tokenWhitelist")
+            yarn test:vaults:tokenWhitelist
+            ;;
+        *)
+            echo "Unknown test: $test_name"
+            exit 1
+            ;;
+    esac
+}
+
+# If a test name is provided, run only that test
+if [ ! -z "$1" ]; then
+    run_test "$1"
+else
+    # Run all tests in order
+    echo "Running all tests..."
+    yarn test:transferHook
+    yarn test:vaults:initialize
+    yarn test:vaults:tokenWhitelist
+fi
