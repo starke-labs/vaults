@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Parse command line arguments
+VERIFIABLE=false
+PROGRAM_NAME=""
+
+while getopts "v" opt; do
+  case $opt in
+    v)
+      VERIFIABLE=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Shift the options out of the argument list
+shift $((OPTIND-1))
+
+# Get program name if provided
+if [ ! -z "$1" ]; then
+    PROGRAM_NAME=$1
+fi
+
+if [ "$VERIFIABLE" = true ]; then
+    echo "Building in verifiable mode..."
+    if [ ! -z "$PROGRAM_NAME" ]; then
+        DOCKER_DEFAULT_PLATFORM=linux/amd64 anchor build --verifiable -p $PROGRAM_NAME
+    else
+        DOCKER_DEFAULT_PLATFORM=linux/amd64 anchor build --verifiable
+    fi
+else
+    echo "Building in standard mode..."
+    if [ ! -z "$PROGRAM_NAME" ]; then
+        anchor build -p $PROGRAM_NAME
+    else
+        anchor build
+    fi
+fi

@@ -1,8 +1,0 @@
-#!/bin/sh
-
-if [ -z "$1" ]; then
-    echo "Usage: $0 <program-name>"
-    exit 1
-fi
-
-DOCKER_DEFAULT_PLATFORM=linux/amd64 anchor build --verifiable -p $1

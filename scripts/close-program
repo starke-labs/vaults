@@ -1,0 +1,35 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <program-id>"
+    echo "Example: $0 Fe8j1bGgJfrdGGpiVa39cP98TvENbgmv95eYhvtiKVR5"
+    exit 1
+fi
+
+# Check if RPC endpoint is provided
+if [ -z "$MAINNET_RPC" ]; then
+    echo "Error: MAINNET_RPC environment variable is not set"
+    echo "Please set it using: export MAINNET_RPC=<your-rpc-endpoint>"
+    exit 1
+fi
+
+# Check if deployer keypair exists
+if [ ! -f "./deploy/deployer.json" ]; then
+    echo "Error: Deployer keypair not found at ./deploy/deployer.json"
+    exit 1
+fi
+
+# Warning message
+echo "WARNING: This will close the program at $1"
+echo "This operation is irreversible and may leave associated accounts in an invalid state."
+echo "Make sure you have closed all associated accounts before proceeding."
+echo ""
+read -p "Are you sure you want to continue? (y/N) " -n 1 -r
+echo ""
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Operation cancelled"
+    exit 1
+fi
+
+# Execute the close command
+solana -k ./deploy/deployer.json program close $1 --bypass-warning --url $MAINNET_RPC
