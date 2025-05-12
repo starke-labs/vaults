@@ -3,7 +3,6 @@ use anchor_spl::token_interface::Mint;
 use transfer_hook::{
     cpi::{accounts::InitializeExtraAccountMetasAccounts, initialize_extra_account_metas},
     program::TransferHook,
-    state::VtokenConfig,
 };
 
 pub fn initialize_vtoken_config<'info>(
@@ -11,7 +10,7 @@ pub fn initialize_vtoken_config<'info>(
     manager: &Signer<'info>,
     mint: &InterfaceAccount<'info, Mint>,
     extra_account_metas: &AccountInfo<'info>,
-    vtoken_config: &Account<'info, VtokenConfig>,
+    vtoken_config: &AccountInfo<'info>,
     transfer_hook_program: &Program<'info, TransferHook>,
     system_program: &Program<'info, System>,
 ) -> Result<()> {

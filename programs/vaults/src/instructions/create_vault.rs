@@ -1,6 +1,7 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::{
     metadata::Metadata,
+    token_2022::Token2022,
     token_interface::{Mint, TokenInterface},
 };
 use transfer_hook::{
@@ -9,7 +10,7 @@ use transfer_hook::{
 
 use crate::{
     constants::NAV_DECIMALS,
-    controllers::{initialize_token_metadata, initialize_transfer_hook, initialize_vtoken_config},
+    controllers::{initialize_token_metadata, initialize_vtoken_config},
     state::{
         ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
         TokenWhitelistError, Vault, VaultCreated,
@@ -44,16 +45,6 @@ pub fn _create_vault(
     let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.bumps.vault]];
     let signer_seeds = &[&vault_seeds[..]];
 
-    // Initialize vtoken transfer hook
-    initialize_transfer_hook(
-        &ctx.accounts.vtoken_mint,
-        &ctx.accounts.transfer_hook_program,
-        &ctx.accounts.vault.to_account_info(),
-        &ctx.accounts.token_program,
-        signer_seeds,
-    )?;
-    msg!("Successfully initialized vtoken transfer hook");
-
     // Initialize vtoken config
     initialize_vtoken_config(
         vtoken_is_transferrable,
@@ -76,7 +67,8 @@ pub fn _create_vault(
         &ctx.accounts.vtoken_mint,
         &ctx.accounts.vault.to_account_info(),
         signer_seeds,
-        &ctx.accounts.rent,
+        &ctx.accounts.instructions,
+        &ctx.accounts.token_2022_program,
         &ctx.accounts.metadata_program,
         &ctx.accounts.system_program,
     )?;
@@ -143,6 +135,9 @@ pub struct CreateVault<'info> {
         mint::decimals = NAV_DECIMALS,
         mint::authority = vault,
         mint::freeze_authority = vault,
+        mint::token_program = token_2022_program,
+        extensions::transfer_hook::program_id = transfer_hook_program,
+        extensions::transfer_hook::authority = manager,
     )]
     pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -154,7 +149,7 @@ pub struct CreateVault<'info> {
         bump,
         seeds::program = metadata_program.key(),
     )]
-    pub metadata: UncheckedAccount<'info>,
+    pub metadata: AccountInfo<'info>,
 
     // Token Whitelist
     #[account(
@@ -188,6 +183,7 @@ pub struct CreateVault<'info> {
     /// and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.
     /// The Token2022 program validates this account during CPI.
     #[account(
+        mut,
         seeds = [EXTRA_ACCOUNT_METAS_SEED, vtoken_mint.key().as_ref()],
         bump,
         seeds::program = transfer_hook_program.key(),
@@ -195,19 +191,28 @@ pub struct CreateVault<'info> {
     pub extra_account_metas: AccountInfo<'info>,
 
     // Vtoken config
+    /// CHECK: This account will be initialized by the transfer hook program
     #[account(
+        mut,
         seeds = [VtokenConfig::SEED, vtoken_mint.key().as_ref()],
         bump,
         seeds::program = transfer_hook_program.key(),
     )]
-    pub vtoken_config: Box<Account<'info, VtokenConfig>>,
+    pub vtoken_config: AccountInfo<'info>,
 
     // Transfer hook program
     pub transfer_hook_program: Program<'info, TransferHook>,
 
-    pub rent: Sysvar<'info, Rent>,
+    // Instructions sysvar
+    // TODO: Check why anchor doesn't support the instruction sysvar
+    /// CHECK: create metadata account ix needs this sysvar
+    #[account(address = solana_program::sysvar::instructions::ID)]
+    pub instructions: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
+    // For deposit token mint
     pub token_program: Interface<'info, TokenInterface>,
+    // For vtoken mint (Token2022)
+    pub token_2022_program: Program<'info, Token2022>,
     pub metadata_program: Program<'info, Metadata>,
     pub clock: Sysvar<'info, Clock>,
 }

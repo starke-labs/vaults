@@ -1,11 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     metadata::{
-        create_metadata_accounts_v3, mpl_token_metadata::types::DataV2, CreateMetadataAccountsV3,
+        mpl_token_metadata::{
+            instructions::CreateV1CpiBuilder,
+            types::{PrintSupply, TokenStandard},
+        },
         Metadata,
     },
+    token_2022::Token2022,
     token_interface::Mint,
 };
+
+use crate::constants::NAV_DECIMALS;
 
 pub fn initialize_token_metadata<'info>(
     name: &str,
@@ -16,35 +22,28 @@ pub fn initialize_token_metadata<'info>(
     mint: &InterfaceAccount<'info, Mint>,
     mint_authority: &AccountInfo<'info>,
     signer_seeds: &[&[&[u8]]],
-    rent: &Sysvar<'info, Rent>,
+    instructions_sysvar: &AccountInfo<'info>,
+    token_2022_program: &Program<'info, Token2022>,
     metadata_program: &Program<'info, Metadata>,
     system_program: &Program<'info, System>,
 ) -> Result<()> {
-    let token_data: DataV2 = DataV2 {
-        name: name.to_string(),
-        symbol: symbol.to_string(),
-        uri: uri.to_string(),
-        seller_fee_basis_points: 0,
-        creators: None,
-        collection: None,
-        uses: None,
-    };
-
-    let metadata_ctx = CpiContext::new_with_signer(
-        metadata_program.to_account_info(),
-        CreateMetadataAccountsV3 {
-            payer: payer.to_account_info(),
-            update_authority: mint_authority.to_account_info(),
-            mint: mint.to_account_info(),
-            metadata: metadata.to_account_info(),
-            mint_authority: mint_authority.to_account_info(),
-            system_program: system_program.to_account_info(),
-            rent: rent.to_account_info(),
-        },
-        signer_seeds,
-    );
-
-    create_metadata_accounts_v3(metadata_ctx, token_data, false, true, None)?;
+    CreateV1CpiBuilder::new(metadata_program)
+        .metadata(metadata)
+        .mint(&mint.to_account_info(), false)
+        .authority(&mint_authority.to_account_info())
+        .payer(payer)
+        .update_authority(&mint_authority.to_account_info(), true)
+        .system_program(system_program)
+        .sysvar_instructions(instructions_sysvar)
+        .spl_token_program(Some(&token_2022_program.to_account_info()))
+        .token_standard(TokenStandard::Fungible)
+        .seller_fee_basis_points(0)
+        .print_supply(PrintSupply::Zero)
+        .name(name.to_string())
+        .symbol(symbol.to_string())
+        .uri(uri.to_string())
+        .decimals(NAV_DECIMALS)
+        .invoke_signed(signer_seeds)?;
 
     Ok(())
 }

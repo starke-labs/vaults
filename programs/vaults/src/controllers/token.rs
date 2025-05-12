@@ -1,9 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
-    transfer_checked, transfer_hook_initialize, Mint, TokenAccount, TokenInterface,
-    TransferChecked, TransferHookInitialize,
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
-use transfer_hook::program::TransferHook;
 
 /// Function for the transfer token instruction
 pub fn transfer_token<'info>(
@@ -68,30 +66,6 @@ fn _transfer_token<'info>(
         }
     }
     transfer_checked(cpi_ctx, amount, mint.decimals)?;
-
-    Ok(())
-}
-
-pub fn initialize_transfer_hook<'info>(
-    mint: &InterfaceAccount<'info, Mint>,
-    transfer_hook_program: &Program<'info, TransferHook>,
-    authority: &AccountInfo<'info>,
-    token_program: &Interface<'info, TokenInterface>,
-    signer_seeds: &[&[&[u8]]],
-) -> Result<()> {
-    let initialize_accounts = TransferHookInitialize {
-        token_program_id: token_program.to_account_info().clone(),
-        mint: mint.to_account_info().clone(),
-    };
-    transfer_hook_initialize(
-        CpiContext::new_with_signer(
-            token_program.to_account_info().clone(),
-            initialize_accounts,
-            signer_seeds,
-        ),
-        Some(authority.key()),
-        Some(transfer_hook_program.key()),
-    )?;
 
     Ok(())
 }
