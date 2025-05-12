@@ -49,10 +49,10 @@ export class ManagerAlreadyInWhitelistError extends VaultsError {
   }
 }
 
-export class ManagerNotInWhitelistError extends VaultsError {
+export class ManagerNotWhitelistedError extends VaultsError {
   constructor(manager: PublicKey) {
-    super(`Manager ${manager.toBase58()} is not in whitelist`);
-    this.name = "ManagerNotInWhitelistError";
+    super(`Manager ${manager.toBase58()} is not whitelisted`);
+    this.name = "ManagerNotWhitelistedError";
   }
 }
 export class InvalidTokenError extends VaultsError {

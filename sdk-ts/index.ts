@@ -24,7 +24,7 @@ import {
   InsufficientBalanceError,
   InvalidTokenError,
   ManagerAlreadyInWhitelistError,
-  ManagerNotInWhitelistError,
+  ManagerNotWhitelistedError,
   SignatureVerificationFailedError,
   StarkeAlreadyInitializedError,
   StarkeNotInitializedError,
@@ -40,6 +40,7 @@ import {
   getStarkeConfigPda,
   getTokenWhitelistPda,
   getVaultPda,
+  getVtokenConfigPda,
   getVtokenMetadataPda,
   getVtokenMintPda,
 } from "./lib/pdas";
@@ -258,7 +259,7 @@ export class VaultsSdk {
       (m) => m.toBase58() === manager.toBase58()
     );
     if (!managerInWhitelist) {
-      throw new ManagerNotInWhitelistError(manager);
+      throw new ManagerNotInWhitelistedError(manager);
     }
 
     const tx = await this.program.methods
@@ -299,19 +300,25 @@ export class VaultsSdk {
     exitFee: number,
     manager: PublicKey,
     depositTokenMint: PublicKey,
+    isVtokenTransferrable: boolean,
     signers: (Keypair | Signer)[] = []
   ): Promise<TransactionSignature> {
     const [vault] = getVaultPda(manager);
     const [vtokenMint] = getVtokenMintPda(vault);
     const [metadata] = getVtokenMetadataPda(vtokenMint);
+    const [vtokenConfig] = getVtokenConfigPda(vtokenMint);
     const tokenProgram = await this.getTokenProgram(depositTokenMint);
 
+    console.log("Vault PDA", vault.toBase58());
+    console.log("Vtoken Mint PDA", vtokenMint.toBase58());
+    console.log("Metadata PDA", metadata.toBase58());
+    console.log("Vtoken Config PDA", vtokenConfig.toBase58());
+
     const tx = await this.program.methods
-      .createVault(name, symbol, uri, entryFee, exitFee)
+      .createVault(name, symbol, uri, entryFee, exitFee, isVtokenTransferrable)
       .accounts({
         manager,
         depositTokenMint,
-        metadata,
         tokenProgram,
       })
       .transaction();
@@ -319,6 +326,7 @@ export class VaultsSdk {
     try {
       return await sendAndConfirmWithRetry(this.provider, tx, signers);
     } catch (e) {
+      console.log(e);
       if (
         e.toString().includes("unauthorized") ||
         e.toString().includes("Signature verification failed")
@@ -336,6 +344,16 @@ export class VaultsSdk {
         throw new InsufficientBalanceError(manager);
       } else if (e.toString().includes("Token is not whitelisted")) {
         throw new TokenNotWhitelistedError(depositTokenMint);
+      } else if (e.toString().includes("Manager is not whitelisted")) {
+        throw new ManagerNotWhitelistedError(manager);
+      } else if (
+        e
+          .toString()
+          .includes(
+            "caused by account: vtoken_config. Error Code: AccountNotInitialized"
+          )
+      ) {
+        throw new AccountNotInitializedError("vtoken_config");
       }
       throw e;
     }

@@ -26,7 +26,7 @@ export const VAULT_SEED = "STARKE_VAULT";
 export const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
 export const VTOKEN_CONFIG_SEED = "STARKE_VTOKEN_CONFIG";
 export const METADATA_SEED = "metadata";
-
+export const EXTRA_ACCOUNT_METAS_SEED = "extra-account-metas";
 // PDAs
 export function getTokenWhitelistPda(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
@@ -79,6 +79,15 @@ export function getVtokenMetadataPda(
 export function getVtokenConfigPda(vTokenMint: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from(VTOKEN_CONFIG_SEED), vTokenMint.toBuffer()],
+    TRANSFER_HOOK_PROGRAM_ID
+  );
+}
+
+export function getExtraAccountMetasPda(
+  vTokenMint: PublicKey
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(EXTRA_ACCOUNT_METAS_SEED), vTokenMint.toBuffer()],
     TRANSFER_HOOK_PROGRAM_ID
   );
 }
