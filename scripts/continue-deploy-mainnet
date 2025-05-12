@@ -1,5 +1,24 @@
 #!/bin/sh
 
+# Parse command line arguments
+VERIFIABLE=false
+PROGRAM_NAME=""
+
+while getopts "v" opt; do
+  case $opt in
+    v)
+      VERIFIABLE=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Shift the options out of the argument list
+shift $((OPTIND-1))
+
 # Check if RPC endpoint is provided
 if [ -z "$MAINNET_RPC" ]; then
     echo "Error: MAINNET_RPC environment variable is not set"
@@ -10,7 +29,8 @@ fi
 # Check if program name is provided
 if [ -z "$1" ]; then
     echo "Error: Program name not provided."
-    echo "Usage: $0 <vaults|transfer_hook>"
+    echo "Usage: $0 [-v] <vaults|transfer_hook>"
+    echo "  -v: Deploy in verifiable mode"
     exit 1
 fi
 
@@ -26,11 +46,15 @@ elif [ "$PROGRAM_NAME" = "transfer_hook" ]; then
     PROGRAM_ID_PATH="target/deploy/transfer_hook-keypair.json"
 else
     echo "Error: Invalid program name '$PROGRAM_NAME'."
-    echo "Usage: $0 <vaults|transfer_hook>"
+    echo "Usage: $0 [-v] <vaults|transfer_hook>"
+    echo "  -v: Deploy in verifiable mode"
     exit 1
 fi
 
-# NOTE: Can not use verifiable build unless anchor fixes their issue
-#       https://github.com/coral-xyz/anchor/issues/3585
-# solana -u $MAINNET_RPC program deploy target/verifiable/vaults.so -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id ./target/deploy/vaults-keypair.json
-solana -u $MAINNET_RPC program deploy "$SO_FILE_PATH" -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id "$PROGRAM_ID_PATH"
+if [ "$VERIFIABLE" = true ]; then
+    echo "Deploying in verifiable mode..."
+    solana -u $MAINNET_RPC program deploy target/verifiable/$PROGRAM_NAME.so -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id "$PROGRAM_ID_PATH"
+else
+    echo "Deploying in standard mode..."
+    solana -u $MAINNET_RPC program deploy "$SO_FILE_PATH" -k ./deploy/authority.json --buffer ./deploy/buffer.json --program-id "$PROGRAM_ID_PATH"
+fi

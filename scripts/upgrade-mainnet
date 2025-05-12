@@ -1,5 +1,25 @@
 #!/bin/sh
 
+# Parse command line arguments
+VERIFIABLE=false
+PROGRAM_ID=""
+PROGRAM_NAME=""
+
+while getopts "v" opt; do
+  case $opt in
+    v)
+      VERIFIABLE=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Shift the options out of the argument list
+shift $((OPTIND-1))
+
 # Check if RPC endpoint is provided
 if [ -z "$MAINNET_RPC" ]; then
     echo "Error: MAINNET_RPC environment variable is not set"
@@ -7,7 +27,43 @@ if [ -z "$MAINNET_RPC" ]; then
     exit 1
 fi
 
-# NOTE: Can not use verifiable build unless anchor fixes their issue
-#       https://github.com/coral-xyz/anchor/issues/3585
-# anchor upgrade -p HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28 ./target/verifiable/vaults.so --provider.cluster $MAINNET_RPC
-anchor upgrade -p HULUoT5PHWhoj9ELE1XHFo8jJqHj89uGwWNq3Skrja28 ./target/deploy/vaults.so --provider.cluster $MAINNET_RPC
+# Check if program name is provided
+if [ -z "$1" ]; then
+    echo "Error: Program name not provided."
+    echo "Usage: $0 [-v] <vaults|transfer_hook> <program-id>"
+    echo "  -v: Upgrade in verifiable mode"
+    exit 1
+fi
+
+PROGRAM_NAME=$1
+shift
+
+# Check if program ID is provided
+if [ -z "$1" ]; then
+    echo "Error: Program ID not provided."
+    echo "Usage: $0 [-v] <vaults|transfer_hook> <program-id>"
+    echo "  -v: Upgrade in verifiable mode"
+    exit 1
+fi
+
+PROGRAM_ID=$1
+
+# Set the correct .so file path based on program name
+if [ "$PROGRAM_NAME" = "vaults" ]; then
+    SO_FILE_PATH="vaults.so"
+elif [ "$PROGRAM_NAME" = "transfer_hook" ]; then
+    SO_FILE_PATH="transfer_hook.so"
+else
+    echo "Error: Invalid program name '$PROGRAM_NAME'."
+    echo "Usage: $0 [-v] <vaults|transfer_hook> <program-id>"
+    echo "  -v: Upgrade in verifiable mode"
+    exit 1
+fi
+
+if [ "$VERIFIABLE" = true ]; then
+    echo "Upgrading in verifiable mode..."
+    anchor upgrade -p $PROGRAM_ID ./target/verifiable/$SO_FILE_PATH --provider.cluster $MAINNET_RPC
+else
+    echo "Upgrading in standard mode..."
+    anchor upgrade -p $PROGRAM_ID ./target/deploy/$SO_FILE_PATH --provider.cluster $MAINNET_RPC
+fi
