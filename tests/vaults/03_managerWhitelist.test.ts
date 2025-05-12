@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { VaultsSdk } from "@starke/sdk";
 import {
   ManagerAlreadyInWhitelistError,
-  ManagerNotInWhitelistError,
+  ManagerNotWhitelistedError,
   SignatureVerificationFailedError,
 } from "@starke/sdk/lib/errors";
 
@@ -147,7 +147,7 @@ describe("Manager Whitelist Tests", () => {
       ]);
       expect.fail("Should have thrown an error");
     } catch (e) {
-      expect(e).to.be.instanceOf(ManagerNotInWhitelistError);
+      expect(e).to.be.instanceOf(ManagerNotWhitelistedError);
     }
   });
 });
