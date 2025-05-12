@@ -138,6 +138,8 @@ describe("Create Vault", () => {
         throw e;
       }
     }
+
+    // TODO: Check that the vault, metadata, and vtoken config accounts were created
   });
 
   // TODO: Test that vaults can't be created if Starke is paused
