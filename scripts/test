@@ -35,6 +35,12 @@ run_test() {
         "vaults:withdraw")
             yarn test:vaults:withdraw
             ;;
+        "vaults:info")
+            yarn test:vaults:info
+            ;;
+        "vaults:pause")
+            yarn test:vaults:pauseStarke
+            ;;
         *)
             echo "Unknown test: $test_name"
             exit 1

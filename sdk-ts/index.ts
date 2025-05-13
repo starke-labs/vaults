@@ -30,6 +30,7 @@ import {
   StarkeAlreadyPausedError,
   StarkeAlreadyResumedError,
   StarkeNotInitializedError,
+  StarkePausedError,
   TokenAlreadyInWhitelistError,
   TokenNotWhitelistedError,
   VaultAlreadyCreatedError,
@@ -387,6 +388,8 @@ export class VaultsSdk {
           )
       ) {
         throw new AccountNotInitializedError("vtoken_config");
+      } else if (e.toString().includes("StarkePaused")) {
+        throw new StarkePausedError();
       }
       throw e;
     }

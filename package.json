@@ -9,7 +9,9 @@
     "test:vaults:managerWhitelist": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/03_managerWhitelist.test.ts",
     "test:vaults:createVault": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/04_createVault.test.ts",
     "test:vaults:deposit": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/05_deposit.test.ts",
-    "test:vaults:withdraw": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/06_withdraw.test.ts"
+    "test:vaults:withdraw": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/06_withdraw.test.ts",
+    "test:vaults:pauseStarke": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/07_pauseStarke.test.ts",
+    "test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.0",

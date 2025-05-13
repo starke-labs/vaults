@@ -117,3 +117,10 @@ export class StarkeAlreadyResumedError extends VaultsError {
     this.name = "StarkeAlreadyResumedError";
   }
 }
+
+export class StarkePausedError extends VaultsError {
+  constructor() {
+    super("Starke is paused");
+    this.name = "StarkePausedError";
+  }
+}
