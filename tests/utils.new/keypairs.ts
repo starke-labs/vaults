@@ -15,6 +15,12 @@ export function getManagerKeypair(): Keypair {
   );
 }
 
+export function getManager2Keypair(): Keypair {
+  return Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(fs.readFileSync("./deploy/manager.json", "utf8")))
+  );
+}
+
 export function getDeployerKeypair(): Keypair {
   return Keypair.fromSecretKey(
     new Uint8Array(
