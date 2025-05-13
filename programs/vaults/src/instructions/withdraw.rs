@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::Token;
+use anchor_spl::token_2022::Token2022;
 use anchor_spl::token_interface::{Mint, TokenAccount};
 
 use crate::constants::STARKE_AUTHORITY;
@@ -38,7 +38,7 @@ pub fn _withdraw<'info>(
         &ctx.accounts.user_vtoken_account,
         amount,
         signer_seeds,
-        &ctx.accounts.vtoken_program,
+        &ctx.accounts.token_2022_program,
     )?;
     msg!("{} vtokens burned successfully", amount);
 
@@ -94,6 +94,7 @@ pub struct Withdraw<'info> {
         mut,
         associated_token::authority = user,
         associated_token::mint = vtoken_mint,
+        associated_token::token_program = token_2022_program,
     )]
     pub user_vtoken_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -109,10 +110,9 @@ pub struct Withdraw<'info> {
         mut,
         seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump = vault.mint_bump,
+        mint::token_program = token_2022_program,
     )]
     pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
-    // Token program (not Token2022 yet, but might need it for using the extensions)
-    pub vtoken_program: Program<'info, Token>,
 
     // Token whitelist
     #[account(
@@ -129,6 +129,7 @@ pub struct Withdraw<'info> {
     pub starke_config: Box<Account<'info, StarkeConfig>>,
 
     pub clock: Sysvar<'info, Clock>,
+    pub token_2022_program: Program<'info, Token2022>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
