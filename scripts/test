@@ -32,6 +32,9 @@ run_test() {
         "vaults:deposit")
             yarn test:vaults:deposit
             ;;
+        "vaults:withdraw")
+            yarn test:vaults:withdraw
+            ;;
         *)
             echo "Unknown test: $test_name"
             exit 1

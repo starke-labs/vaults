@@ -91,10 +91,11 @@ describe("Withdraw", () => {
       vaultPda,
       withdrawer.publicKey
     );
+    console.log("initialVtokenBalance", initialVtokenBalance.toString());
 
-    if (initialVtokenBalance.gt(new BN(1 * 10 ** 9))) {
+    if (initialVtokenBalance.gt(new BN(10 ** -3 * 10 ** 9))) {
       await vaults.withdraw(
-        new BN(1 * 10 ** 9),
+        initialVtokenBalance,
         withdrawer.publicKey,
         manager,
         [authority]
@@ -107,11 +108,11 @@ describe("Withdraw", () => {
       );
 
       // Verify balance reduction matches withdraw amount
-      expect(initialVtokenBalance.sub(finalVtokenBalance).toString()).to.equal(
-        new BN(1 * 10 ** 9).toString()
-      );
+      expect(finalVtokenBalance.toString()).to.equal(new BN(0).toString());
     } else {
-      expect.fail("Should be able to withdraw");
+      expect.fail(
+        "Insufficient vtoken balance to withdraw, run the deposit test first"
+      );
     }
   });
 
