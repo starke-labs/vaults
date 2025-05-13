@@ -7,7 +7,8 @@
     "test:vaults:initialize": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/01_initialize.test.ts",
     "test:vaults:tokenWhitelist": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/02_tokenWhitelist.test.ts",
     "test:vaults:managerWhitelist": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/03_managerWhitelist.test.ts",
-    "test:vaults:createVault": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/04_createVault.test.ts"
+    "test:vaults:createVault": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/04_createVault.test.ts",
+    "test:vaults:deposit": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/05_deposit.test.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.0",

@@ -301,7 +301,7 @@ export class VaultsSdk {
       (m) => m.toBase58() === manager.toBase58()
     );
     if (!managerInWhitelist) {
-      throw new ManagerNotInWhitelistedError(manager);
+      throw new ManagerNotWhitelistedError(manager);
     }
 
     const tx = await this.program.methods
