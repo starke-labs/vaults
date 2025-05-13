@@ -27,6 +27,8 @@ import {
   ManagerNotWhitelistedError,
   SignatureVerificationFailedError,
   StarkeAlreadyInitializedError,
+  StarkeAlreadyPausedError,
+  StarkeAlreadyResumedError,
   StarkeNotInitializedError,
   TokenAlreadyInWhitelistError,
   TokenNotWhitelistedError,
@@ -159,6 +161,46 @@ export class VaultsSdk {
       return await sendAndConfirmWithRetry(this.provider, tx, signers);
     } catch (e) {
       if (e.toString().includes("Missing signature")) {
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+      }
+      throw e;
+    }
+  }
+
+  async pauseStarke(
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    const starkeConfig = await this.fetchStarkeConfig();
+    if (starkeConfig.isPaused) {
+      throw new StarkeAlreadyPausedError();
+    }
+
+    const tx = await this.program.methods.pauseStarke().transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+      }
+      throw e;
+    }
+  }
+
+  async resumeStarke(
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    const starkeConfig = await this.fetchStarkeConfig();
+    if (!starkeConfig.isPaused) {
+      throw new StarkeAlreadyResumedError();
+    }
+
+    const tx = await this.program.methods.resumeStarke().transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
         throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
       }
       throw e;
@@ -303,16 +345,7 @@ export class VaultsSdk {
     isVtokenTransferrable: boolean,
     signers: (Keypair | Signer)[] = []
   ): Promise<TransactionSignature> {
-    const [vault] = getVaultPda(manager);
-    const [vtokenMint] = getVtokenMintPda(vault);
-    const [metadata] = getVtokenMetadataPda(vtokenMint);
-    const [vtokenConfig] = getVtokenConfigPda(vtokenMint);
     const tokenProgram = await this.getTokenProgram(depositTokenMint);
-
-    console.log("Vault PDA", vault.toBase58());
-    console.log("Vtoken Mint PDA", vtokenMint.toBase58());
-    console.log("Metadata PDA", metadata.toBase58());
-    console.log("Vtoken Config PDA", vtokenConfig.toBase58());
 
     const tx = await this.program.methods
       .createVault(name, symbol, uri, entryFee, exitFee, isVtokenTransferrable)
@@ -326,13 +359,13 @@ export class VaultsSdk {
     try {
       return await sendAndConfirmWithRetry(this.provider, tx, signers);
     } catch (e) {
-      console.log(e);
       if (
         e.toString().includes("unauthorized") ||
         e.toString().includes("Signature verification failed")
       ) {
         throw new SignatureVerificationFailedError(manager);
       } else if (e.toString().includes("already in use")) {
+        const [vault] = getVaultPda(manager);
         throw new VaultAlreadyCreatedError(vault);
       } else if (
         e

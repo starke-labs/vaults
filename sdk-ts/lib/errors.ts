@@ -103,3 +103,17 @@ export class VtokenConfigNotInitializedError extends VaultsError {
     this.name = "VtokenConfigNotInitializedError";
   }
 }
+
+export class StarkeAlreadyPausedError extends VaultsError {
+  constructor() {
+    super("Starke is already paused");
+    this.name = "StarkeAlreadyPausedError";
+  }
+}
+
+export class StarkeAlreadyResumedError extends VaultsError {
+  constructor() {
+    super("Starke is already resumed");
+    this.name = "StarkeAlreadyResumedError";
+  }
+}
