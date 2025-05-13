@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     token::Token,
+    token_2022::Token2022,
     token_interface::{burn, mint_to, Burn, Mint, MintTo, TokenAccount},
 };
 
@@ -12,7 +13,7 @@ pub fn mint_vtoken<'info>(
     to: &InterfaceAccount<'info, TokenAccount>,
     amount: u64,
     signer_seeds: &[&[&[u8]]],
-    token_program: &Program<'info, Token>,
+    token_program: &Program<'info, Token2022>,
 ) -> Result<()> {
     let mint_accounts = MintTo {
         mint: mint.to_account_info(),

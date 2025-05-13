@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::Token;
+use anchor_spl::token_2022::Token2022;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
@@ -81,7 +81,7 @@ pub fn _deposit<'info>(
         &ctx.accounts.vtoken_account,
         vtokens_to_mint,
         signer_seeds,
-        &ctx.accounts.vtoken_program,
+        &ctx.accounts.token_2022_program,
     )?;
     msg!("{} vtokens minted to user successfully", vtokens_to_mint);
 
@@ -143,6 +143,7 @@ pub struct Deposit<'info> {
         payer = user,
         associated_token::authority = user,
         associated_token::mint = vtoken_mint,
+        associated_token::token_program = token_2022_program,
     )]
     pub vtoken_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -158,18 +159,15 @@ pub struct Deposit<'info> {
         mut,
         seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump = vault.mint_bump,
+        mint::token_program = token_2022_program,
     )]
     pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
-    // Token program (not Token2022 yet, but might need it for using the extensions)
-    pub vtoken_program: Program<'info, Token>,
 
     // Deposit token mint
     #[account(
         constraint = deposit_token_mint.key() == vault.deposit_token_mint,
     )]
     pub deposit_token_mint: Box<InterfaceAccount<'info, Mint>>,
-    // NOTE: Changing this name to `deposit_token_program` will break the constraint for `vault_deposit_token_account`
-    pub token_program: Interface<'info, TokenInterface>,
 
     // Deposit token price update
     pub deposit_token_price_update: Box<Account<'info, PriceUpdateV2>>,
@@ -189,6 +187,10 @@ pub struct Deposit<'info> {
     pub starke_config: Box<Account<'info, StarkeConfig>>,
 
     pub clock: Sysvar<'info, Clock>,
+    // Used for deposit token mint
+    pub token_program: Interface<'info, TokenInterface>,
+    // Used for vtoken mint
+    pub token_2022_program: Program<'info, Token2022>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
