@@ -516,7 +516,12 @@ export class VaultsSdk {
 
   async getVtokenBalance(vault: PublicKey, user: PublicKey): Promise<BN> {
     const [vtokenMint] = getVtokenMintPda(vault);
-    const vtokenAta = await getAssociatedTokenAddress(vtokenMint, user);
+    const vtokenAta = await getAssociatedTokenAddress(
+      vtokenMint,
+      user,
+      false,
+      TOKEN_2022_PROGRAM_ID
+    );
     const vtokenBalance = await this.provider.connection.getTokenAccountBalance(
       vtokenAta
     );
@@ -558,7 +563,9 @@ export class VaultsSdk {
       if (!token) continue;
       const userTokenAccount = await getAssociatedTokenAddress(
         tokenMint,
-        withdrawer
+        withdrawer,
+        false,
+        programId
       );
 
       remainingAccounts.push(
