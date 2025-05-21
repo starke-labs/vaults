@@ -11,6 +11,8 @@
     "test:vaults:deposit": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/05_deposit.test.ts",
     "test:vaults:withdraw": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/06_withdraw.test.ts",
     "test:vaults:pauseStarke": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/07_pauseStarke.test.ts",
+    "test:vaults:vtokenTransferrability": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/08_vtokenTransferrability.test.ts",
+    "test:vaults:swap": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/09_swap.test.ts",
     "test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts"
   },
   "dependencies": {

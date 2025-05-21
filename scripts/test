@@ -41,6 +41,12 @@ run_test() {
         "vaults:pause")
             yarn test:vaults:pauseStarke
             ;;
+        "vaults:vtoken")
+            yarn test:vaults:vtokenTransferrability
+            ;;
+        "vaults:swap")
+            yarn test:vaults:swap
+            ;;
         *)
             echo "Unknown test: $test_name"
             exit 1

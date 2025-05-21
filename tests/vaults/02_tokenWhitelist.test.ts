@@ -79,7 +79,7 @@ describe("Token Whitelist Tests", () => {
     }
 
     // Verify token was added
-    const whitelistedToken = await vaults.fetchWhitelistedTokens(USDC.mint);
+    const whitelistedToken = await vaults.fetchWhitelistedToken(USDC.mint);
     expect(whitelistedToken.mint.toBase58()).to.equal(USDC.mint.toBase58());
     expect(whitelistedToken.priceFeedId).to.equal(USDC.priceFeedId);
     expect(whitelistedToken.priceUpdate.toBase58()).to.equal(
@@ -158,7 +158,7 @@ describe("Token Whitelist Tests", () => {
     await vaults.addTokenToWhitelist(dummyToken, [authority]);
 
     // Verify token was added
-    let tokenInWhitelist = await vaults.fetchWhitelistedTokens(dummyToken.mint);
+    let tokenInWhitelist = await vaults.fetchWhitelistedToken(dummyToken.mint);
     expect(tokenInWhitelist.mint.toBase58()).to.equal(
       dummyToken.mint.toBase58()
     );
@@ -172,7 +172,7 @@ describe("Token Whitelist Tests", () => {
 
     // Verify token was removed
     try {
-      tokenInWhitelist = await vaults.fetchWhitelistedTokens(dummyToken.mint);
+      tokenInWhitelist = await vaults.fetchWhitelistedToken(dummyToken.mint);
       expect.fail("Should have thrown an error");
     } catch (e) {
       expect(e).to.be.instanceOf(TokenNotWhitelistedError);

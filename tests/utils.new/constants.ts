@@ -1,4 +1,4 @@
-export const DEFAULT_MINT_DECIMALS = 6;
+export const VTOKEN_DECIMALS = 9;
 
 export const USDC_PRICE_FEED_ID =
   "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a";

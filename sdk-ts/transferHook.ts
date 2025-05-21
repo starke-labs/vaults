@@ -34,4 +34,6 @@ export class TransferHookSdk {
       throw e;
     }
   }
+
+  // TODO: Implement sdk method for instruction `set_vtoken_is_transferrable`
 }

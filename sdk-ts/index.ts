@@ -83,6 +83,7 @@ export class VaultsSdk {
   }
 
   // *** New methods ***
+  // Accounts
   async fetchStarkeConfig(): Promise<StarkeConfig> {
     try {
       // @ts-ignore
@@ -125,7 +126,7 @@ export class VaultsSdk {
     }
   }
 
-  async fetchWhitelistedTokens(mint: PublicKey): Promise<Token> {
+  async fetchWhitelistedToken(mint: PublicKey): Promise<Token> {
     const whitelist = await this.fetchTokenWhitelist();
     const token = whitelist.tokens.find(
       (token) => token.mint.toBase58() === mint.toBase58()
@@ -136,6 +137,20 @@ export class VaultsSdk {
     return token;
   }
 
+  async fetchVault(manager: PublicKey): Promise<Vault> {
+    try {
+      // @ts-ignore
+      return (await this.program.account.vault.fetch(
+        getVaultPda(manager)[0]
+      )) as Vault;
+    } catch (e) {
+      if (e.toString().includes("Account does not exist")) {
+        throw new VaultNotFoundError(manager);
+      }
+    }
+  }
+
+  // Admin instructions
   async initializeStarke(
     signers: (Keypair | Signer)[]
   ): Promise<TransactionSignature> {
@@ -335,6 +350,7 @@ export class VaultsSdk {
     return tokenProgram;
   }
 
+  // Manager instructions
   async createVault(
     name: string,
     symbol: string,
@@ -395,20 +411,78 @@ export class VaultsSdk {
     }
   }
 
-  async fetchVault(manager: PublicKey): Promise<Vault> {
-    try {
-      // @ts-ignore
-      return (await this.program.account.vault.fetch(
-        getVaultPda(manager)[0]
-      )) as Vault;
-    } catch (e) {
-      console.log(e);
-      if (e.toString().includes("Account does not exist")) {
-        throw new VaultNotFoundError(manager);
+  async swapOnJupiter(
+    inputMint: PublicKey,
+    outputMint: PublicKey,
+    amount: BN,
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    const quoteResponse = await this.jup.quoteGet({
+      inputMint: inputMint.toBase58(),
+      outputMint: outputMint.toBase58(),
+      amount: amount.toNumber(),
+    });
+
+    const [vault] = getVaultPda(manager);
+
+    const swapIxsResponse = await this.jup.swapInstructionsPost({
+      swapRequest: {
+        userPublicKey: vault.toBase58(),
+        quoteResponse,
+      },
+    });
+
+    const swapInstruction = constructSwapInstruction(
+      swapIxsResponse.swapInstruction
+    );
+
+    const instruction = await this.program.methods
+      .swapOnJupiter(swapInstruction.data)
+      .accounts({
+        manager,
+        inputTokenMint: inputMint,
+        outputTokenMint: outputMint,
+        tokenProgram: await this.getTokenProgram(outputMint),
+      })
+      .remainingAccounts(swapInstruction.keys)
+      .instruction();
+
+    const modifyComputeUnitsIx = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
+
+    const addPriorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+      // Does not work with 50k micro lamports, works with 100k
+      microLamports: 150_000,
+    });
+
+    let recentBlockhash = (await this.provider.connection.getLatestBlockhash())
+      .blockhash;
+
+    const messageV0 = new TransactionMessage({
+      payerKey: manager,
+      recentBlockhash,
+      instructions: [modifyComputeUnitsIx, addPriorityFeeIx, instruction],
+    }).compileToV0Message(
+      await getAddressLookupTables(
+        this.provider.connection,
+        swapIxsResponse.addressLookupTableAddresses
+      )
+    );
+
+    return await this.provider.sendAndConfirm(
+      new VersionedTransaction(messageV0),
+      signers,
+      {
+        ...DEFAULT_RETRY_CONFIG,
+        skipPreflight: true,
+        maxRetries: 3, // Internal retries for network issues
       }
-    }
+    );
   }
 
+  // User instructions
   private async getDepositRemainingAccounts(
     vault: PublicKey,
     whitelistedTokens: Token[]
@@ -636,76 +710,5 @@ export class VaultsSdk {
       }
       throw e;
     }
-  }
-
-  async swapOnJupiter(
-    inputMint: PublicKey,
-    outputMint: PublicKey,
-    amount: BN,
-    manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
-  ): Promise<TransactionSignature> {
-    const quoteResponse = await this.jup.quoteGet({
-      inputMint: inputMint.toBase58(),
-      outputMint: outputMint.toBase58(),
-      amount: amount.toNumber(),
-    });
-
-    const [vault] = getVaultPda(manager);
-
-    const swapIxsResponse = await this.jup.swapInstructionsPost({
-      swapRequest: {
-        userPublicKey: vault.toBase58(),
-        quoteResponse,
-      },
-    });
-
-    const swapInstruction = constructSwapInstruction(
-      swapIxsResponse.swapInstruction
-    );
-
-    const instruction = await this.program.methods
-      .swapOnJupiter(swapInstruction.data)
-      .accounts({
-        manager,
-        inputTokenMint: inputMint,
-        outputTokenMint: outputMint,
-        tokenProgram: await this.getTokenProgram(outputMint),
-      })
-      .remainingAccounts(swapInstruction.keys)
-      .instruction();
-
-    const modifyComputeUnitsIx = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_400_000,
-    });
-
-    const addPriorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-      // Does not work with 50k micro lamports, works with 100k
-      microLamports: 150_000,
-    });
-
-    let recentBlockhash = (await this.provider.connection.getLatestBlockhash())
-      .blockhash;
-
-    const messageV0 = new TransactionMessage({
-      payerKey: manager,
-      recentBlockhash,
-      instructions: [modifyComputeUnitsIx, addPriorityFeeIx, instruction],
-    }).compileToV0Message(
-      await getAddressLookupTables(
-        this.provider.connection,
-        swapIxsResponse.addressLookupTableAddresses
-      )
-    );
-
-    return await this.provider.sendAndConfirm(
-      new VersionedTransaction(messageV0),
-      signers,
-      {
-        ...DEFAULT_RETRY_CONFIG,
-        skipPreflight: true,
-        maxRetries: 3, // Internal retries for network issues
-      }
-    );
   }
 }
