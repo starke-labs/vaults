@@ -11,7 +11,7 @@ pub mod state;
 use constants::EXTRA_ACCOUNT_METAS_SEED;
 use state::VtokenConfig;
 
-declare_id!("FJ6KWvqGqJJuXmdhrrxpRidYQpfP9CqPQcQqkZJRj9gw");
+declare_id!("Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz");
 
 #[error_code]
 pub enum TransferHookError {

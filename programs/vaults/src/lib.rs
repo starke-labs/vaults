@@ -9,7 +9,7 @@ pub mod state;
 
 use instructions::*;
 
-declare_id!("7BEEntBTABgKumVMdc8Qm7UymNBv6UExjgdQgz9SppaK");
+declare_id!("CoKHY3hzpZouFEDLazfBD9Vyq9AYBvAQA11moQUqs3sr");
 
 #[program]
 pub mod vaults {
