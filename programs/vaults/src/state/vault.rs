@@ -20,6 +20,9 @@ pub struct Vault {
     pub pending_entry_fee: Option<u16>,
     pub pending_exit_fee: Option<u16>,
     pub fee_update_timestamp: i64,
+    // Config
+    pub min_deposit_amount: u64, // minimum amount of deposit token to deposit in deposit token decimals
+    pub max_shareholder_count: Option<u32>, // maximum number of shareholders, if None, there is no limit
 }
 
 impl Vault {
@@ -35,7 +38,9 @@ impl Vault {
         + 2  // exit fee (u16)
         + 3  // pending_entry_fee (Option<u16>)
         + 3  // pending_exit_fee (Option<u16>)
-        + 8; // fee_update_timestamp (i64)
+        + 8  // fee_update_timestamp (i64)
+        + 8  // min_deposit_amount (u64)
+        + 5; // max_shareholder_count (Option<u32>)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -53,6 +58,8 @@ impl Vault {
         vtoken_mint_bump: u8,
         entry_fee: u16,
         exit_fee: u16,
+        min_deposit_amount: u64,
+        max_shareholder_count: Option<u32>,
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(name.len() > 0, VaultError::NameTooShort);
@@ -70,6 +77,8 @@ impl Vault {
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
         self.fee_update_timestamp = 0;
+        self.min_deposit_amount = min_deposit_amount;
+        self.max_shareholder_count = max_shareholder_count;
 
         Ok(())
     }
@@ -175,4 +184,6 @@ pub enum VaultError {
     InvalidAmount,
     #[msg("Price confidence too low")]
     PriceConfidenceTooLow,
+    #[msg("Deposit amount is below minimum")]
+    DepositBelowMinimum,
 }

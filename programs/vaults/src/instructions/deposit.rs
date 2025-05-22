@@ -30,8 +30,11 @@ pub fn _deposit<'info>(
         ctx.accounts.deposit_token_mint.key()
     );
 
-    // Amount should be greater than 0
-    require!(amount > 0, VaultError::InvalidAmount);
+    // Amount should be greater than minimum deposit amount
+    require!(
+        amount >= ctx.accounts.vault.min_deposit_amount,
+        VaultError::DepositBelowMinimum
+    );
 
     // Calculate the total NAV using vault's get_nav function
     let total_nav = ctx.accounts.vault.get_nav(

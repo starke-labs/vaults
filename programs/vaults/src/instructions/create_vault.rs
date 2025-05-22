@@ -25,6 +25,8 @@ pub fn _create_vault(
     entry_fee: u16,
     exit_fee: u16,
     vtoken_is_transferrable: bool,
+    min_deposit_amount: u64,
+    max_shareholder_count: Option<u32>,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -84,6 +86,8 @@ pub fn _create_vault(
         ctx.bumps.vtoken_mint,
         entry_fee,
         exit_fee,
+        min_deposit_amount,
+        max_shareholder_count,
     )?;
 
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());
