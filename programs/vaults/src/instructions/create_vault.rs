@@ -9,7 +9,7 @@ use transfer_hook::{
 };
 
 use crate::{
-    constants::NAV_DECIMALS,
+    constants::AUM_DECIMALS,
     controllers::{initialize_token_metadata, initialize_vtoken_config},
     state::{
         ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
@@ -25,8 +25,7 @@ pub fn _create_vault(
     entry_fee: u16,
     exit_fee: u16,
     vtoken_is_transferrable: bool,
-    min_deposit_amount: u64,
-    max_shareholder_count: Option<u32>,
+    // min_deposit_amount: u64,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -86,8 +85,7 @@ pub fn _create_vault(
         ctx.bumps.vtoken_mint,
         entry_fee,
         exit_fee,
-        min_deposit_amount,
-        max_shareholder_count,
+        // min_deposit_amount,
     )?;
 
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());
@@ -136,7 +134,7 @@ pub struct CreateVault<'info> {
         seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
         // TODO: Add metadata
-        mint::decimals = NAV_DECIMALS,
+        mint::decimals = AUM_DECIMALS,
         mint::authority = vault,
         mint::freeze_authority = vault,
         mint::token_program = token_2022_program,

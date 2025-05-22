@@ -31,18 +31,19 @@ pub fn _deposit<'info>(
     );
 
     // Amount should be greater than minimum deposit amount
-    require!(
-        amount >= ctx.accounts.vault.min_deposit_amount,
-        VaultError::DepositBelowMinimum
-    );
+    // require!(
+    //     amount >= ctx.accounts.vault.min_deposit_amount,
+    //     VaultError::DepositBelowMinimum
+    // );
+    require!(amount > 0, VaultError::InvalidAmount);
 
-    // Calculate the total NAV using vault's get_nav function
-    let total_nav = ctx.accounts.vault.get_nav(
+    // Calculate the total AUM using vault's get_aum function
+    let total_aum = ctx.accounts.vault.get_aum(
         ctx.remaining_accounts,
         &ctx.accounts.token_whitelist,
         &ctx.accounts.vault.key(),
     )?;
-    msg!("Vault NAV: {}", total_nav);
+    msg!("Vault AUM: {}", total_aum);
 
     // Calculate the USD value of deposit tokens
     let deposit_value = calculate_deposit_token_value(
@@ -54,9 +55,9 @@ pub fn _deposit<'info>(
     )?;
     msg!("Deposit value: {}", deposit_value);
 
-    // Calculate vtokens to mint based on NAV
+    // Calculate vtokens to mint based on AUM
     let vtokens_to_mint =
-        calculate_vtokens_to_mint(total_nav, deposit_value, ctx.accounts.vtoken_mint.supply)?;
+        calculate_vtokens_to_mint(total_aum, deposit_value, ctx.accounts.vtoken_mint.supply)?;
     msg!("Vtokens to mint: {}", vtokens_to_mint);
 
     // Transfer deposit tokens from depositor to vault

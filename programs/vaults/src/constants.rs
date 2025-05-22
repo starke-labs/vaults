@@ -8,6 +8,6 @@ pub static PYTH_PRICE_FEED_MAX_AGE_SECONDS: u64 = 30;
 // 100 basis points = 1%
 pub static PYTH_CONFIDENCE_THRESHOLD_BPS: u64 = 100;
 
-pub static NAV_DECIMALS: u8 = 9;
+pub static AUM_DECIMALS: u8 = 9;
 
-pub static PRECISION: u64 = 10u64.pow(NAV_DECIMALS as u32);
+pub static PRECISION: u64 = 10u64.pow(AUM_DECIMALS as u32);

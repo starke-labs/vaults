@@ -11,7 +11,7 @@ use anchor_spl::{
     token_interface::Mint,
 };
 
-use crate::constants::NAV_DECIMALS;
+use crate::constants::AUM_DECIMALS;
 
 pub fn initialize_token_metadata<'info>(
     name: &str,
@@ -42,7 +42,7 @@ pub fn initialize_token_metadata<'info>(
         .name(name.to_string())
         .symbol(symbol.to_string())
         .uri(uri.to_string())
-        .decimals(NAV_DECIMALS)
+        .decimals(AUM_DECIMALS)
         .invoke_signed(signer_seeds)?;
 
     Ok(())

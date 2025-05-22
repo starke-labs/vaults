@@ -68,7 +68,7 @@ pub fn withdraw_all_tokens<'info>(
 }
 
 /// Calculate the withdrawal ratio based on the amount of vtokens being withdrawn
-/// and the total supply of vtokens in NAV decimals
+/// and the total supply of vtokens in AUM decimals
 fn calculate_withdrawal_ratio(amount: u64, total_supply: u64) -> Result<u64> {
     msg!(
         "Calculating withdrawal ratio - Amount: {}, Total Supply: {}",
@@ -220,7 +220,7 @@ fn withdraw_token<'info>(
 }
 
 /// Calculate the amount of tokens to withdraw for a specific
-/// token balance and withdrawal ratio in NAV decimals
+/// token balance and withdrawal ratio in AUM decimals
 fn calculate_token_withdrawal_amount(token_balance: u64, withdrawal_ratio: u64) -> Result<u64> {
     msg!(
         "Calculating token withdrawal amount - Balance: {}, Ratio: {}",

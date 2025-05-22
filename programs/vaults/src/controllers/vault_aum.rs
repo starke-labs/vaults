@@ -56,10 +56,10 @@ pub fn parse_vault_balances<'info>(
 pub fn compute_token_value_usd(
     token_balance: u64,
     token_decimals: u8,
-    price_in_nav_decimals: u64,
+    price_in_aum_decimals: u64,
 ) -> Result<u64> {
     (token_balance as u128)
-        .checked_mul(price_in_nav_decimals as u128)
+        .checked_mul(price_in_aum_decimals as u128)
         .ok_or(error!(VaultError::NumericOverflow))?
         .checked_div(10u128.pow(token_decimals as u32))
         .ok_or(error!(VaultError::NumericOverflow))

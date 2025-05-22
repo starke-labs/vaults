@@ -56,8 +56,7 @@ pub mod vaults {
         entry_fee: u16,
         exit_fee: u16,
         vtoken_is_transferrable: bool,
-        min_deposit_amount: u64,
-        max_shareholder_count: Option<u32>,
+        // min_deposit_amount: u64,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -67,8 +66,7 @@ pub mod vaults {
             entry_fee,
             exit_fee,
             vtoken_is_transferrable,
-            min_deposit_amount,
-            max_shareholder_count,
+            // min_deposit_amount,
         )
     }
 

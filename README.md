@@ -9,9 +9,9 @@ Starke Finance Vaults is a Solana program designed to bridge the gap between inv
 ## Key Features
 
 - **Vault Management**: Create and manage vaults with customizable parameters including entry/exit fees and token whitelisting
-- **Token Operations**: Secure deposits and withdrawals with proportional vToken minting/burning based on NAV calculations
+- **Token Operations**: Secure deposits and withdrawals with proportional vToken minting/burning based on AUM calculations
   - Supports both SPL Token and Token-2022 for vault assets. (Note: vTokens currently only support standard SPL Token mints.)
-- **Price Integration**: Pyth price feed integration for accurate NAV calculations and token valuation
+- **Price Integration**: Pyth price feed integration for accurate AUM calculations and token valuation
 - **Security**: Program-controlled authority, comprehensive access controls, and time-delayed updates
 - **Event System**: Detailed event emission for all major operations (vault creation, deposits, withdrawals, fee updates)
 - **Swap Integration**: Built-in support for token swaps through Jupiter

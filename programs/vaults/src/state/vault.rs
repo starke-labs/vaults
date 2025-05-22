@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use super::{TokenWhitelist, VaultFeesUpdated};
 use crate::controllers::{
-    compute_token_value_usd, parse_vault_balances, transform_price_to_nav_decimals,
+    compute_token_value_usd, parse_vault_balances, transform_price_to_aum_decimals,
     verify_price_update_and_get_pyth_price,
 };
 
@@ -21,8 +21,12 @@ pub struct Vault {
     pub pending_exit_fee: Option<u16>,
     pub fee_update_timestamp: i64,
     // Config
-    pub min_deposit_amount: u64, // minimum amount of deposit token to deposit in deposit token decimals
-    pub max_shareholder_count: Option<u32>, // maximum number of shareholders, if None, there is no limit
+    // if the vault is private, then we have the following configurability
+    // pub is_private_vault: bool,
+    // minimum amount of deposit token to deposit in deposit token decimals, if None, there is no minimum
+    // pub min_deposit_amount: Option<u64>,
+    // maximum amount of aum allowed in vault, if None, there is no maximum
+    // pub max_allowed_aum: Option<u64>,
 }
 
 impl Vault {
@@ -38,9 +42,9 @@ impl Vault {
         + 2  // exit fee (u16)
         + 3  // pending_entry_fee (Option<u16>)
         + 3  // pending_exit_fee (Option<u16>)
-        + 8  // fee_update_timestamp (i64)
-        + 8  // min_deposit_amount (u64)
-        + 5; // max_shareholder_count (Option<u32>)
+        + 8; // fee_update_timestamp (i64)
+             // + 9  // min_deposit_amount (Option<u64>)
+             // + 9; // max_allowed_aum (Option<u64>)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -58,8 +62,7 @@ impl Vault {
         vtoken_mint_bump: u8,
         entry_fee: u16,
         exit_fee: u16,
-        min_deposit_amount: u64,
-        max_shareholder_count: Option<u32>,
+        // min_deposit_amount: u64,
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(name.len() > 0, VaultError::NameTooShort);
@@ -76,9 +79,8 @@ impl Vault {
         self.exit_fee = exit_fee;
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
-        self.fee_update_timestamp = 0;
-        self.min_deposit_amount = min_deposit_amount;
-        self.max_shareholder_count = max_shareholder_count;
+        // self.fee_update_timestamp = 0;
+        // self.min_deposit_amount = min_deposit_amount;
 
         Ok(())
     }
@@ -132,14 +134,15 @@ impl Vault {
         Ok((self.entry_fee, self.exit_fee))
     }
 
-    pub fn get_nav<'info>(
+    /// Assets under management
+    pub fn get_aum<'info>(
         &self,
         remaining_accounts: &'info [AccountInfo<'info>],
         whitelist: &Account<'info, TokenWhitelist>,
         vault_key: &Pubkey,
     ) -> Result<u64> {
         let vault_balances = parse_vault_balances(remaining_accounts, whitelist, vault_key)?;
-        let nav = vault_balances
+        let aum = vault_balances
             .iter()
             .map(|b| {
                 let token_price = verify_price_update_and_get_pyth_price(
@@ -149,12 +152,12 @@ impl Vault {
                 )?;
                 // TODO: Throw error if confidence interval is above threshold
                 //       https://docs.pyth.network/price-feeds/best-practices#confidence-intervals
-                let price_in_nav_decimals = transform_price_to_nav_decimals(&token_price)?;
-                compute_token_value_usd(b.token_balance, b.token_decimals, price_in_nav_decimals)
+                let price_in_aum_decimals = transform_price_to_aum_decimals(&token_price)?;
+                compute_token_value_usd(b.token_balance, b.token_decimals, price_in_aum_decimals)
             })
             .sum::<Result<u64>>()?;
 
-        Ok(nav)
+        Ok(aum)
     }
 }
 

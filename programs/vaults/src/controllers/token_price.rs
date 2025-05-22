@@ -32,7 +32,7 @@ pub fn get_token_price_from_pyth_feed<'info>(
     Ok(price)
 }
 
-pub fn transform_price_to_nav_decimals(price: &Price) -> Result<u64> {
+pub fn transform_price_to_aum_decimals(price: &Price) -> Result<u64> {
     // TODO: Handle case when exponent is positive or check if that is possible in pyth price feeds?
     (price.price.unsigned_abs() as u128)
         .checked_mul(PRECISION as u128)

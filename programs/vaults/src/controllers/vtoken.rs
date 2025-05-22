@@ -47,19 +47,19 @@ pub fn burn_vtoken<'info>(
 }
 
 pub fn calculate_vtokens_to_mint(
-    total_nav: u64,
+    total_aum: u64,
     deposit_value: u64,
     vtoken_supply: u64,
 ) -> Result<u64> {
-    if total_nav == 0 {
+    if total_aum == 0 {
         // Initial deposit - mint 1:1
         Ok(deposit_value)
     } else {
-        // Calculate proportional amount based on NAV
+        // Calculate proportional amount based on AUM
         (deposit_value as u128)
             .checked_mul(vtoken_supply as u128)
             .ok_or(error!(VaultError::NumericOverflow))?
-            .checked_div(total_nav as u128)
+            .checked_div(total_aum as u128)
             .ok_or(error!(VaultError::NumericOverflow))
             .map(|result| result as u64)
     }
