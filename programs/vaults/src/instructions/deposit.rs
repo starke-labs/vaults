@@ -10,7 +10,6 @@ use crate::controllers::{
 };
 use crate::state::{
     Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault,
-    VaultError,
 };
 
 pub fn _deposit<'info>(
@@ -30,12 +29,8 @@ pub fn _deposit<'info>(
         ctx.accounts.deposit_token_mint.key()
     );
 
-    // Amount should be greater than minimum deposit amount
-    // require!(
-    //     amount >= ctx.accounts.vault.min_deposit_amount,
-    //     VaultError::DepositBelowMinimum
-    // );
-    require!(amount > 0, VaultError::InvalidAmount);
+    // Validate deposit amount
+    ctx.accounts.vault.validate_deposit_amount(amount)?;
 
     // Calculate the total AUM using vault's get_aum function
     let total_aum = ctx.accounts.vault.get_aum(
@@ -54,6 +49,11 @@ pub fn _deposit<'info>(
         &ctx.accounts.deposit_token_price_update,
     )?;
     msg!("Deposit value: {}", deposit_value);
+
+    // Validate max AUM for private vaults
+    ctx.accounts
+        .vault
+        .validate_max_aum(total_aum, deposit_value)?;
 
     // Calculate vtokens to mint based on AUM
     let vtokens_to_mint =

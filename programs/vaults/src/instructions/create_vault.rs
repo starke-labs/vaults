@@ -25,7 +25,9 @@ pub fn _create_vault(
     entry_fee: u16,
     exit_fee: u16,
     vtoken_is_transferrable: bool,
-    // min_deposit_amount: u64,
+    is_private_vault: bool,
+    min_deposit_amount: Option<u64>,
+    max_allowed_aum: Option<u64>,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -40,6 +42,21 @@ pub fn _create_vault(
     );
     msg!("Name: {}", name);
     msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
+    msg!(
+        "Vault type: {}",
+        if is_private_vault {
+            "Private"
+        } else {
+            "Public"
+        }
+    );
+    if let Some(min_deposit) = min_deposit_amount {
+        msg!("Minimum deposit amount: {}", min_deposit);
+    }
+    // TODO: Add check for is_private_vault
+    if let Some(max_aum) = max_allowed_aum {
+        msg!("Maximum allowed AUM: {}", max_aum);
+    }
 
     // Vault seeds
     let manager = ctx.accounts.manager.key();
@@ -85,7 +102,9 @@ pub fn _create_vault(
         ctx.bumps.vtoken_mint,
         entry_fee,
         exit_fee,
-        // min_deposit_amount,
+        is_private_vault,
+        min_deposit_amount,
+        max_allowed_aum,
     )?;
 
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());
@@ -99,6 +118,9 @@ pub fn _create_vault(
         timestamp: ctx.accounts.clock.unix_timestamp,
         entry_fee: ctx.accounts.vault.entry_fee,
         exit_fee: ctx.accounts.vault.exit_fee,
+        is_private_vault: ctx.accounts.vault.is_private_vault,
+        min_deposit_amount: ctx.accounts.vault.min_deposit_amount,
+        max_allowed_aum: ctx.accounts.vault.max_allowed_aum,
     });
 
     Ok(())

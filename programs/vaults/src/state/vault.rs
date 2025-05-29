@@ -21,12 +21,14 @@ pub struct Vault {
     pub pending_exit_fee: Option<u16>,
     pub fee_update_timestamp: i64,
     // Config
-    // if the vault is private, then we have the following configurability
-    // pub is_private_vault: bool,
-    // minimum amount of deposit token to deposit in deposit token decimals, if None, there is no minimum
-    // pub min_deposit_amount: Option<u64>,
-    // maximum amount of aum allowed in vault, if None, there is no maximum
-    // pub max_allowed_aum: Option<u64>,
+    // Public vault
+    // Minimum amount of deposit token to deposit in deposit token decimals
+    pub min_deposit_amount: Option<u64>, // None means no minimum
+    // Private vault
+    pub is_private_vault: bool,
+    // Maximum amount of aum allowed in vault, if None, there is no maximum
+    // USD value in AUM_DECIMALS decimals
+    pub max_allowed_aum: Option<u64>, // None means no maximum, for public vaults
 }
 
 impl Vault {
@@ -42,9 +44,10 @@ impl Vault {
         + 2  // exit fee (u16)
         + 3  // pending_entry_fee (Option<u16>)
         + 3  // pending_exit_fee (Option<u16>)
-        + 8; // fee_update_timestamp (i64)
-             // + 9  // min_deposit_amount (Option<u64>)
-             // + 9; // max_allowed_aum (Option<u64>)
+        + 8  // fee_update_timestamp (i64)
+        + 1  // is_private_vault (bool)
+        + 9  // min_deposit_amount (Option<u64>)
+        + 9; // max_allowed_aum (Option<u64>)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -62,7 +65,9 @@ impl Vault {
         vtoken_mint_bump: u8,
         entry_fee: u16,
         exit_fee: u16,
-        // min_deposit_amount: u64,
+        is_private_vault: bool,
+        min_deposit_amount: Option<u64>,
+        max_allowed_aum: Option<u64>,
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(name.len() > 0, VaultError::NameTooShort);
@@ -79,8 +84,10 @@ impl Vault {
         self.exit_fee = exit_fee;
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
-        // self.fee_update_timestamp = 0;
-        // self.min_deposit_amount = min_deposit_amount;
+        self.fee_update_timestamp = 0;
+        self.is_private_vault = is_private_vault;
+        self.min_deposit_amount = min_deposit_amount;
+        self.max_allowed_aum = max_allowed_aum;
 
         Ok(())
     }
@@ -159,6 +166,35 @@ impl Vault {
 
         Ok(aum)
     }
+
+    /// Validates deposit amount against vault's minimum deposit requirement
+    pub fn validate_deposit_amount(&self, amount: u64) -> Result<()> {
+        // Check if amount is not zero
+        require!(amount > 0, VaultError::InvalidAmount);
+
+        // Check minimum deposit amount if configured
+        if let Some(min_deposit) = self.min_deposit_amount {
+            require!(amount >= min_deposit, VaultError::DepositBelowMinimum);
+        }
+
+        Ok(())
+    }
+
+    /// Validates if the vault can accept more deposits based on max AUM limit
+    pub fn validate_max_aum(&self, current_aum: u64, deposit_value: u64) -> Result<()> {
+        // Only check max AUM for private vaults
+        if self.is_private_vault {
+            if let Some(max_aum) = self.max_allowed_aum {
+                let new_aum = current_aum
+                    .checked_add(deposit_value)
+                    .ok_or(VaultError::NumericOverflow)?;
+
+                require!(new_aum <= max_aum, VaultError::MaxAumExceeded);
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[error_code]
@@ -189,4 +225,6 @@ pub enum VaultError {
     PriceConfidenceTooLow,
     #[msg("Deposit amount is below minimum")]
     DepositBelowMinimum,
+    #[msg("Maximum AUM limit exceeded")]
+    MaxAumExceeded,
 }
