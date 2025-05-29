@@ -28,7 +28,7 @@ pub struct Vault {
     pub is_private_vault: bool,
     // Maximum amount of aum allowed in vault, if None, there is no maximum
     // USD value in AUM_DECIMALS decimals
-    pub max_allowed_aum: Option<u64>, // None means no maximum, for public vaults
+    pub max_allowed_aum: Option<u64>, // None means no maximum, public vaults should have this set to None
 }
 
 impl Vault {
@@ -227,4 +227,6 @@ pub enum VaultError {
     DepositBelowMinimum,
     #[msg("Maximum AUM limit exceeded")]
     MaxAumExceeded,
+    #[msg("Max AUM should be set for only private vaults")]
+    MaxAumRequiredForPrivateVaults,
 }

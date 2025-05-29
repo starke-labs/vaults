@@ -13,7 +13,7 @@ use crate::{
     controllers::{initialize_token_metadata, initialize_vtoken_config},
     state::{
         ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
-        TokenWhitelistError, Vault, VaultCreated,
+        TokenWhitelistError, Vault, VaultCreated, VaultError,
     },
 };
 
@@ -53,7 +53,12 @@ pub fn _create_vault(
     if let Some(min_deposit) = min_deposit_amount {
         msg!("Minimum deposit amount: {}", min_deposit);
     }
-    // TODO: Add check for is_private_vault
+
+    require!(
+        // Is not private vault xor max allowed AUM is set
+        !is_private_vault ^ max_allowed_aum.is_some(),
+        VaultError::MaxAumRequiredForPrivateVaults
+    );
     if let Some(max_aum) = max_allowed_aum {
         msg!("Maximum allowed AUM: {}", max_aum);
     }
