@@ -21,10 +21,14 @@ import idl from "@starke/idl/vaults.json";
 import { EventHandler } from "./events";
 import {
   AccountNotInitializedError,
+  DepositBelowMinimumError,
   InsufficientBalanceError,
+  InvalidAmountError,
   InvalidTokenError,
   ManagerAlreadyInWhitelistError,
   ManagerNotWhitelistedError,
+  MaxAumExceededError,
+  MaxAumRequiredForPrivateVaultsError,
   SignatureVerificationFailedError,
   StarkeAlreadyInitializedError,
   StarkeAlreadyPausedError,
@@ -360,12 +364,33 @@ export class VaultsSdk {
     manager: PublicKey,
     depositTokenMint: PublicKey,
     isVtokenTransferrable: boolean,
+    isPrivateVault: boolean,
+    minDepositAmount: BN | null,
+    maxAllowedAum: BN | null,
     signers: (Keypair | Signer)[] = []
   ): Promise<TransactionSignature> {
+    // Validate XOR logic: private vaults must have max AUM, public vaults must not
+    if (isPrivateVault && maxAllowedAum === null) {
+      throw new MaxAumRequiredForPrivateVaultsError();
+    }
+    if (!isPrivateVault && maxAllowedAum !== null) {
+      throw new MaxAumRequiredForPrivateVaultsError();
+    }
+
     const tokenProgram = await this.getTokenProgram(depositTokenMint);
 
     const tx = await this.program.methods
-      .createVault(name, symbol, uri, entryFee, exitFee, isVtokenTransferrable)
+      .createVault(
+        name,
+        symbol,
+        uri,
+        entryFee,
+        exitFee,
+        isVtokenTransferrable,
+        isPrivateVault,
+        minDepositAmount,
+        maxAllowedAum
+      )
       .accounts({
         manager,
         depositTokenMint,
@@ -406,6 +431,8 @@ export class VaultsSdk {
         throw new AccountNotInitializedError("vtoken_config");
       } else if (e.toString().includes("StarkePaused")) {
         throw new StarkePausedError();
+      } else if (e.toString().includes("MaxAumRequiredForPrivateVaults")) {
+        throw new MaxAumRequiredForPrivateVaultsError();
       }
       throw e;
     }
@@ -586,6 +613,13 @@ export class VaultsSdk {
         throw new AccountNotInitializedError("user_deposit_token_account");
       } else if (e.toString().includes("Error: insufficient funds")) {
         throw new InsufficientBalanceError(depositor);
+      } else if (e.toString().includes("DepositBelowMinimum")) {
+        // Extract amount info if possible from error message
+        throw new DepositBelowMinimumError(amount.toString(), "minimum");
+      } else if (e.toString().includes("MaxAumExceeded")) {
+        throw new MaxAumExceededError("current", "max");
+      } else if (e.toString().includes("InvalidAmount")) {
+        throw new InvalidAmountError();
       }
       throw e;
     }

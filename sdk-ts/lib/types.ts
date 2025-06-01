@@ -40,6 +40,9 @@ export interface Vault {
   pendingEntryFee: number | null;
   pendingExitFee: number | null;
   feeUpdateTimestamp: number;
+  isPrivateVault: boolean;
+  minDepositAmount: bigint | null;
+  maxAllowedAum: bigint | null;
 }
 
 export interface VaultConfig {

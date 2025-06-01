@@ -124,3 +124,33 @@ export class StarkePausedError extends VaultsError {
     this.name = "StarkePausedError";
   }
 }
+
+export class DepositBelowMinimumError extends VaultsError {
+  constructor(amount: string, minimum: string) {
+    super(`Deposit amount ${amount} is below minimum ${minimum}`);
+    this.name = "DepositBelowMinimumError";
+  }
+}
+
+export class MaxAumExceededError extends VaultsError {
+  constructor(currentAum: string, maxAum: string) {
+    super(`Maximum AUM limit exceeded. Current: ${currentAum}, Max: ${maxAum}`);
+    this.name = "MaxAumExceededError";
+  }
+}
+
+export class InvalidAmountError extends VaultsError {
+  constructor() {
+    super("Invalid amount: must be greater than 0");
+    this.name = "InvalidAmountError";
+  }
+}
+
+export class MaxAumRequiredForPrivateVaultsError extends VaultsError {
+  constructor() {
+    super(
+      "Max AUM must be set for private vaults and must not be set for public vaults"
+    );
+    this.name = "MaxAumRequiredForPrivateVaultsError";
+  }
+}
