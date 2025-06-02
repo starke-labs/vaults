@@ -26,3 +26,10 @@ transfer-hook = { path = "../transfer_hook", features = [
     "cpi",
     "no-entrypoint",
 ] }
+
+[dev-dependencies]
+mollusk-svm = "0.1.5"
+solana-program-pack = "2.2.1"
+solana-program = "2.2.1"
+solana-sdk = "2.2.2"
+spl-token = "8.0.0"

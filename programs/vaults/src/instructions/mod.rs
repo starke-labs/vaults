@@ -23,3 +23,6 @@ pub use resume_starke::*;
 pub use swap_on_jupiter::*;
 pub use update_vault_fees::*;
 pub use withdraw::*;
+
+#[cfg(test)]
+pub mod tests;

@@ -76,8 +76,8 @@ impl Vault {
         self.bump = bump;
         self.mint = vtoken_mint;
         self.mint_bump = vtoken_mint_bump;
-        self.entry_fee = 0; //entry_fee;
-        self.exit_fee = 0; //exit_fee;
+        self.entry_fee = 0;
+        self.exit_fee = 0;
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
         self.fee_update_timestamp = 0;

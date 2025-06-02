@@ -1,7 +1,6 @@
-use anchor_lang::prelude::*;
-
 use crate::constants::STARKE_AUTHORITY;
 use crate::state::{TokenWhitelist, TokenWhitelistError, WhitelistTokenAdded};
+use anchor_lang::prelude::*;
 
 pub fn _add_token(
     ctx: Context<ModifyTokenWhitelist>,
@@ -29,7 +28,7 @@ pub fn _add_token(
     Ok(())
 }
 
-#[derive(Accounts)]
+#[derive(Accounts, AnchorSerialize, AnchorDeserialize)]
 pub struct ModifyTokenWhitelist<'info> {
     #[account(
         address = STARKE_AUTHORITY @ TokenWhitelistError::UnauthorizedAccess,

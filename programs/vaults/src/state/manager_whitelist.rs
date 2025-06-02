@@ -48,6 +48,14 @@ impl ManagerWhitelist {
     pub fn is_whitelisted(&self, manager_pubkey: &Pubkey) -> bool {
         self.managers.contains(manager_pubkey)
     }
+
+    #[cfg(test)]
+    pub fn from_bump(bump: u8) -> Self {
+        Self {
+            managers: vec![],
+            bump,
+        }
+    }
 }
 
 #[error_code]
