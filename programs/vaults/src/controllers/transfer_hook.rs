@@ -14,12 +14,13 @@ pub fn initialize_vtoken_config<'info>(
     transfer_hook_program: &Program<'info, TransferHook>,
     system_program: &Program<'info, System>,
 ) -> Result<()> {
+    // TODO: Can implement From trait for `InitializeExtraAccountMetasAccounts` struct
     let initialize_extra_account_metas_accounts = InitializeExtraAccountMetasAccounts {
         manager: manager.to_account_info(),
         mint: mint.to_account_info(),
         extra_account_metas: extra_account_metas.to_account_info(),
         vtoken_config: vtoken_config.to_account_info(),
-        system_program: system_program.to_account_info().clone(),
+        system_program: system_program.to_account_info(),
     };
     initialize_extra_account_metas(
         CpiContext::new(

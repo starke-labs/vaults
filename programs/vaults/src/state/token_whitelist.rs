@@ -53,12 +53,12 @@ impl TokenWhitelist {
 
     pub fn add_token(
         &mut self,
-        token_mint: &Pubkey,
-        price_feed_id: &str,
-        price_update: &Pubkey,
+        token_mint: Pubkey,
+        price_feed_id: String,
+        price_update: Pubkey,
     ) -> Result<()> {
         require!(
-            !self.tokens.iter().any(|t| t.mint == *token_mint),
+            !self.tokens.iter().any(|t| t.mint == token_mint),
             TokenWhitelistError::TokenAlreadyWhitelisted
         );
         require!(
@@ -67,9 +67,9 @@ impl TokenWhitelist {
         );
 
         self.tokens.push(TokenInfo {
-            mint: *token_mint,
-            price_feed_id: price_feed_id.to_string(),
-            price_update: *price_update,
+            mint: token_mint,
+            price_feed_id,
+            price_update,
         });
         Ok(())
     }

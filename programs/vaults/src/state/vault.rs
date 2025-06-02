@@ -69,8 +69,6 @@ impl Vault {
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(!name.is_empty(), VaultError::NameTooShort);
-        // require!(entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
-        // require!(exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
 
         self.manager = manager;
         self.deposit_token_mint = deposit_token_mint;

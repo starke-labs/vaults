@@ -15,7 +15,7 @@ pub fn _add_token(
 
     ctx.accounts
         .token_whitelist
-        .add_token(&token, &price_feed_id, &price_update)?;
+        .add_token(token, price_feed_id.clone(), price_update)?;
 
     msg!("Successfully added token to whitelist");
 

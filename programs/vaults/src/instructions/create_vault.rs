@@ -78,7 +78,7 @@ pub fn _create_vault(
 
     // Initialize vtoken metadata
     initialize_token_metadata(
-        &name,
+        name.clone(),
         symbol,
         uri,
         &ctx.accounts.manager,
