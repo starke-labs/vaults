@@ -15,8 +15,8 @@ use crate::constants::AUM_DECIMALS;
 
 pub fn initialize_token_metadata<'info>(
     name: &str,
-    symbol: &str,
-    uri: &str,
+    symbol: String,
+    uri: String,
     payer: &Signer<'info>,
     metadata: &AccountInfo<'info>,
     mint: &InterfaceAccount<'info, Mint>,

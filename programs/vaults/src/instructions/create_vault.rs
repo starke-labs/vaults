@@ -19,11 +19,11 @@ use crate::{
 
 pub fn _create_vault(
     ctx: Context<CreateVault>,
-    name: &str,
-    symbol: &str,
-    uri: &str,
-    entry_fee: u16,
-    exit_fee: u16,
+    name: String,
+    symbol: String,
+    uri: String,
+    //entry_fee: u16,
+    //exit_fee: u16,
     vtoken_is_transferrable: bool,
     is_private_vault: bool,
     min_deposit_amount: Option<u64>,
@@ -41,7 +41,7 @@ pub fn _create_vault(
         ctx.accounts.deposit_token_mint.key()
     );
     msg!("Name: {}", name);
-    msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
+    // msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
     msg!(
         "Vault type: {}",
         if is_private_vault {
@@ -82,7 +82,7 @@ pub fn _create_vault(
 
     // Initialize vtoken metadata
     initialize_token_metadata(
-        name,
+        &name,
         symbol,
         uri,
         &ctx.accounts.manager,
@@ -99,14 +99,14 @@ pub fn _create_vault(
 
     // Initialize vault
     ctx.accounts.vault.initialize(
-        &ctx.accounts.manager.key(),
-        &ctx.accounts.deposit_token_mint.key(),
+        ctx.accounts.manager.key(),
+        ctx.accounts.deposit_token_mint.key(),
         name,
         ctx.bumps.vault,
-        &ctx.accounts.vtoken_mint.key(),
+        ctx.accounts.vtoken_mint.key(),
         ctx.bumps.vtoken_mint,
-        entry_fee,
-        exit_fee,
+        //entry_fee,
+        // exit_fee,
         is_private_vault,
         min_deposit_amount,
         max_allowed_aum,

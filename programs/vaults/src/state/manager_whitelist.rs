@@ -22,9 +22,9 @@ impl ManagerWhitelist {
         Ok(())
     }
 
-    pub fn add_manager(&mut self, manager_pubkey: &Pubkey) -> Result<()> {
+    pub fn add_manager(&mut self, manager_pubkey: Pubkey) -> Result<()> {
         require!(
-            !self.managers.iter().any(|m| m == manager_pubkey),
+            !self.managers.contains(&manager_pubkey),
             ManagerWhitelistError::ManagerAlreadyWhitelisted
         );
         require!(
@@ -32,13 +32,13 @@ impl ManagerWhitelist {
             ManagerWhitelistError::WhitelistFull
         );
 
-        self.managers.push(*manager_pubkey);
+        self.managers.push(manager_pubkey);
         Ok(())
     }
 
     pub fn remove_manager(&mut self, manager_pubkey: &Pubkey) -> Result<()> {
         if let Some(index) = self.managers.iter().position(|m| m == manager_pubkey) {
-            self.managers.remove(index);
+            self.managers.swap_remove(index);
             Ok(())
         } else {
             err!(ManagerWhitelistError::ManagerNotWhitelisted)
@@ -46,7 +46,7 @@ impl ManagerWhitelist {
     }
 
     pub fn is_whitelisted(&self, manager_pubkey: &Pubkey) -> bool {
-        self.managers.iter().any(|m| m == manager_pubkey)
+        self.managers.contains(manager_pubkey)
     }
 }
 

@@ -5,9 +5,9 @@ use crate::state::{TokenWhitelist, TokenWhitelistError, WhitelistTokenAdded};
 
 pub fn _add_token(
     ctx: Context<ModifyTokenWhitelist>,
-    token: &Pubkey,
-    price_feed_id: &str,
-    price_update: &Pubkey,
+    token: Pubkey,
+    price_feed_id: String,
+    price_update: Pubkey,
 ) -> Result<()> {
     msg!("Processing request to add token: {}", token);
     msg!("Price feed ID: {}", price_feed_id);
@@ -15,14 +15,14 @@ pub fn _add_token(
 
     ctx.accounts
         .token_whitelist
-        .add_token(&token, price_feed_id, &price_update)?;
+        .add_token(&token, &price_feed_id, &price_update)?;
 
     msg!("Successfully added token to whitelist");
 
     emit!(WhitelistTokenAdded {
-        mint: *token,
-        price_feed_id: price_feed_id.to_string(),
-        price_update: *price_update,
+        mint: token,
+        price_feed_id,
+        price_update,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 

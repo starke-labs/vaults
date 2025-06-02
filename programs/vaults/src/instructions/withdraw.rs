@@ -44,7 +44,7 @@ pub fn _withdraw<'info>(
 
     // Process withdrawals for all tokens in the vault
     withdraw_all_tokens(
-        &ctx.remaining_accounts,
+        ctx.remaining_accounts,
         &ctx.accounts.user,
         &ctx.accounts.vault,
         &ctx.accounts.vtoken_mint,

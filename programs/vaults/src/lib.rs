@@ -33,19 +33,19 @@ pub mod vaults {
         price_feed_id: String,
         price_update: Pubkey,
     ) -> Result<()> {
-        _add_token(ctx, &token, &price_feed_id, &price_update)
+        _add_token(ctx, token, price_feed_id, price_update)
     }
 
     pub fn remove_token(ctx: Context<ModifyTokenWhitelist>, token: Pubkey) -> Result<()> {
-        _remove_token(ctx, &token)
+        _remove_token(ctx, token)
     }
 
     pub fn add_manager(ctx: Context<ModifyManagerWhitelist>, manager: Pubkey) -> Result<()> {
-        _add_manager(ctx, &manager)
+        _add_manager(ctx, manager)
     }
 
     pub fn remove_manager(ctx: Context<ModifyManagerWhitelist>, manager: Pubkey) -> Result<()> {
-        _remove_manager(ctx, &manager)
+        _remove_manager(ctx, manager)
     }
 
     pub fn create_vault(
@@ -53,8 +53,8 @@ pub mod vaults {
         name: String,
         symbol: String,
         uri: String,
-        entry_fee: u16,
-        exit_fee: u16,
+        _entry_fee: u16,
+        _exit_fee: u16,
         vtoken_is_transferrable: bool,
         is_private_vault: bool,
         min_deposit_amount: Option<u64>,
@@ -62,11 +62,11 @@ pub mod vaults {
     ) -> Result<()> {
         _create_vault(
             ctx,
-            &name,
-            &symbol,
-            &uri,
-            entry_fee,
-            exit_fee,
+            name,
+            symbol,
+            uri,
+            // entry_fee,
+            // exit_fee,
             vtoken_is_transferrable,
             is_private_vault,
             min_deposit_amount,

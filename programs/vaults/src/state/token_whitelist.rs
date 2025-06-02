@@ -35,8 +35,8 @@ impl TokenWhitelist {
 
     pub fn initialize(
         &mut self,
-        authority: &Pubkey,
-        program_authority: &Pubkey,
+        authority: Pubkey,
+        program_authority: Pubkey,
         bump: u8,
     ) -> Result<()> {
         require!(
@@ -44,8 +44,8 @@ impl TokenWhitelist {
             TokenWhitelistError::UnauthorizedAccess
         );
 
-        self.authority = *authority;
-        self.program_authority = *program_authority;
+        self.authority = authority;
+        self.program_authority = program_authority;
         self.tokens = Vec::new();
         self.bump = bump;
         Ok(())
@@ -76,7 +76,7 @@ impl TokenWhitelist {
 
     pub fn remove_token(&mut self, token_mint: &Pubkey) -> Result<()> {
         if let Some(index) = self.tokens.iter().position(|t| t.mint == *token_mint) {
-            self.tokens.remove(index);
+            self.tokens.swap_remove(index);
             Ok(())
         } else {
             err!(TokenWhitelistError::TokenNotWhitelisted)

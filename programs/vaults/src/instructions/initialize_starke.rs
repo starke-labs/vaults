@@ -24,8 +24,8 @@ pub fn _initialize_starke(ctx: Context<InitializeStarke>) -> Result<()> {
 
     let authority_key = ctx.accounts.authority.key();
     ctx.accounts.token_whitelist.initialize(
-        &authority_key,
-        &STARKE_AUTHORITY,
+        authority_key,
+        STARKE_AUTHORITY,
         ctx.bumps.token_whitelist,
     )?;
     msg!("Token whitelist initialized successfully");

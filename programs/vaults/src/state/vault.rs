@@ -57,31 +57,31 @@ impl Vault {
 
     pub fn initialize(
         &mut self,
-        manager: &Pubkey,
-        deposit_token_mint: &Pubkey,
-        name: &str,
+        manager: Pubkey,
+        deposit_token_mint: Pubkey,
+        name: String,
         bump: u8,
-        vtoken_mint: &Pubkey,
+        vtoken_mint: Pubkey,
         vtoken_mint_bump: u8,
-        entry_fee: u16,
-        exit_fee: u16,
+        // entry_fee: u16,
+        // exit_fee: u16,
         is_private_vault: bool,
         min_deposit_amount: Option<u64>,
         max_allowed_aum: Option<u64>,
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
-        require!(name.len() > 0, VaultError::NameTooShort);
-        require!(entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
-        require!(exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
+        require!(!name.is_empty(), VaultError::NameTooShort);
+        // require!(entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
+        // require!(exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
 
-        self.manager = *manager;
-        self.deposit_token_mint = *deposit_token_mint;
+        self.manager = manager;
+        self.deposit_token_mint = deposit_token_mint;
         self.name = name.to_string();
         self.bump = bump;
-        self.mint = *vtoken_mint;
+        self.mint = vtoken_mint;
         self.mint_bump = vtoken_mint_bump;
-        self.entry_fee = entry_fee;
-        self.exit_fee = exit_fee;
+        self.entry_fee = 0;//entry_fee;
+        self.exit_fee = 0;//exit_fee;
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
         self.fee_update_timestamp = 0;
