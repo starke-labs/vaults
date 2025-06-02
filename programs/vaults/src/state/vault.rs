@@ -63,8 +63,6 @@ impl Vault {
         bump: u8,
         vtoken_mint: Pubkey,
         vtoken_mint_bump: u8,
-        // entry_fee: u16,
-        // exit_fee: u16,
         is_private_vault: bool,
         min_deposit_amount: Option<u64>,
         max_allowed_aum: Option<u64>,
@@ -80,8 +78,8 @@ impl Vault {
         self.bump = bump;
         self.mint = vtoken_mint;
         self.mint_bump = vtoken_mint_bump;
-        self.entry_fee = 0;//entry_fee;
-        self.exit_fee = 0;//exit_fee;
+        self.entry_fee = 0; //entry_fee;
+        self.exit_fee = 0; //exit_fee;
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
         self.fee_update_timestamp = 0;

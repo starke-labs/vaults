@@ -22,8 +22,6 @@ pub fn _create_vault(
     name: String,
     symbol: String,
     uri: String,
-    //entry_fee: u16,
-    //exit_fee: u16,
     vtoken_is_transferrable: bool,
     is_private_vault: bool,
     min_deposit_amount: Option<u64>,
@@ -41,7 +39,6 @@ pub fn _create_vault(
         ctx.accounts.deposit_token_mint.key()
     );
     msg!("Name: {}", name);
-    // msg!("Entry fee: {}, Exit fee: {}", entry_fee, exit_fee);
     msg!(
         "Vault type: {}",
         if is_private_vault {
@@ -105,8 +102,6 @@ pub fn _create_vault(
         ctx.bumps.vault,
         ctx.accounts.vtoken_mint.key(),
         ctx.bumps.vtoken_mint,
-        //entry_fee,
-        // exit_fee,
         is_private_vault,
         min_deposit_amount,
         max_allowed_aum,
