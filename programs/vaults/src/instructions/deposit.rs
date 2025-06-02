@@ -76,8 +76,7 @@ pub fn _deposit<'info>(
 
     // Mint vtokens to depositor
     let manager = ctx.accounts.manager.key();
-    let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
-    let signer_seeds = &[&vault_seeds[..]];
+    let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
 
     mint_vtoken(
         &ctx.accounts.vault,

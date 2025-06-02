@@ -55,8 +55,7 @@ pub fn _swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()
     msg!("Account infos prepared: {} accounts", accounts_infos.len());
 
     let manager = ctx.accounts.manager.key();
-    let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]];
-    let signer_seeds = &[&vault_seeds[..]];
+    let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
 
     invoke_signed(
         &Instruction {

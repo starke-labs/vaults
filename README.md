@@ -116,6 +116,7 @@ Current limitations and upcoming features:
 - TODO: Use `#[derive(InitSpace)]` for accounts instead of manually allocating space
 - WIP: Refactor tests (use mainnet / devnet)
 - TODO: Update sdk to new programs
+- TODO: Add a function for creating signer_seeds given seeds and bump
 
 ## Contributing
 

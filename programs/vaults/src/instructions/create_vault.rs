@@ -62,8 +62,7 @@ pub fn _create_vault(
 
     // Vault seeds
     let manager = ctx.accounts.manager.key();
-    let vault_seeds = &[Vault::SEED, manager.as_ref(), &[ctx.bumps.vault]];
-    let signer_seeds = &[&vault_seeds[..]];
+    let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.bumps.vault]]];
 
     // Initialize vtoken config
     initialize_vtoken_config(
