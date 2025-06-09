@@ -8,7 +8,7 @@ pub fn get_token_price_from_pyth_feed<'info>(
     price_feed_id: &str,
     price_update: &Account<'info, PriceUpdateV2>,
 ) -> Result<Price> {
-    let feed_id: [u8; 32] = get_feed_id_from_hex(&price_feed_id)?;
+    let feed_id: [u8; 32] = get_feed_id_from_hex(price_feed_id)?;
     let price = price_update.get_price_no_older_than(
         &Clock::get()?,
         PYTH_PRICE_FEED_MAX_AGE_SECONDS,
@@ -22,7 +22,7 @@ pub fn get_token_price_from_pyth_feed<'info>(
         .conf
         .checked_mul(10u64.pow(4))
         .ok_or(VaultError::NumericOverflow)?
-        .checked_div(price.price.abs() as u64)
+        .checked_div(price.price.unsigned_abs())
         .ok_or(VaultError::NumericOverflow)?;
     require!(
         conf_ratio < PYTH_CONFIDENCE_THRESHOLD_BPS,
