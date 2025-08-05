@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::STARKE_AUTHORITY;
-use crate::state::{ManagerWhitelist, StarkeConfig, TokenWhitelist, TokenWhitelistError};
+use crate::state::{ManagerWhitelist, StarkeConfig, TokenWhitelist, TokenWhitelistError, UserWhitelist};
 
 pub fn _initialize_starke(ctx: Context<InitializeStarke>) -> Result<()> {
     msg!("Initializing token whitelist");
@@ -35,6 +35,12 @@ pub fn _initialize_starke(ctx: Context<InitializeStarke>) -> Result<()> {
         .initialize(ctx.bumps.manager_whitelist)?;
 
     msg!("Manager whitelist initialized successfully");
+    
+    ctx.accounts
+        .user_whitelist
+        .initialize(authority_key, ctx.bumps.user_whitelist)?;
+    msg!("User whitelist initialized successfully");
+
     ctx.accounts
         .starke_config
         .initialize(ctx.bumps.starke_config)?;
@@ -68,6 +74,15 @@ pub struct InitializeStarke<'info> {
         bump,
     )]
     pub manager_whitelist: Box<Account<'info, ManagerWhitelist>>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = UserWhitelist::MAX_SPACE,
+        seeds = [UserWhitelist::SEED],
+        bump,
+    )]
+    pub user_whitelist: Box<Account<'info, UserWhitelist>>,
 
     #[account(
         init,

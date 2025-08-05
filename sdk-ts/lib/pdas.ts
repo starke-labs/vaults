@@ -5,7 +5,7 @@ import { PublicKey } from "@solana/web3.js";
 // );
 // !!TODO: Find a way to get the program id from the IDL
 export const VAULTS_PROGRAM_ID = new PublicKey(
-  "CoKHY3hzpZouFEDLazfBD9Vyq9AYBvAQA11moQUqs3sr"
+  "8mkCdpBLeEEiGTu3y5rRyAWMfjBEw3Qm8SNQmMXNhG5f"
 );
 export const TRANSFER_HOOK_PROGRAM_ID = new PublicKey(
   "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
@@ -21,6 +21,7 @@ export const AUTHORITY_PROGRAM_ID = new PublicKey(
 // Seeds
 export const TOKEN_WHITELIST_SEED = "STARKE_TOKEN_WHITELIST";
 export const MANAGER_WHITELIST_SEED = "STARKE_MANAGER_WHITELIST";
+export const USER_WHITELIST_SEED = "STARKE_USER_WHITELIST";
 export const STARKE_CONFIG_SEED = "STARKE_CONFIG";
 export const VAULT_SEED = "STARKE_VAULT";
 export const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
@@ -38,6 +39,13 @@ export function getTokenWhitelistPda(): [PublicKey, number] {
 export function getManagerWhitelistPda(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from(MANAGER_WHITELIST_SEED)],
+    VAULTS_PROGRAM_ID
+  );
+}
+
+export function getUserWhitelistPda(): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(USER_WHITELIST_SEED)],
     VAULTS_PROGRAM_ID
   );
 }

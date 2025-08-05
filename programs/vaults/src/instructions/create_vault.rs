@@ -13,7 +13,7 @@ use crate::{
     controllers::{initialize_token_metadata, initialize_vtoken_config},
     state::{
         ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
-        TokenWhitelistError, Vault, VaultCreated, VaultError,
+        TokenWhitelistError, Vault, VaultCreated,
     },
 };
 
@@ -23,9 +23,14 @@ pub fn _create_vault(
     symbol: String,
     uri: String,
     vtoken_is_transferrable: bool,
-    is_private_vault: bool,
-    min_deposit_amount: Option<u64>,
     max_allowed_aum: Option<u64>,
+    allow_retail: bool,
+    allow_accredited: bool,
+    allow_institutional: bool,
+    allow_qualified: bool,
+    individual_min_deposit: u32,
+    institutional_min_deposit: u32,
+    max_depositors: u32,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -39,23 +44,18 @@ pub fn _create_vault(
         ctx.accounts.deposit_token_mint.key()
     );
     msg!("Name: {}", name);
-    msg!(
-        "Vault type: {}",
-        if is_private_vault {
-            "Private"
-        } else {
-            "Public"
-        }
-    );
-    if let Some(min_deposit) = min_deposit_amount {
-        msg!("Minimum deposit amount: {}", min_deposit);
+    msg!("Creating vault with investor type restrictions");
+    
+    if individual_min_deposit > 0 {
+        msg!("Individual minimum deposit amount: {}", individual_min_deposit);
+    }
+    if institutional_min_deposit > 0 {
+        msg!("Institutional minimum deposit amount: {}", institutional_min_deposit);
+    }
+    if max_depositors > 0 {
+        msg!("Maximum depositors: {}", max_depositors);
     }
 
-    require!(
-        // Is not private vault xor max allowed AUM is set
-        !is_private_vault ^ max_allowed_aum.is_some(),
-        VaultError::MaxAumRequiredForPrivateVaults
-    );
     if let Some(max_aum) = max_allowed_aum {
         msg!("Maximum allowed AUM: {}", max_aum);
     }
@@ -101,9 +101,14 @@ pub fn _create_vault(
         ctx.bumps.vault,
         ctx.accounts.vtoken_mint.key(),
         ctx.bumps.vtoken_mint,
-        is_private_vault,
-        min_deposit_amount,
         max_allowed_aum,
+        allow_retail,
+        allow_accredited,
+        allow_institutional,
+        allow_qualified,
+        individual_min_deposit,
+        institutional_min_deposit,
+        max_depositors,
     )?;
 
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());
@@ -117,8 +122,6 @@ pub fn _create_vault(
         timestamp: ctx.accounts.clock.unix_timestamp,
         entry_fee: ctx.accounts.vault.entry_fee,
         exit_fee: ctx.accounts.vault.exit_fee,
-        is_private_vault: ctx.accounts.vault.is_private_vault,
-        min_deposit_amount: ctx.accounts.vault.min_deposit_amount,
         max_allowed_aum: ctx.accounts.vault.max_allowed_aum,
     });
 

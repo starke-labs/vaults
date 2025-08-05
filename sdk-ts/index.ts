@@ -25,10 +25,11 @@ import {
   InsufficientBalanceError,
   InvalidAmountError,
   InvalidTokenError,
+  InvestorTypeNotAllowedError,
   ManagerAlreadyInWhitelistError,
   ManagerNotWhitelistedError,
   MaxAumExceededError,
-  MaxAumRequiredForPrivateVaultsError,
+  MaxDepositorsExceededError,
   SignatureVerificationFailedError,
   StarkeAlreadyInitializedError,
   StarkeAlreadyPausedError,
@@ -37,6 +38,7 @@ import {
   StarkePausedError,
   TokenAlreadyInWhitelistError,
   TokenNotWhitelistedError,
+  UserNotWhitelistedError,
   VaultAlreadyCreatedError,
   VaultNotFoundError,
 } from "./lib/errors";
@@ -46,6 +48,7 @@ import {
   getManagerWhitelistPda,
   getStarkeConfigPda,
   getTokenWhitelistPda,
+  getUserWhitelistPda,
   getVaultPda,
   getVtokenConfigPda,
   getVtokenMetadataPda,
@@ -58,10 +61,12 @@ import {
 } from "./lib/transaction";
 import {
   AccountMeta,
+  InvestorType,
   ManagerWhitelist,
   StarkeConfig,
   Token,
   TokenWhitelist,
+  UserWhitelist,
   Vault,
 } from "./lib/types";
 
@@ -122,6 +127,20 @@ export class VaultsSdk {
       return (await this.program.account.managerWhitelist.fetch(
         getManagerWhitelistPda()[0]
       )) as ManagerWhitelist;
+    } catch (e) {
+      if (e.toString().includes("Account does not exist")) {
+        throw new StarkeNotInitializedError();
+      }
+      throw e;
+    }
+  }
+
+  async fetchUserWhitelist(): Promise<UserWhitelist> {
+    try {
+      // @ts-ignore
+      return (await this.program.account.userWhitelist.fetch(
+        getUserWhitelistPda()[0]
+      )) as UserWhitelist;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
         throw new StarkeNotInitializedError();
@@ -339,6 +358,45 @@ export class VaultsSdk {
     }
   }
 
+  async addUserToWhitelist(
+    user: PublicKey,
+    investorType: InvestorType,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    const tx = await this.program.methods
+      .addUser(user, investorType)
+      .accounts({ starkeAuthority: AUTHORITY_PROGRAM_ID })
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+      }
+      throw e;
+    }
+  }
+
+  async removeUserFromWhitelist(
+    user: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    const tx = await this.program.methods
+      .removeUser(user)
+      .accounts({ starkeAuthority: AUTHORITY_PROGRAM_ID })
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (e.toString().includes("Signature verification failed")) {
+        throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+      }
+      throw e;
+    }
+  }
+
   async getTokenProgram(mint: PublicKey): Promise<PublicKey> {
     // TODO: Should we check this at program level?
     const tokenProgram = (await this.provider.connection.getAccountInfo(mint))
@@ -359,37 +417,42 @@ export class VaultsSdk {
     name: string,
     symbol: string,
     uri: string,
-    entryFee: number,
-    exitFee: number,
     manager: PublicKey,
     depositTokenMint: PublicKey,
     isVtokenTransferrable: boolean,
-    isPrivateVault: boolean,
-    minDepositAmount: BN | null,
     maxAllowedAum: BN | null,
+    allowRetail: boolean,
+    allowAccredited: boolean,
+    allowInstitutional: boolean,
+    allowQualified: boolean,
+    individualMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
+    institutionalMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
+    maxDepositors?: number, // u32, 0 = unlimited, optional defaults to 0
     signers: (Keypair | Signer)[] = []
   ): Promise<TransactionSignature> {
-    // Validate XOR logic: private vaults must have max AUM, public vaults must not
-    if (isPrivateVault && maxAllowedAum === null) {
-      throw new MaxAumRequiredForPrivateVaultsError();
-    }
-    if (!isPrivateVault && maxAllowedAum !== null) {
-      throw new MaxAumRequiredForPrivateVaultsError();
-    }
+    // No validation needed - max_allowed_aum can be set or not set for any vault
 
     const tokenProgram = await this.getTokenProgram(depositTokenMint);
 
+    // Set defaults for optional parameters (0 = no limit/minimum)
+    const finalIndividualMinDeposit = individualMinDeposit ?? 0;
+    const finalInstitutionalMinDeposit = institutionalMinDeposit ?? 0;
+    const finalMaxDepositors = maxDepositors ?? 0;
+    
     const tx = await this.program.methods
       .createVault(
         name,
         symbol,
         uri,
-        entryFee,
-        exitFee,
         isVtokenTransferrable,
-        isPrivateVault,
-        minDepositAmount,
-        maxAllowedAum
+        maxAllowedAum,
+        allowRetail,
+        allowAccredited,
+        allowInstitutional,
+        allowQualified,
+        finalIndividualMinDeposit,
+        finalInstitutionalMinDeposit,
+        finalMaxDepositors
       )
       .accounts({
         manager,
@@ -405,9 +468,9 @@ export class VaultsSdk {
         e.toString().includes("unauthorized") ||
         e.toString().includes("Signature verification failed")
       ) {
-        throw new SignatureVerificationFailedError(manager);
+        throw new SignatureVerificationFailedError(this.provider.wallet.publicKey);
       } else if (e.toString().includes("already in use")) {
-        const [vault] = getVaultPda(manager);
+        const [vault] = getVaultPda(this.provider.wallet.publicKey);
         throw new VaultAlreadyCreatedError(vault);
       } else if (
         e
@@ -416,11 +479,11 @@ export class VaultsSdk {
             "Attempt to debit an account but found no record of a prior credit"
           )
       ) {
-        throw new InsufficientBalanceError(manager);
+        throw new InsufficientBalanceError(this.provider.wallet.publicKey);
       } else if (e.toString().includes("Token is not whitelisted")) {
         throw new TokenNotWhitelistedError(depositTokenMint);
       } else if (e.toString().includes("Manager is not whitelisted")) {
-        throw new ManagerNotWhitelistedError(manager);
+        throw new ManagerNotWhitelistedError(this.provider.wallet.publicKey);
       } else if (
         e
           .toString()
@@ -431,8 +494,6 @@ export class VaultsSdk {
         throw new AccountNotInitializedError("vtoken_config");
       } else if (e.toString().includes("StarkePaused")) {
         throw new StarkePausedError();
-      } else if (e.toString().includes("MaxAumRequiredForPrivateVaults")) {
-        throw new MaxAumRequiredForPrivateVaultsError();
       }
       throw e;
     }
@@ -620,6 +681,12 @@ export class VaultsSdk {
         throw new MaxAumExceededError("current", "max");
       } else if (e.toString().includes("InvalidAmount")) {
         throw new InvalidAmountError();
+      } else if (e.toString().includes("UserNotWhitelisted")) {
+        throw new UserNotWhitelistedError(depositor);
+      } else if (e.toString().includes("InvestorTypeNotAllowed")) {
+        throw new InvestorTypeNotAllowedError("unknown");
+      } else if (e.toString().includes("MaxDepositorsExceeded")) {
+        throw new MaxDepositorsExceededError();
       }
       throw e;
     }

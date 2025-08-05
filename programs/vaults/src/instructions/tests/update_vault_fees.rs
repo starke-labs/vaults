@@ -50,9 +50,15 @@ fn test_update_vault_fees_success() {
         pending_entry_fee: None,
         pending_exit_fee: None,
         fee_update_timestamp: 0,
-        min_deposit_amount: None,
-        is_private_vault: false,
         max_allowed_aum: None,
+        allow_retail: true,
+        allow_accredited: true,
+        allow_institutional: true,
+        allow_qualified: true,
+        individual_min_deposit: 0,
+        institutional_min_deposit: 0,
+        max_depositors: 0,
+        current_depositors: 0,
     };
     let vault_account = serialize_into_account!(vault_state, program_id);
 
@@ -111,9 +117,15 @@ fn test_update_vault_fees_unauthorized_should_fail() {
         pending_entry_fee: None,
         pending_exit_fee: None,
         fee_update_timestamp: 0,
-        min_deposit_amount: None,
-        is_private_vault: false,
         max_allowed_aum: None,
+        allow_retail: true,
+        allow_accredited: true,
+        allow_institutional: true,
+        allow_qualified: true,
+        individual_min_deposit: 0,
+        institutional_min_deposit: 0,
+        max_depositors: 0,
+        current_depositors: 0,
     };
     let vault_account = serialize_into_account!(vault_state, program_id);
 
@@ -149,9 +161,15 @@ fn test_update_vault_fees_seed_constraint_violation_should_fail() {
         pending_entry_fee: None,
         pending_exit_fee: None,
         fee_update_timestamp: 0,
-        min_deposit_amount: None,
-        is_private_vault: false,
         max_allowed_aum: None,
+        allow_retail: true,
+        allow_accredited: true,
+        allow_institutional: true,
+        allow_qualified: true,
+        individual_min_deposit: 0,
+        institutional_min_deposit: 0,
+        max_depositors: 0,
+        current_depositors: 0,
     };
     let vault_account = serialize_into_account!(vault_state, program_id);
 

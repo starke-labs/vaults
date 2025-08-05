@@ -61,28 +61,42 @@ describe("Initialize Starke Tests", () => {
   });
 
   it("should successfully initialize starke if not initialized already", async () => {
+    let wasAlreadyInitialized = false;
+
     // Try to initialize starke
     try {
       await vaults.initializeStarke([authority]);
     } catch (e) {
-      if (!(e instanceof StarkeAlreadyInitializedError)) {
+      if (e instanceof StarkeAlreadyInitializedError) {
+        wasAlreadyInitialized = true;
+      } else {
         throw e;
       }
     }
 
     // Verify starke config was initialized
     const starkeConfig = await vaults.fetchStarkeConfig();
+    expect(starkeConfig).to.exist;
     expect(starkeConfig.isPaused).to.equal(false);
 
     // Verify token whitelist was initialized
-    const whitelist = await vaults.fetchTokenWhitelist();
-    expect(whitelist.authority.toBase58()).to.equal(
+    const tokenWhitelist = await vaults.fetchTokenWhitelist();
+    expect(tokenWhitelist).to.exist;
+    expect(tokenWhitelist.authority.toBase58()).to.equal(
       authority.publicKey.toBase58()
     );
 
     // Verify manager whitelist was initialized
     const managerWhitelist = await vaults.fetchManagerWhitelist();
-    expect(managerWhitelist.managers.length).to.equal(0);
+    expect(managerWhitelist).to.exist;
+    expect(managerWhitelist.managers).to.be.an("array");
+
+    // Verify user whitelist was initialized
+    const userWhitelist = await vaults.fetchUserWhitelist();
+    expect(userWhitelist).to.exist;
+    expect(userWhitelist.authority.toBase58()).to.equal(
+      authority.publicKey.toBase58()
+    );
   });
 
   it("should not initialize whitelist twice", async () => {

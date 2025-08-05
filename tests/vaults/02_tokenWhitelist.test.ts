@@ -4,7 +4,6 @@ import { expect } from "chai";
 import { VaultsSdk } from "@starke/sdk";
 import {
   SignatureVerificationFailedError,
-  StarkeAlreadyInitializedError,
   TokenAlreadyInWhitelistError,
   TokenNotWhitelistedError,
 } from "@starke/sdk/lib/errors";

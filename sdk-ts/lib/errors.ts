@@ -146,11 +146,24 @@ export class InvalidAmountError extends VaultsError {
   }
 }
 
-export class MaxAumRequiredForPrivateVaultsError extends VaultsError {
+
+export class UserNotWhitelistedError extends VaultsError {
+  constructor(user: PublicKey) {
+    super(`User ${user.toBase58()} is not whitelisted`);
+    this.name = "UserNotWhitelistedError";
+  }
+}
+
+export class InvestorTypeNotAllowedError extends VaultsError {
+  constructor(investorType: string) {
+    super(`Investor type ${investorType} is not allowed for this vault`);
+    this.name = "InvestorTypeNotAllowedError";
+  }
+}
+
+export class MaxDepositorsExceededError extends VaultsError {
   constructor() {
-    super(
-      "Max AUM must be set for private vaults and must not be set for public vaults"
-    );
-    this.name = "MaxAumRequiredForPrivateVaultsError";
+    super("Maximum number of depositors exceeded for this vault");
+    this.name = "MaxDepositorsExceededError";
   }
 }

@@ -40,9 +40,35 @@ export interface Vault {
   pendingEntryFee: number | null;
   pendingExitFee: number | null;
   feeUpdateTimestamp: number;
-  isPrivateVault: boolean;
-  minDepositAmount: bigint | null;
   maxAllowedAum: bigint | null;
+  allowRetail: boolean;
+  allowAccredited: boolean;
+  allowInstitutional: boolean;
+  allowQualified: boolean;
+  individualMinDeposit: number; // u32, 0 = no minimum
+  institutionalMinDeposit: number; // u32, 0 = no minimum
+  maxDepositors: number; // u32, 0 = unlimited
+  currentDepositors: number;
+}
+
+export const InvestorType = {
+  Retail: { retail: {} },
+  Accredited: { accredited: {} },
+  Institutional: { institutional: {} },
+  Qualified: { qualified: {} }
+} as const;
+
+export type InvestorType = typeof InvestorType[keyof typeof InvestorType];
+
+export interface UserEntry {
+  user: PublicKey;
+  investorType: InvestorType;
+}
+
+export interface UserWhitelist {
+  authority: PublicKey;
+  bump: number;
+  users: UserEntry[];
 }
 
 export interface VaultConfig {

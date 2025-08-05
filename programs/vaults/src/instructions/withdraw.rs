@@ -30,6 +30,10 @@ pub fn _withdraw<'info>(
     let manager = ctx.accounts.manager.key();
     let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
 
+    // Check if user will have zero vtokens after withdrawal (becoming a non-depositor)
+    let user_balance_before = ctx.accounts.user_vtoken_account.amount;
+    let will_be_zero_balance = user_balance_before == amount;
+
     // Burn vtokens from depositor
     burn_vtoken(
         &ctx.accounts.user,
@@ -40,6 +44,12 @@ pub fn _withdraw<'info>(
         &ctx.accounts.token_2022_program,
     )?;
     msg!("{} vtokens burned successfully", amount);
+
+    // Decrement depositor count if user withdrew all their tokens
+    if will_be_zero_balance {
+        ctx.accounts.vault.decrement_depositor_count()?;
+        msg!("Depositor removed. Total depositors: {}", ctx.accounts.vault.current_depositors);
+    }
 
     // Process withdrawals for all tokens in the vault
     withdraw_all_tokens(
@@ -99,6 +109,7 @@ pub struct Withdraw<'info> {
 
     // Vault
     #[account(
+        mut,
         seeds = [Vault::SEED, manager.key().as_ref()],
         bump = vault.bump,
     )]

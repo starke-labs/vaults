@@ -29,17 +29,26 @@ run_test() {
         "vaults:managerWhitelist")
             yarn test:vaults:managerWhitelist
             ;;
+        "vaults:userWhitelist")
+            yarn test:vaults:userWhitelist
+            ;;
         "vaults:createVault")
             yarn test:vaults:createVault
+            ;;
+        "vaults:createVaultEnhanced")
+            yarn test:vaults:createVaultEnhanced
             ;;
         "vaults:deposit")
             yarn test:vaults:deposit
             ;;
+        "vaults:investorTypeValidation")
+            yarn test:vaults:investorTypeValidation
+            ;;
         "vaults:withdraw")
             yarn test:vaults:withdraw
             ;;
-        "vaults:info")
-            yarn test:vaults:info
+        "vaults:depositWithdrawEnhanced")
+            yarn test:vaults:depositWithdrawEnhanced
             ;;
         "vaults:pause")
             yarn test:vaults:pauseStarke
@@ -49,6 +58,12 @@ run_test() {
             ;;
         "vaults:swap")
             yarn test:vaults:swap
+            ;;
+        "vaults:integration")
+            yarn test:vaults:integrationTest
+            ;;
+        "vaults:info")
+            yarn test:vaults:info
             ;;
         *)
             echo "Unknown test: $test_name"

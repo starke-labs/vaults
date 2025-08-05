@@ -62,11 +62,18 @@ describe("Pause Starke", () => {
         "test",
         "test",
         "test",
-        0,
-        0,
         manager2.publicKey,
         nonWhitelistedToken,
-        false
+        false,
+        null,
+        true,
+        true,
+        true,
+        true,
+        1000000,
+        10000000,
+        0,
+        [manager2]
       );
       expect.fail("Should not be able to add a vault if the starke is paused");
     } catch (error) {

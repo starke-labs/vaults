@@ -10,6 +10,7 @@ use crate::controllers::{
 };
 use crate::state::{
     Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault,
+    UserWhitelist, UserWhitelistError,
 };
 
 pub fn _deposit<'info>(
@@ -29,8 +30,23 @@ pub fn _deposit<'info>(
         ctx.accounts.deposit_token_mint.key()
     );
 
-    // Validate deposit amount
-    ctx.accounts.vault.validate_deposit_amount(amount)?;
+    // Validate user is whitelisted and get their investor type
+    let investor_type = ctx.accounts.user_whitelist
+        .get_user_type(&ctx.accounts.user.key())
+        .ok_or(UserWhitelistError::UserNotWhitelisted)?;
+    msg!("User investor type: {:?}", investor_type);
+
+    // Validate investor type is allowed for this vault
+    ctx.accounts.vault.validate_investor_type(&investor_type)?;
+
+    // Validate deposit amount based on investor type
+    ctx.accounts.vault.validate_deposit_amount_by_type(amount, &investor_type)?;
+
+    // Check if this is a new depositor (first time depositing)
+    let is_new_depositor = ctx.accounts.vtoken_account.amount == 0;
+    
+    // Validate max depositors limit
+    ctx.accounts.vault.validate_max_depositors(is_new_depositor)?;
 
     // Calculate the total AUM using vault's get_aum function
     let total_aum = ctx.accounts.vault.get_aum(
@@ -87,6 +103,12 @@ pub fn _deposit<'info>(
         &ctx.accounts.token_2022_program,
     )?;
     msg!("{} vtokens minted to user successfully", vtokens_to_mint);
+
+    // Increment depositor count if this is a new depositor
+    if is_new_depositor {
+        ctx.accounts.vault.increment_depositor_count()?;
+        msg!("New depositor added. Total depositors: {}", ctx.accounts.vault.current_depositors);
+    }
 
     msg!("Deposit completed successfully");
 
@@ -152,6 +174,7 @@ pub struct Deposit<'info> {
 
     // Vault
     #[account(
+        mut,
         seeds = [Vault::SEED, manager.key().as_ref()],
         bump = vault.bump,
     )]
@@ -181,6 +204,13 @@ pub struct Deposit<'info> {
         bump = token_whitelist.bump,
     )]
     pub token_whitelist: Box<Account<'info, TokenWhitelist>>,
+
+    // User whitelist
+    #[account(
+        seeds = [UserWhitelist::SEED],
+        bump = user_whitelist.bump,
+    )]
+    pub user_whitelist: Box<Account<'info, UserWhitelist>>,
 
     // Starke config
     #[account(

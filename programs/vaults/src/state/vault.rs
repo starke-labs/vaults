@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use super::{TokenWhitelist, VaultFeesUpdated};
+use super::{InvestorType, TokenWhitelist, VaultFeesUpdated};
 use crate::controllers::{
     compute_token_value_usd, parse_vault_balances, transform_price_to_aum_decimals,
     verify_price_update_and_get_pyth_price,
@@ -21,14 +21,20 @@ pub struct Vault {
     pub pending_exit_fee: Option<u16>,
     pub fee_update_timestamp: i64,
     // Config
-    // Public vault
-    // Minimum amount of deposit token to deposit in deposit token decimals
-    pub min_deposit_amount: Option<u64>, // None means no minimum
-    // Private vault
-    pub is_private_vault: bool,
     // Maximum amount of aum allowed in vault, if None, there is no maximum
     // USD value in AUM_DECIMALS decimals
-    pub max_allowed_aum: Option<u64>, // None means no maximum, public vaults should have this set to None
+    pub max_allowed_aum: Option<u64>, // None means no maximum
+    // New investor permission settings
+    pub allow_retail: bool,
+    pub allow_accredited: bool,
+    pub allow_institutional: bool,
+    pub allow_qualified: bool,
+    // Deposit configuration (0 = no minimum)
+    pub individual_min_deposit: u32, // For retail/accredited investors, 0 = no minimum
+    pub institutional_min_deposit: u32, // For institutional/qualified investors, 0 = no minimum
+    // Max depositors (0 = unlimited)
+    pub max_depositors: u32, // 0 means unlimited
+    pub current_depositors: u32,
 }
 
 impl Vault {
@@ -45,9 +51,15 @@ impl Vault {
         + 3  // pending_entry_fee (Option<u16>)
         + 3  // pending_exit_fee (Option<u16>)
         + 8  // fee_update_timestamp (i64)
-        + 1  // is_private_vault (bool)
-        + 9  // min_deposit_amount (Option<u64>)
-        + 9; // max_allowed_aum (Option<u64>)
+        + 9  // max_allowed_aum (Option<u64>)
+        + 1  // allow_retail (bool)
+        + 1  // allow_accredited (bool)
+        + 1  // allow_institutional (bool)
+        + 1  // allow_qualified (bool)
+        + 4  // individual_min_deposit (u32)
+        + 4  // institutional_min_deposit (u32)
+        + 4  // max_depositors (u32)
+        + 4; // current_depositors (u32)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -63,9 +75,14 @@ impl Vault {
         bump: u8,
         vtoken_mint: Pubkey,
         vtoken_mint_bump: u8,
-        is_private_vault: bool,
-        min_deposit_amount: Option<u64>,
         max_allowed_aum: Option<u64>,
+        allow_retail: bool,
+        allow_accredited: bool,
+        allow_institutional: bool,
+        allow_qualified: bool,
+        individual_min_deposit: u32,
+        institutional_min_deposit: u32,
+        max_depositors: u32,
     ) -> Result<()> {
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(!name.is_empty(), VaultError::NameTooShort);
@@ -81,9 +98,15 @@ impl Vault {
         self.pending_entry_fee = None;
         self.pending_exit_fee = None;
         self.fee_update_timestamp = 0;
-        self.is_private_vault = is_private_vault;
-        self.min_deposit_amount = min_deposit_amount;
         self.max_allowed_aum = max_allowed_aum;
+        self.allow_retail = allow_retail;
+        self.allow_accredited = allow_accredited;
+        self.allow_institutional = allow_institutional;
+        self.allow_qualified = allow_qualified;
+        self.individual_min_deposit = individual_min_deposit;
+        self.institutional_min_deposit = institutional_min_deposit;
+        self.max_depositors = max_depositors;
+        self.current_depositors = 0;
 
         Ok(())
     }
@@ -163,32 +186,82 @@ impl Vault {
         Ok(aum)
     }
 
-    /// Validates deposit amount against vault's minimum deposit requirement
-    pub fn validate_deposit_amount(&self, amount: u64) -> Result<()> {
-        // Check if amount is not zero
-        require!(amount > 0, VaultError::InvalidAmount);
 
-        // Check minimum deposit amount if configured
-        if let Some(min_deposit) = self.min_deposit_amount {
-            require!(amount >= min_deposit, VaultError::DepositBelowMinimum);
+    /// Validates if the vault can accept more deposits based on max AUM limit
+    pub fn validate_max_aum(&self, current_aum: u64, deposit_value: u64) -> Result<()> {
+        // Check max AUM if it's set
+        if let Some(max_aum) = self.max_allowed_aum {
+            let new_aum = current_aum
+                .checked_add(deposit_value)
+                .ok_or(VaultError::NumericOverflow)?;
+
+            require!(new_aum <= max_aum, VaultError::MaxAumExceeded);
         }
 
         Ok(())
     }
 
-    /// Validates if the vault can accept more deposits based on max AUM limit
-    pub fn validate_max_aum(&self, current_aum: u64, deposit_value: u64) -> Result<()> {
-        // Only check max AUM for private vaults
-        if self.is_private_vault {
-            if let Some(max_aum) = self.max_allowed_aum {
-                let new_aum = current_aum
-                    .checked_add(deposit_value)
-                    .ok_or(VaultError::NumericOverflow)?;
+    /// Validates if the user's investor type is allowed in this vault
+    pub fn validate_investor_type(&self, investor_type: &InvestorType) -> Result<()> {
+        let is_allowed = match investor_type {
+            InvestorType::Retail => self.allow_retail,
+            InvestorType::Accredited => self.allow_accredited,
+            InvestorType::Institutional => self.allow_institutional,
+            InvestorType::Qualified => self.allow_qualified,
+        };
 
-                require!(new_aum <= max_aum, VaultError::MaxAumExceeded);
-            }
+        require!(is_allowed, VaultError::InvestorTypeNotAllowed);
+        Ok(())
+    }
+
+    /// Validates deposit amount based on investor type
+    pub fn validate_deposit_amount_by_type(
+        &self,
+        amount: u64,
+        investor_type: &InvestorType,
+    ) -> Result<()> {
+        // Check if amount is not zero
+        require!(amount > 0, VaultError::InvalidAmount);
+
+        // Check minimum deposit amount based on investor type (0 = no minimum)
+        let min_deposit = match investor_type {
+            InvestorType::Retail | InvestorType::Accredited => self.individual_min_deposit,
+            InvestorType::Institutional | InvestorType::Qualified => self.institutional_min_deposit,
+        };
+
+        if min_deposit > 0 {
+            require!(amount >= min_deposit as u64, VaultError::DepositBelowMinimum);
         }
 
+        Ok(())
+    }
+
+    /// Validates if the vault can accept more depositors
+    pub fn validate_max_depositors(&self, is_new_depositor: bool) -> Result<()> {
+        if is_new_depositor && self.max_depositors > 0 {
+            require!(
+                self.current_depositors < self.max_depositors,
+                VaultError::MaxDepositorsExceeded
+            );
+        }
+        Ok(())
+    }
+
+    /// Increments the depositor count (call when a new depositor makes their first deposit)
+    pub fn increment_depositor_count(&mut self) -> Result<()> {
+        self.current_depositors = self
+            .current_depositors
+            .checked_add(1)
+            .ok_or(VaultError::NumericOverflow)?;
+        Ok(())
+    }
+
+    /// Decrements the depositor count (call when a depositor withdraws all their tokens)
+    pub fn decrement_depositor_count(&mut self) -> Result<()> {
+        self.current_depositors = self
+            .current_depositors
+            .checked_sub(1)
+            .ok_or(VaultError::NumericOverflow)?;
         Ok(())
     }
 }
@@ -223,6 +296,8 @@ pub enum VaultError {
     DepositBelowMinimum,
     #[msg("Maximum AUM limit exceeded")]
     MaxAumExceeded,
-    #[msg("Max AUM should be set for only private vaults")]
-    MaxAumRequiredForPrivateVaults,
+    #[msg("Investor type not allowed for this vault")]
+    InvestorTypeNotAllowed,
+    #[msg("Maximum depositors limit exceeded")]
+    MaxDepositorsExceeded,
 }

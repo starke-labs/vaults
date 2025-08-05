@@ -1,18 +1,38 @@
 import { BN } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { InvestorType } from "./lib/types";
 
 // Create Vault
 export interface CreateVaultParams {
   name: string;
   symbol: string;
   uri: string;
-  entryFee: number;
-  exitFee: number;
+  vtokenIsTransferrable: boolean;
+  isPrivateVault: boolean;
+  minDepositAmount: BN | null; // DEPRECATED, use individualMinDeposit
+  maxAllowedAum: BN | null;
+  allowRetail: boolean;
+  allowAccredited: boolean;
+  allowInstitutional: boolean;
+  allowQualified: boolean;
+  individualMinDeposit: BN | null;
+  institutionalMinDeposit: BN | null;
+  maxDepositors: number | null;
 }
 
 export interface CreateVaultAccounts {
   manager: PublicKey;
   depositTokenMint: PublicKey;
+}
+
+// User Whitelist
+export interface AddUserParams {
+  user: PublicKey;
+  investorType: InvestorType;
+}
+
+export interface RemoveUserParams {
+  user: PublicKey;
 }
 
 // Add Token

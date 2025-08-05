@@ -10,8 +10,6 @@ pub struct VaultCreated {
     pub timestamp: i64,
     pub entry_fee: u16,
     pub exit_fee: u16,
-    pub is_private_vault: bool,
-    pub min_deposit_amount: Option<u64>,
     pub max_allowed_aum: Option<u64>,
 }
 

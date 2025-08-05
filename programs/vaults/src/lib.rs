@@ -8,8 +8,9 @@ mod instructions;
 pub mod state;
 
 use instructions::*;
+use state::InvestorType;
 
-declare_id!("CoKHY3hzpZouFEDLazfBD9Vyq9AYBvAQA11moQUqs3sr");
+declare_id!("8mkCdpBLeEEiGTu3y5rRyAWMfjBEw3Qm8SNQmMXNhG5f");
 
 #[program]
 pub mod vaults {
@@ -54,9 +55,14 @@ pub mod vaults {
         symbol: String,
         uri: String,
         vtoken_is_transferrable: bool,
-        is_private_vault: bool,
-        min_deposit_amount: Option<u64>,
         max_allowed_aum: Option<u64>,
+        allow_retail: bool,
+        allow_accredited: bool,
+        allow_institutional: bool,
+        allow_qualified: bool,
+        individual_min_deposit: u32,
+        institutional_min_deposit: u32,
+        max_depositors: u32,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -64,9 +70,14 @@ pub mod vaults {
             symbol,
             uri,
             vtoken_is_transferrable,
-            is_private_vault,
-            min_deposit_amount,
             max_allowed_aum,
+            allow_retail,
+            allow_accredited,
+            allow_institutional,
+            allow_qualified,
+            individual_min_deposit,
+            institutional_min_deposit,
+            max_depositors,
         )
     }
 
@@ -94,6 +105,18 @@ pub mod vaults {
 
     pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
         _swap_on_jupiter(ctx, data)
+    }
+
+    pub fn add_user(
+        ctx: Context<ModifyUserWhitelist>,
+        user: Pubkey,
+        investor_type: InvestorType,
+    ) -> Result<()> {
+        _add_user(ctx, user, investor_type)
+    }
+
+    pub fn remove_user(ctx: Context<ModifyUserWhitelist>, user: Pubkey) -> Result<()> {
+        _remove_user(ctx, user)
     }
 }
 
