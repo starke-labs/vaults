@@ -81,6 +81,10 @@ pub mod vaults {
         )
     }
 
+    pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
+        _close_vault(ctx)
+    }
+
     pub fn update_vault_fees(
         ctx: Context<UpdateVaultFees>,
         new_entry_fee: u16,

@@ -300,4 +300,10 @@ pub enum VaultError {
     InvestorTypeNotAllowed,
     #[msg("Maximum depositors limit exceeded")]
     MaxDepositorsExceeded,
+    #[msg("Cannot close vault with active depositors")]
+    VaultHasActiveDepositors,
+    #[msg("Cannot close vault with outstanding vtokens")]
+    VTokensOutstanding,
+    #[msg("Cannot close vault with remaining funds")]
+    FundsRemaining,
 }

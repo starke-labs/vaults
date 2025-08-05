@@ -499,6 +499,50 @@ export class VaultsSdk {
     }
   }
 
+  async closeVault(
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = []
+  ): Promise<TransactionSignature> {
+    // Get vault and validate it exists
+    const vault = await this.fetchVault(manager);
+    
+    const tokenProgram = await this.getTokenProgram(vault.depositTokenMint);
+    const tx = await this.program.methods
+      .closeVault()
+      .accounts({
+        manager,
+        tokenProgram,
+      })
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      if (
+        e.toString().includes("unauthorized") ||
+        e.toString().includes("Signature verification failed")
+      ) {
+        throw new SignatureVerificationFailedError(manager);
+      } else if (
+        e.toString().includes("VaultHasActiveDepositors") ||
+        e.toString().includes("Cannot close vault with active depositors")
+      ) {
+        throw new Error("Cannot close vault: vault has active depositors");
+      } else if (
+        e.toString().includes("VTokensOutstanding") ||
+        e.toString().includes("Cannot close vault with outstanding vtokens")
+      ) {
+        throw new Error("Cannot close vault: outstanding vtokens exist");
+      } else if (
+        e.toString().includes("FundsRemaining") ||
+        e.toString().includes("Cannot close vault with remaining funds")
+      ) {
+        throw new Error("Cannot close vault: funds remaining in vault");
+      }
+      throw e;
+    }
+  }
+
   async swapOnJupiter(
     inputMint: PublicKey,
     outputMint: PublicKey,

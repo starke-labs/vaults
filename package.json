@@ -18,6 +18,7 @@
     "test:vaults:vtokenTransferrability": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/12_vtokenTransferrability.test.ts",
     "test:vaults:swap": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/13_swap.test.ts",
     "test:vaults:integrationTest": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/14_integrationTest.test.ts",
+    "test:vaults:closeVault": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/15_closeVault.test.ts",
     "test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts"
   },
   "dependencies": {

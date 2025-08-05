@@ -62,6 +62,9 @@ run_test() {
         "vaults:integration")
             yarn test:vaults:integrationTest
             ;;
+        "vaults:closeVault")
+            yarn test:vaults:closeVault
+            ;;
         "vaults:info")
             yarn test:vaults:info
             ;;

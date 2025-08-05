@@ -77,3 +77,10 @@ pub struct WhitelistManagerRemoved {
     pub manager: Pubkey,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct VaultClosed {
+    pub vault: Pubkey,
+    pub manager: Pubkey,
+    pub timestamp: i64,
+}
