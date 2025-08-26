@@ -1,0 +1,3120 @@
+{
+  "address": "8mkCdpBLeEEiGTu3y5rRyAWMfjBEw3Qm8SNQmMXNhG5f",
+  "metadata": {
+    "name": "vaults",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Vaults program that can create and manage Starke vaults on Solana."
+  },
+  "instructions": [
+    {
+      "name": "add_manager",
+      "discriminator": [
+        125,
+        38,
+        192,
+        212,
+        101,
+        91,
+        179,
+        16
+      ],
+      "accounts": [
+        {
+          "name": "starke_authority",
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  77,
+                  65,
+                  78,
+                  65,
+                  71,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "manager",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "add_token",
+      "discriminator": [
+        237,
+        255,
+        26,
+        54,
+        56,
+        48,
+        68,
+        52
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "token_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "token",
+          "type": "pubkey"
+        },
+        {
+          "name": "price_feed_id",
+          "type": "string"
+        },
+        {
+          "name": "price_update",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "add_user",
+      "discriminator": [
+        15,
+        200,
+        3,
+        168,
+        184,
+        41,
+        189,
+        176
+      ],
+      "accounts": [
+        {
+          "name": "starke_authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "user_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "user",
+          "type": "pubkey"
+        },
+        {
+          "name": "investor_type",
+          "type": {
+            "defined": {
+              "name": "InvestorType"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "create_vault",
+      "discriminator": [
+        29,
+        237,
+        247,
+        208,
+        193,
+        82,
+        54,
+        135
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "metadata_program"
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "metadata_program"
+            }
+          }
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "manager_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  77,
+                  65,
+                  78,
+                  65,
+                  71,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_token_mint"
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "extra_account_metas",
+          "docs": [
+            "and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.",
+            "The Token2022 program validates this account during CPI."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "transfer_hook_program"
+            }
+          }
+        },
+        {
+          "name": "vtoken_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "transfer_hook_program"
+            }
+          }
+        },
+        {
+          "name": "transfer_hook_program",
+          "address": "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
+        },
+        {
+          "name": "instructions",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "metadata_program",
+          "address": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        },
+        {
+          "name": "vtoken_is_transferrable",
+          "type": "bool"
+        },
+        {
+          "name": "max_allowed_aum",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "allow_retail",
+          "type": "bool"
+        },
+        {
+          "name": "allow_accredited",
+          "type": "bool"
+        },
+        {
+          "name": "allow_institutional",
+          "type": "bool"
+        },
+        {
+          "name": "allow_qualified",
+          "type": "bool"
+        },
+        {
+          "name": "individual_min_deposit",
+          "type": "u32"
+        },
+        {
+          "name": "institutional_min_deposit",
+          "type": "u32"
+        },
+        {
+          "name": "max_depositors",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "deposit",
+      "discriminator": [
+        242,
+        35,
+        198,
+        137,
+        82,
+        225,
+        242,
+        182
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "user_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vtoken_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_2022_program"
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_token_mint"
+        },
+        {
+          "name": "deposit_token_price_update"
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_starke",
+      "discriminator": [
+        16,
+        178,
+        42,
+        23,
+        230,
+        89,
+        43,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "token_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "manager_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  77,
+                  65,
+                  78,
+                  65,
+                  71,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pause_starke",
+      "discriminator": [
+        205,
+        50,
+        154,
+        173,
+        117,
+        161,
+        179,
+        74
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "starke_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "remove_manager",
+      "discriminator": [
+        150,
+        55,
+        157,
+        77,
+        128,
+        148,
+        7,
+        15
+      ],
+      "accounts": [
+        {
+          "name": "starke_authority",
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  77,
+                  65,
+                  78,
+                  65,
+                  71,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "manager",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "remove_token",
+      "discriminator": [
+        149,
+        134,
+        57,
+        61,
+        136,
+        2,
+        144,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "token_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "token",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "remove_user",
+      "discriminator": [
+        99,
+        5,
+        208,
+        156,
+        250,
+        249,
+        104,
+        114
+      ],
+      "accounts": [
+        {
+          "name": "starke_authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "user_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "user",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "resume_starke",
+      "discriminator": [
+        172,
+        36,
+        251,
+        146,
+        200,
+        138,
+        112,
+        252
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "starke_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "swap_on_jupiter",
+      "discriminator": [
+        232,
+        211,
+        206,
+        82,
+        98,
+        218,
+        198,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "input_token_mint"
+        },
+        {
+          "name": "output_token_mint"
+        },
+        {
+          "name": "input_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "input_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "output_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "output_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "jupiter_program",
+          "address": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "update_vault_fees",
+      "discriminator": [
+        202,
+        171,
+        0,
+        218,
+        64,
+        38,
+        201,
+        193
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "new_entry_fee",
+          "type": "u16"
+        },
+        {
+          "name": "new_exit_fee",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "discriminator": [
+        183,
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "user_vtoken_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_2022_program"
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ManagerWhitelist",
+      "discriminator": [
+        106,
+        27,
+        27,
+        13,
+        31,
+        107,
+        37,
+        167
+      ]
+    },
+    {
+      "name": "PriceUpdateV2",
+      "discriminator": [
+        34,
+        241,
+        35,
+        99,
+        157,
+        126,
+        244,
+        205
+      ]
+    },
+    {
+      "name": "StarkeConfig",
+      "discriminator": [
+        178,
+        9,
+        140,
+        16,
+        195,
+        6,
+        254,
+        182
+      ]
+    },
+    {
+      "name": "TokenWhitelist",
+      "discriminator": [
+        105,
+        240,
+        104,
+        47,
+        95,
+        13,
+        48,
+        78
+      ]
+    },
+    {
+      "name": "UserWhitelist",
+      "discriminator": [
+        85,
+        117,
+        65,
+        9,
+        71,
+        70,
+        43,
+        115
+      ]
+    },
+    {
+      "name": "Vault",
+      "discriminator": [
+        211,
+        8,
+        232,
+        43,
+        2,
+        152,
+        117,
+        119
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Deposited",
+      "discriminator": [
+        111,
+        141,
+        26,
+        45,
+        161,
+        35,
+        100,
+        57
+      ]
+    },
+    {
+      "name": "VaultClosed",
+      "discriminator": [
+        238,
+        129,
+        38,
+        228,
+        227,
+        118,
+        249,
+        215
+      ]
+    },
+    {
+      "name": "VaultCreated",
+      "discriminator": [
+        117,
+        25,
+        120,
+        254,
+        75,
+        236,
+        78,
+        115
+      ]
+    },
+    {
+      "name": "VaultFeesUpdateRequested",
+      "discriminator": [
+        97,
+        3,
+        168,
+        94,
+        226,
+        54,
+        119,
+        191
+      ]
+    },
+    {
+      "name": "VaultFeesUpdated",
+      "discriminator": [
+        251,
+        221,
+        126,
+        24,
+        30,
+        216,
+        100,
+        207
+      ]
+    },
+    {
+      "name": "WhitelistManagerAdded",
+      "discriminator": [
+        18,
+        113,
+        171,
+        6,
+        111,
+        255,
+        166,
+        168
+      ]
+    },
+    {
+      "name": "WhitelistManagerRemoved",
+      "discriminator": [
+        46,
+        50,
+        244,
+        156,
+        35,
+        111,
+        164,
+        100
+      ]
+    },
+    {
+      "name": "WhitelistTokenAdded",
+      "discriminator": [
+        95,
+        215,
+        231,
+        200,
+        40,
+        171,
+        216,
+        34
+      ]
+    },
+    {
+      "name": "WhitelistTokenRemoved",
+      "discriminator": [
+        134,
+        226,
+        241,
+        88,
+        123,
+        60,
+        61,
+        22
+      ]
+    },
+    {
+      "name": "Withdrawn",
+      "discriminator": [
+        20,
+        89,
+        223,
+        198,
+        194,
+        124,
+        219,
+        13
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidDepositToken",
+      "msg": "Invalid deposit token"
+    },
+    {
+      "code": 6001,
+      "name": "NameTooShort",
+      "msg": "Name must be 32 characters or less"
+    },
+    {
+      "code": 6002,
+      "name": "NameTooLong",
+      "msg": "Name must be 1 character or more"
+    },
+    {
+      "code": 6003,
+      "name": "NumericOverflow",
+      "msg": "Numeric overflow"
+    },
+    {
+      "code": 6004,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds for withdrawal"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidFee",
+      "msg": "Invalid fee"
+    },
+    {
+      "code": 6006,
+      "name": "FeeUpdateDelayNotPassed",
+      "msg": "Fee update delay not passed"
+    },
+    {
+      "code": 6007,
+      "name": "MintAndTokenAccountMismatch",
+      "msg": "Mint and token account mismatch"
+    },
+    {
+      "code": 6008,
+      "name": "VaultAndTokenAccountMismatch",
+      "msg": "Vault and token account mismatch"
+    },
+    {
+      "code": 6009,
+      "name": "UserAndTokenAccountMismatch",
+      "msg": "User and token account mismatch"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount"
+    },
+    {
+      "code": 6011,
+      "name": "PriceConfidenceTooLow",
+      "msg": "Price confidence too low"
+    },
+    {
+      "code": 6012,
+      "name": "DepositBelowMinimum",
+      "msg": "Deposit amount is below minimum"
+    },
+    {
+      "code": 6013,
+      "name": "MaxAumExceeded",
+      "msg": "Maximum AUM limit exceeded"
+    },
+    {
+      "code": 6014,
+      "name": "InvestorTypeNotAllowed",
+      "msg": "Investor type not allowed for this vault"
+    },
+    {
+      "code": 6015,
+      "name": "MaxDepositorsExceeded",
+      "msg": "Maximum depositors limit exceeded"
+    },
+    {
+      "code": 6016,
+      "name": "VaultHasActiveDepositors",
+      "msg": "Cannot close vault with active depositors"
+    },
+    {
+      "code": 6017,
+      "name": "VTokensOutstanding",
+      "msg": "Cannot close vault with outstanding vtokens"
+    },
+    {
+      "code": 6018,
+      "name": "FundsRemaining",
+      "msg": "Cannot close vault with remaining funds"
+    }
+  ],
+  "types": [
+    {
+      "name": "Deposited",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "deposit_amount",
+            "type": "u64"
+          },
+          {
+            "name": "vtoken_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_minted_amount",
+            "type": "u64"
+          },
+          {
+            "name": "new_vtoken_supply",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvestorType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Retail"
+          },
+          {
+            "name": "Accredited"
+          },
+          {
+            "name": "Institutional"
+          },
+          {
+            "name": "Qualified"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ManagerWhitelist",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "managers",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceFeedMessage",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "feed_id",
+            "docs": [
+              "`FeedId` but avoid the type alias because of compatibility issues with Anchor's `idl-build` feature."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "price",
+            "type": "i64"
+          },
+          {
+            "name": "conf",
+            "type": "u64"
+          },
+          {
+            "name": "exponent",
+            "type": "i32"
+          },
+          {
+            "name": "publish_time",
+            "docs": [
+              "The timestamp of this price update in seconds"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "prev_publish_time",
+            "docs": [
+              "The timestamp of the previous price update. This field is intended to allow users to",
+              "identify the single unique price update for any moment in time:",
+              "for any time t, the unique update is the one such that prev_publish_time < t <= publish_time.",
+              "",
+              "Note that there may not be such an update while we are migrating to the new message-sending logic,",
+              "as some price updates on pythnet may not be sent to other chains (because the message-sending",
+              "logic may not have triggered). We can solve this problem by making the message-sending mandatory",
+              "(which we can do once publishers have migrated over).",
+              "",
+              "Additionally, this field may be equal to publish_time if the message is sent on a slot where",
+              "where the aggregation was unsuccesful. This problem will go away once all publishers have",
+              "migrated over to a recent version of pyth-agent."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "ema_price",
+            "type": "i64"
+          },
+          {
+            "name": "ema_conf",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceUpdateV2",
+      "docs": [
+        "A price update account. This account is used by the Pyth Receiver program to store a verified price update from a Pyth price feed.",
+        "It contains:",
+        "- `write_authority`: The write authority for this account. This authority can close this account to reclaim rent or update the account to contain a different price update.",
+        "- `verification_level`: The [`VerificationLevel`] of this price update. This represents how many Wormhole guardian signatures have been verified for this price update.",
+        "- `price_message`: The actual price update.",
+        "- `posted_slot`: The slot at which this price update was posted."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "write_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "verification_level",
+            "type": {
+              "defined": {
+                "name": "VerificationLevel"
+              }
+            }
+          },
+          {
+            "name": "price_message",
+            "type": {
+              "defined": {
+                "name": "PriceFeedMessage"
+              }
+            }
+          },
+          {
+            "name": "posted_slot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StarkeConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "is_paused",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "price_feed_id",
+            "type": "string"
+          },
+          {
+            "name": "price_update",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenWhitelist",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "program_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokens",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "TokenInfo"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "investor_type",
+            "type": {
+              "defined": {
+                "name": "InvestorType"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserWhitelist",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "users",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "UserEntry"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "deposit_token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint_bump",
+            "type": "u8"
+          },
+          {
+            "name": "entry_fee",
+            "type": "u16"
+          },
+          {
+            "name": "exit_fee",
+            "type": "u16"
+          },
+          {
+            "name": "pending_entry_fee",
+            "type": {
+              "option": "u16"
+            }
+          },
+          {
+            "name": "pending_exit_fee",
+            "type": {
+              "option": "u16"
+            }
+          },
+          {
+            "name": "fee_update_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "max_allowed_aum",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "allow_retail",
+            "type": "bool"
+          },
+          {
+            "name": "allow_accredited",
+            "type": "bool"
+          },
+          {
+            "name": "allow_institutional",
+            "type": "bool"
+          },
+          {
+            "name": "allow_qualified",
+            "type": "bool"
+          },
+          {
+            "name": "individual_min_deposit",
+            "type": "u32"
+          },
+          {
+            "name": "institutional_min_deposit",
+            "type": "u32"
+          },
+          {
+            "name": "max_depositors",
+            "type": "u32"
+          },
+          {
+            "name": "current_depositors",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "deposit_token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "entry_fee",
+            "type": "u16"
+          },
+          {
+            "name": "exit_fee",
+            "type": "u16"
+          },
+          {
+            "name": "max_allowed_aum",
+            "type": {
+              "option": "u64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultFeesUpdateRequested",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "pending_entry_fee",
+            "type": "u16"
+          },
+          {
+            "name": "pending_exit_fee",
+            "type": "u16"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultFeesUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_entry_fee",
+            "type": "u16"
+          },
+          {
+            "name": "new_exit_fee",
+            "type": "u16"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VerificationLevel",
+      "docs": [
+        "Pyth price updates are bridged to all blockchains via Wormhole.",
+        "Using the price updates on another chain requires verifying the signatures of the Wormhole guardians.",
+        "The usual process is to check the signatures for two thirds of the total number of guardians, but this can be cumbersome on Solana because of the transaction size limits,",
+        "so we also allow for partial verification.",
+        "",
+        "This enum represents how much a price update has been verified:",
+        "- If `Full`, we have verified the signatures for two thirds of the current guardians.",
+        "- If `Partial`, only `num_signatures` guardian signatures have been checked.",
+        "",
+        "# Warning",
+        "Using partially verified price updates is dangerous, as it lowers the threshold of guardians that need to collude to produce a malicious price update."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Partial",
+            "fields": [
+              {
+                "name": "num_signatures",
+                "type": "u8"
+              }
+            ]
+          },
+          {
+            "name": "Full"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhitelistManagerAdded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhitelistManagerRemoved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhitelistTokenAdded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "price_feed_id",
+            "type": "string"
+          },
+          {
+            "name": "price_update",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhitelistTokenRemoved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Withdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_burned_amount",
+            "type": "u64"
+          },
+          {
+            "name": "new_vtoken_supply",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}
