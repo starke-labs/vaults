@@ -1,6 +1,5 @@
 pub mod add_manager;
 pub mod add_token;
-pub mod close_vault;
 pub mod create_vault;
 pub mod deposit;
 pub mod initialize_starke;
@@ -15,7 +14,6 @@ pub mod withdraw;
 
 pub use add_manager::*;
 pub use add_token::*;
-pub use close_vault::*;
 pub use create_vault::*;
 pub use deposit::*;
 pub use initialize_starke::*;
