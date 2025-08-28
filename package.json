@@ -19,7 +19,8 @@
     "test:vaults:swap": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/13_swap.test.ts",
     "test:vaults:integrationTest": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/14_integrationTest.test.ts",
     "test:vaults:closeVault": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/15_closeVault.test.ts",
-    "test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts"
+    "test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts",
+    "script": "ts-node -r tsconfig-paths/register tests/script.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
