@@ -1,4 +1,8 @@
 import { AnchorProvider, BN, Program, Wallet } from "@coral-xyz/anchor";
+import {
+  IBackpackSolanaSigner,
+  ISolanaSigner,
+} from "@dynamic-labs/solana-core";
 import { DefaultApi, createJupiterApiClient } from "@jup-ag/api";
 import {
   TOKEN_2022_PROGRAM_ID,
@@ -60,8 +64,7 @@ import {
   createSolanaSigner,
   isKeypair,
   isSolanaSigner,
-} from "./lib/signer-adapter";
-import { IBackpackSolanaSigner, ISolanaSigner } from "./lib/signer-types";
+} from "./lib/signerAdapter";
 import { getAddressLookupTables } from "./lib/solana";
 import {
   DEFAULT_RETRY_CONFIG,
@@ -117,6 +120,33 @@ class SolanaSignerWalletAdapter implements WalletInterface {
   }
 }
 
+/**
+ * Enhanced Vaults SDK with wallet adapter support
+ *
+ * This SDK supports multiple signer types through a common interface:
+ * - Standard Solana Keypair (built-in)
+ * - Wallet adapters implementing ISolanaSigner (Dynamic.xyz, Phantom, etc.)
+ * - Extended wallet signers (IBackpackSolanaSigner)
+ *
+ * The SDK provides interfaces and reference implementations for wallet integration
+ * but does not include wallet SDKs as dependencies, keeping it lightweight.
+ *
+ * Example with Dynamic.xyz (requires Dynamic packages in your app):
+ * ```typescript
+ * // In your app: npm install @dynamic-labs/sdk-react-core @dynamic-labs/solana
+ * import { useUserWallets } from '@dynamic-labs/sdk-react-core';
+ * import { EnhancedVaultsSdk, DynamicWalletAdapter } from '@starke/vaults-sdk';
+ *
+ * const userWallets = useUserWallets();
+ * const solanaWallet = userWallets.find(w => w.chain === 'SOL');
+ *
+ * if (solanaWallet?.connector) {
+ *   const adapter = new DynamicWalletAdapter(solanaWallet.connector);
+ *   const sdk = new EnhancedVaultsSdk(connection, adapter);
+ *   await sdk.connectWallet();
+ * }
+ * ```
+ */
 export class EnhancedVaultsSdk {
   private program: Program;
   private provider: AnchorProvider;
@@ -215,7 +245,8 @@ export class EnhancedVaultsSdk {
     message: Uint8Array
   ): Promise<{ signature: Uint8Array; message: Uint8Array }> {
     if (isSolanaSigner(this.signer)) {
-      return await this.signer.signMessage(message);
+      const result = await this.signer.signMessage(message);
+      return { signature: result.signature, message };
     } else {
       // For Keypair, use tweetnacl for message signing
       const { sign } = await import("tweetnacl");

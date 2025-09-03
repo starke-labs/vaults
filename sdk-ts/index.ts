@@ -438,7 +438,7 @@ export class VaultsSdk {
     const finalIndividualMinDeposit = individualMinDeposit ?? 0;
     const finalInstitutionalMinDeposit = institutionalMinDeposit ?? 0;
     const finalMaxDepositors = maxDepositors ?? 0;
-    
+
     const tx = await this.program.methods
       .createVault(
         name,
@@ -468,7 +468,9 @@ export class VaultsSdk {
         e.toString().includes("unauthorized") ||
         e.toString().includes("Signature verification failed")
       ) {
-        throw new SignatureVerificationFailedError(this.provider.wallet.publicKey);
+        throw new SignatureVerificationFailedError(
+          this.provider.wallet.publicKey
+        );
       } else if (e.toString().includes("already in use")) {
         const [vault] = getVaultPda(this.provider.wallet.publicKey);
         throw new VaultAlreadyCreatedError(vault);
@@ -505,7 +507,7 @@ export class VaultsSdk {
   ): Promise<TransactionSignature> {
     // Get vault and validate it exists
     const vault = await this.fetchVault(manager);
-    
+
     const tokenProgram = await this.getTokenProgram(vault.depositTokenMint);
     const tx = await this.program.methods
       .closeVault()
@@ -857,3 +859,22 @@ export class VaultsSdk {
     }
   }
 }
+
+// Export all the types and utilities for external use
+export * from "./lib/errors";
+export * from "./lib/types";
+export * from "./lib/walletEvents";
+export * from "./lib/walletTypes";
+export * from "./lib/signerAdapter";
+export * from "./lib/dynamicWalletAdapter";
+export { EventHandler } from "./events";
+
+// Re-export Dynamic.xyz types for convenience
+export type {
+  ISolanaSigner,
+  IBackpackSolanaSigner,
+  ISolana,
+  ConnectionResult,
+  SignedMessage,
+  ISolanaEvents,
+} from "@dynamic-labs/solana-core";
