@@ -95,16 +95,15 @@ interface WalletInterface {
 // Adapter to make ISolanaSigner work with Anchor's Wallet interface
 class SolanaSignerWalletAdapter implements WalletInterface {
   private signer: ISolanaSigner;
+  private signerPublicKey: PublicKey;
 
-  constructor(signer: ISolanaSigner) {
+  constructor(signer: ISolanaSigner, signerPublicKey: PublicKey) {
     this.signer = signer;
+    this.signerPublicKey = signerPublicKey;
   }
 
   get publicKey(): PublicKey {
-    if (!this.signer.publicKey) {
-      throw new Error("Wallet not connected or public key not available");
-    }
-    return new PublicKey(this.signer.publicKey.toBytes());
+    return this.signerPublicKey;
   }
 
   async signTransaction<T extends VersionedTransaction | Transaction>(
@@ -159,7 +158,8 @@ export class EnhancedVaultsSdk {
 
   constructor(
     connection: Connection,
-    signer: Keypair | ISolanaSigner | IBackpackSolanaSigner
+    signer: Keypair | ISolanaSigner | IBackpackSolanaSigner,
+    signerPublicKey?: PublicKey
   ) {
     this.connection = connection;
     this.signer = signer;
@@ -171,8 +171,11 @@ export class EnhancedVaultsSdk {
       // For Keypair, use the standard Anchor Wallet
       walletAdapter = new Wallet(signer);
     } else if (isSolanaSigner(signer)) {
+      if (!signerPublicKey) {
+        throw new Error("Signer public key is required");
+      }
       // For ISolanaSigner, use our adapter
-      walletAdapter = new SolanaSignerWalletAdapter(signer);
+      walletAdapter = new SolanaSignerWalletAdapter(signer, signerPublicKey);
     } else {
       throw new Error("Invalid signer type provided");
     }
