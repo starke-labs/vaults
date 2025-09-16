@@ -863,8 +863,6 @@ export class VaultsSdk {
 // Export all the types and utilities for external use
 export * from "./lib/errors";
 export * from "./lib/types";
-export * from "./lib/walletEvents";
-export * from "./lib/walletTypes";
 export * from "./lib/signerAdapter";
 export * from "./lib/dynamicWalletAdapter";
 export { EventHandler } from "./events";

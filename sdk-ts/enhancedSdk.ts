@@ -1,4 +1,7 @@
-import { AnchorProvider, BN, Program, Wallet } from "@coral-xyz/anchor";
+// coral internally exports Wallet in non-standardized way which is
+// not compatible with Vite bundler so we import Wallet separately
+import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
+import Wallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import {
   IBackpackSolanaSigner,
   ISolanaSigner,

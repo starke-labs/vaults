@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "outDir": "../sdk-ts-dist",
+  },
+  "include": ["./**/*"],
+  "exclude": ["../tests", "../migrations"]
+}

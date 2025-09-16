@@ -9,3 +9,5 @@ test-ledger
 .env
 deploy
 .vscode
+tsconfig.tsbuildinfo
+sdk-ts-dist
