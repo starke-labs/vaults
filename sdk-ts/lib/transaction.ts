@@ -58,6 +58,9 @@ export async function sendAndConfirmWithRetry(
       return signature;
     } catch (error) {
       lastError = error as Error;
+
+      // If user cancelled transaction don't ask him again to sign
+      if (error === "Transaction cancelled") throw error;
       // DEBUG
       // console.error(
       //   `Attempt ${attempt} failed:`,
