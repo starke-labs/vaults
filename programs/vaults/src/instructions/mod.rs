@@ -11,6 +11,7 @@ pub mod swap_on_jupiter;
 pub mod update_vault_fees;
 pub mod user_whitelist;
 pub mod withdraw;
+pub mod close_vault;
 
 pub use add_manager::*;
 pub use add_token::*;
@@ -25,6 +26,7 @@ pub use swap_on_jupiter::*;
 pub use update_vault_fees::*;
 pub use user_whitelist::*;
 pub use withdraw::*;
+pub use close_vault::*;
 
 #[cfg(test)]
 pub mod tests;

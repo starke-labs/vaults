@@ -307,3 +307,12 @@ pub enum VaultError {
     #[msg("Cannot close vault with remaining funds")]
     FundsRemaining,
 }
+
+
+#[error_code]
+pub enum VaultCloseError {
+    #[msg("Cannot close vault: vtoken supply is not zero.")]
+    NonZeroVtokenSupply,
+    #[msg("Unauthorized: only the vault manager can close this vault.")]
+    UnauthorizedManager,
+}

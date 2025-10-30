@@ -8,6 +8,107 @@
   },
   "instructions": [
     {
+      "name": "close_extra_account_metas_accounts",
+      "discriminator": [
+        20,
+        43,
+        123,
+        173,
+        212,
+        13,
+        184,
+        60
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vtoken_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "extra_account_metas",
+          "docs": [
+            "and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.",
+            "The Token2022 program validates this account during CPI."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "execute",
       "discriminator": [
         130,
@@ -322,6 +423,11 @@
       "code": 6002,
       "name": "MintDoesNotMatchVault",
       "msg": "Mint does not match vault"
+    },
+    {
+      "code": 6003,
+      "name": "ManagerAccountFull",
+      "msg": "Manager lamports account is full while closing extra_account_metas account."
     }
   ],
   "types": [
