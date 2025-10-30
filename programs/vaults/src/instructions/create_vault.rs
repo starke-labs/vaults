@@ -10,13 +10,14 @@ use transfer_hook::{
 
 use crate::{
     constants::AUM_DECIMALS,
-    controllers::{initialize_token_metadata, initialize_vtoken_config},
+    controllers::{initialize_token_metadata, initialize_vtoken_config, update_token_metadata},
     state::{
         ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
         TokenWhitelistError, Vault, VaultCreated,
     },
 };
 
+#[allow(clippy::too_many_arguments)]
 pub fn _create_vault(
     ctx: Context<CreateVault>,
     name: String,
@@ -45,12 +46,18 @@ pub fn _create_vault(
     );
     msg!("Name: {}", name);
     msg!("Creating vault with investor type restrictions");
-    
+
     if individual_min_deposit > 0 {
-        msg!("Individual minimum deposit amount: {}", individual_min_deposit);
+        msg!(
+            "Individual minimum deposit amount: {}",
+            individual_min_deposit
+        );
     }
     if institutional_min_deposit > 0 {
-        msg!("Institutional minimum deposit amount: {}", institutional_min_deposit);
+        msg!(
+            "Institutional minimum deposit amount: {}",
+            institutional_min_deposit
+        );
     }
     if max_depositors > 0 {
         msg!("Maximum depositors: {}", max_depositors);
@@ -76,22 +83,39 @@ pub fn _create_vault(
     )?;
     msg!("Successfully initialized vtoken config");
 
-    // Initialize vtoken metadata
-    initialize_token_metadata(
-        name.clone(),
-        symbol,
-        uri,
-        &ctx.accounts.manager,
-        &ctx.accounts.metadata,
-        &ctx.accounts.vtoken_mint,
-        &ctx.accounts.vault.to_account_info(),
-        signer_seeds,
-        &ctx.accounts.instructions,
-        &ctx.accounts.token_2022_program,
-        &ctx.accounts.metadata_program,
-        &ctx.accounts.system_program,
-    )?;
-    msg!("Successfully initialized vtoken metadata");
+    if ctx.accounts.metadata.data_is_empty() {
+        // Initialize vtoken metadata
+        initialize_token_metadata(
+            name.clone(),
+            symbol,
+            uri,
+            &ctx.accounts.manager,
+            &ctx.accounts.metadata,
+            &ctx.accounts.vtoken_mint,
+            &ctx.accounts.vault.to_account_info(),
+            signer_seeds,
+            &ctx.accounts.instructions,
+            &ctx.accounts.token_2022_program,
+            &ctx.accounts.metadata_program,
+            &ctx.accounts.system_program,
+        )?;
+        msg!("Successfully initialized vtoken metadata");
+    } else {
+        update_token_metadata(
+            name.clone(),
+            symbol,
+            uri,
+            &ctx.accounts.manager,
+            &ctx.accounts.metadata,
+            &ctx.accounts.vtoken_mint,
+            &ctx.accounts.vault.to_account_info(),
+            signer_seeds,
+            &ctx.accounts.instructions,
+            &ctx.accounts.metadata_program,
+            &ctx.accounts.system_program,
+        )?;
+        msg!("Updating vtoken metadata initialization");
+    }
 
     // Initialize vault
     ctx.accounts.vault.initialize(
@@ -153,7 +177,7 @@ pub struct CreateVault<'info> {
 
     // Vtoken mint
     #[account(
-        init,
+        init_if_needed,
         payer = manager,
         seeds = [Vault::VTOKEN_MINT_SEED, vault.key().as_ref()],
         bump,
@@ -162,10 +186,11 @@ pub struct CreateVault<'info> {
         mint::authority = vault,
         mint::freeze_authority = vault,
         mint::token_program = token_2022_program,
+        extensions::close_authority::authority = vault,
         extensions::transfer_hook::program_id = transfer_hook_program,
         extensions::transfer_hook::authority = manager,
     )]
-    pub vtoken_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub vtoken_mint: InterfaceAccount<'info, Mint>,
 
     // Vtoken metadata
     /// CHECK: This account will be initialized by Metaplex

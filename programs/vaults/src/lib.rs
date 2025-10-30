@@ -49,6 +49,7 @@ pub mod vaults {
         _remove_manager(ctx, manager)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_vault(
         ctx: Context<CreateVault>,
         name: String,
@@ -80,6 +81,11 @@ pub mod vaults {
             max_depositors,
         )
     }
+
+    pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
+        _close_vault(ctx)
+    }
+
 
     pub fn update_vault_fees(
         ctx: Context<UpdateVaultFees>,

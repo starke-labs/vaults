@@ -246,6 +246,213 @@
       ]
     },
     {
+      "name": "close_vault",
+      "discriminator": [
+        141,
+        103,
+        17,
+        126,
+        72,
+        75,
+        29,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "extra_accounts_meta",
+          "docs": [
+            "and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.",
+            "The Token2022 program validates this account during CPI."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "transfer_hook_program"
+            }
+          }
+        },
+        {
+          "name": "vtoken_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "transfer_hook_program"
+            }
+          }
+        },
+        {
+          "name": "transfer_hook_program",
+          "address": "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "create_vault",
       "discriminator": [
         29,

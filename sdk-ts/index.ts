@@ -504,14 +504,12 @@ export class VaultsSdk {
     signers: (Keypair | Signer)[] = []
   ): Promise<TransactionSignature> {
     // Get vault and validate it exists
-    const vault = await this.fetchVault(manager);
-    
-    const tokenProgram = await this.getTokenProgram(vault.depositTokenMint);
+	await this.fetchVault(manager);
+
     const tx = await this.program.methods
       .closeVault()
       .accounts({
         manager,
-        tokenProgram,
       })
       .transaction();
 

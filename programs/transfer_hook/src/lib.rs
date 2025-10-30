@@ -10,6 +10,7 @@ pub mod state;
 
 use constants::EXTRA_ACCOUNT_METAS_SEED;
 use state::VtokenConfig;
+use std::io::Write;
 
 declare_id!("Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz");
 
@@ -21,6 +22,8 @@ pub enum TransferHookError {
     Unauthorized,
     #[msg("Mint does not match vault")]
     MintDoesNotMatchVault,
+    #[msg("Manager lamports account is full while closing extra_account_metas account.")]
+    ManagerAccountFull,
 }
 
 #[program]
@@ -76,7 +79,7 @@ pub mod transfer_hook {
                 // Invoke custom transfer hook instruction on our program
                 __private::__global::execute(program_id, accounts, &amount_bytes)
             }
-            _ => return Err(ProgramError::InvalidInstructionData.into()),
+            _ => Err(ProgramError::InvalidInstructionData.into()),
         }
     }
 
@@ -87,6 +90,35 @@ pub mod transfer_hook {
         let vault_config = &mut ctx.accounts.vtoken_config;
         vault_config.set_vtoken_is_transferrable(vtoken_is_transferrable)?;
 
+        Ok(())
+    }
+
+    pub fn close_extra_account_metas_accounts(
+        ctx: Context<CloseExtraAccountMetasAccounts>,
+    ) -> Result<()> {
+        let manager = &ctx.accounts.manager;
+        let extra_account_metas = &ctx.accounts.extra_account_metas;
+
+        // Lamports ExtraAccountMetas -> Manager
+        **manager.lamports.borrow_mut() = manager
+            .lamports()
+            .checked_add(extra_account_metas.lamports())
+            .ok_or(TransferHookError::ManagerAccountFull)?;
+        **extra_account_metas.lamports.borrow_mut() = 0;
+
+        // Deinitialize ExtraAccountMetas
+        let mut data = extra_account_metas.try_borrow_mut_data()?;
+        data.fill(0);
+        msg!(
+            "Closed extra_account_metas for mint {}.",
+            ctx.accounts.mint.key(),
+        );
+
+        // Mark for removal by Solana runtime GC
+        pub const CLOSED_ACCOUNT_DISCRIMINATOR: [u8; 8] = [255, 255, 255, 255, 255, 255, 255, 255];
+        let dst: &mut [u8] = &mut data;
+        let mut cursor = std::io::Cursor::new(dst);
+        cursor.write_all(&CLOSED_ACCOUNT_DISCRIMINATOR)?;
         Ok(())
     }
 }
@@ -181,4 +213,31 @@ pub struct SetVtokenIsTransferrableAccounts<'info> {
         bump
     )]
     pub vtoken_config: Account<'info, VtokenConfig>,
+}
+
+#[derive(Accounts)]
+pub struct CloseExtraAccountMetasAccounts<'info> {
+    #[account(mut)]
+    pub manager: Signer<'info>,
+
+    #[account(
+        mut,
+        close = manager,
+        seeds = [VtokenConfig::SEED, mint.key().as_ref()],
+        bump = vtoken_config.bump,
+        constraint = vtoken_config.manager == manager.key() @ TransferHookError::Unauthorized
+    )]
+    pub vtoken_config: Account<'info, VtokenConfig>,
+
+    /// CHECK: This account is initialized in the initialize_extra_account_metas instruction
+    /// and its data is structured according to spl_tlv_account_resolution::state::ExtraAccountMetaList.
+    /// The Token2022 program validates this account during CPI.
+    #[account(
+        mut,
+        seeds = [EXTRA_ACCOUNT_METAS_SEED, mint.key().as_ref()],
+        bump
+    )]
+    pub extra_account_metas: AccountInfo<'info>,
+
+    pub mint: InterfaceAccount<'info, Mint>,
 }
