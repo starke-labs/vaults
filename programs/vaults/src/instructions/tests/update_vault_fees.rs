@@ -59,6 +59,7 @@ fn test_update_vault_fees_success() {
         institutional_min_deposit: 0,
         max_depositors: 0,
         current_depositors: 0,
+        initial_vtoken_price: 1,
     };
     let vault_account = serialize_into_account!(vault_state, program_id);
 
@@ -126,6 +127,7 @@ fn test_update_vault_fees_unauthorized_should_fail() {
         institutional_min_deposit: 0,
         max_depositors: 0,
         current_depositors: 0,
+        initial_vtoken_price: 1,
     };
     let vault_account = serialize_into_account!(vault_state, program_id);
 
@@ -170,6 +172,7 @@ fn test_update_vault_fees_seed_constraint_violation_should_fail() {
         institutional_min_deposit: 0,
         max_depositors: 0,
         current_depositors: 0,
+        initial_vtoken_price: 1,
     };
     let vault_account = serialize_into_account!(vault_state, program_id);
 

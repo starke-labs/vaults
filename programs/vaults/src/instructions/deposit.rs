@@ -9,8 +9,8 @@ use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
 use crate::state::{
-    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault,
-    UserWhitelist, UserWhitelistError,
+    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserWhitelist,
+    UserWhitelistError, Vault,
 };
 
 pub fn _deposit<'info>(
@@ -31,7 +31,9 @@ pub fn _deposit<'info>(
     );
 
     // Validate user is whitelisted and get their investor type
-    let investor_type = ctx.accounts.user_whitelist
+    let investor_type = ctx
+        .accounts
+        .user_whitelist
         .get_user_type(&ctx.accounts.user.key())
         .ok_or(UserWhitelistError::UserNotWhitelisted)?;
     msg!("User investor type: {:?}", investor_type);
@@ -40,13 +42,17 @@ pub fn _deposit<'info>(
     ctx.accounts.vault.validate_investor_type(&investor_type)?;
 
     // Validate deposit amount based on investor type
-    ctx.accounts.vault.validate_deposit_amount_by_type(amount, &investor_type)?;
+    ctx.accounts
+        .vault
+        .validate_deposit_amount_by_type(amount, &investor_type)?;
 
     // Check if this is a new depositor (first time depositing)
     let is_new_depositor = ctx.accounts.vtoken_account.amount == 0;
-    
+
     // Validate max depositors limit
-    ctx.accounts.vault.validate_max_depositors(is_new_depositor)?;
+    ctx.accounts
+        .vault
+        .validate_max_depositors(is_new_depositor)?;
 
     // Calculate the total AUM using vault's get_aum function
     let total_aum = ctx.accounts.vault.get_aum(
@@ -72,8 +78,12 @@ pub fn _deposit<'info>(
         .validate_max_aum(total_aum, deposit_value)?;
 
     // Calculate vtokens to mint based on AUM
-    let vtokens_to_mint =
-        calculate_vtokens_to_mint(total_aum, deposit_value, ctx.accounts.vtoken_mint.supply)?;
+    let vtokens_to_mint = calculate_vtokens_to_mint(
+        total_aum,
+        deposit_value,
+        ctx.accounts.vtoken_mint.supply,
+        ctx.accounts.vault.initial_vtoken_price,
+    )?;
     msg!("Vtokens to mint: {}", vtokens_to_mint);
 
     // Transfer deposit tokens from depositor to vault
@@ -107,7 +117,10 @@ pub fn _deposit<'info>(
     // Increment depositor count if this is a new depositor
     if is_new_depositor {
         ctx.accounts.vault.increment_depositor_count()?;
-        msg!("New depositor added. Total depositors: {}", ctx.accounts.vault.current_depositors);
+        msg!(
+            "New depositor added. Total depositors: {}",
+            ctx.accounts.vault.current_depositors
+        );
     }
 
     msg!("Deposit completed successfully");

@@ -828,6 +828,10 @@
         {
           "name": "max_depositors",
           "type": "u32"
+        },
+        {
+          "name": "initial_vtoken_price",
+          "type": "u32"
         }
       ]
     },
@@ -2673,6 +2677,11 @@
       "code": 6018,
       "name": "FundsRemaining",
       "msg": "Cannot close vault with remaining funds"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidInitialPrice",
+      "msg": "Invalid initial price, must be greater than 0"
     }
   ],
   "types": [
@@ -3060,6 +3069,10 @@
           {
             "name": "current_depositors",
             "type": "u32"
+          },
+          {
+            "name": "initial_vtoken_price",
+            "type": "u32"
           }
         ]
       }
@@ -3126,6 +3139,10 @@
             "type": {
               "option": "u64"
             }
+          },
+          {
+            "name": "initial_vtoken_price",
+            "type": "u32"
           }
         ]
       }

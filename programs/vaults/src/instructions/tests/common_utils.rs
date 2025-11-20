@@ -66,6 +66,7 @@ pub(super) fn new_default_account(program_id: Pubkey) -> Account {
     }
 }
 
+#[allow(dead_code)]
 pub(super) fn new_default_account_with_space(program_id: Pubkey, space: usize) -> Account {
     Account {
         lamports: 1_000_000_000,

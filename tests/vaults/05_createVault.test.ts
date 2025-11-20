@@ -50,6 +50,7 @@ describe("Create Vault", () => {
   const INDIVIDUAL_MIN_DEPOSIT: number = 0; // 0 = no minimum
   const INSTITUTIONAL_MIN_DEPOSIT: number = 0; // 0 = no minimum
   const MAX_DEPOSITORS: number = 0; // 0 = unlimited
+  const INITIAL_VTOKEN_PRICE: number = 2;
 
   before(async () => {
     // Get keypairs
@@ -81,6 +82,7 @@ describe("Create Vault", () => {
         ALLOW_ACCREDITED,
         ALLOW_INSTITUTIONAL,
         ALLOW_QUALIFIED,
+		INITIAL_VTOKEN_PRICE,
         INDIVIDUAL_MIN_DEPOSIT,
         INSTITUTIONAL_MIN_DEPOSIT,
         MAX_DEPOSITORS
@@ -110,6 +112,7 @@ describe("Create Vault", () => {
         ALLOW_ACCREDITED,
         ALLOW_INSTITUTIONAL,
         ALLOW_QUALIFIED,
+		INITIAL_VTOKEN_PRICE,
         INDIVIDUAL_MIN_DEPOSIT,
         INSTITUTIONAL_MIN_DEPOSIT,
         MAX_DEPOSITORS
@@ -140,6 +143,7 @@ describe("Create Vault", () => {
         ALLOW_ACCREDITED,
         ALLOW_INSTITUTIONAL,
         ALLOW_QUALIFIED,
+		INITIAL_VTOKEN_PRICE,
         INDIVIDUAL_MIN_DEPOSIT,
         INSTITUTIONAL_MIN_DEPOSIT,
         MAX_DEPOSITORS
@@ -168,6 +172,7 @@ describe("Create Vault", () => {
         ALLOW_ACCREDITED,
         ALLOW_INSTITUTIONAL,
         ALLOW_QUALIFIED,
+		INITIAL_VTOKEN_PRICE,
         INDIVIDUAL_MIN_DEPOSIT,
         INSTITUTIONAL_MIN_DEPOSIT,
         MAX_DEPOSITORS
@@ -196,6 +201,7 @@ describe("Create Vault", () => {
         ALLOW_ACCREDITED,
         ALLOW_INSTITUTIONAL,
         ALLOW_QUALIFIED,
+		INITIAL_VTOKEN_PRICE,
         INDIVIDUAL_MIN_DEPOSIT,
         INSTITUTIONAL_MIN_DEPOSIT,
         MAX_DEPOSITORS
@@ -227,6 +233,7 @@ describe("Create Vault", () => {
       expect(vault.individualMinDeposit).to.equal(INDIVIDUAL_MIN_DEPOSIT);
       expect(vault.institutionalMinDeposit).to.equal(INSTITUTIONAL_MIN_DEPOSIT);
       expect(vault.maxDepositors).to.equal(MAX_DEPOSITORS);
+      expect(vault.initialPrice).to.equal(INITIAL_VTOKEN_PRICE);
     } else {
       console.log("Vault already existed, skipping parameter validation");
       console.log("Existing vault settings:");
@@ -280,6 +287,7 @@ describe("Create Vault", () => {
         ALLOW_ACCREDITED,
         ALLOW_INSTITUTIONAL,
         ALLOW_QUALIFIED,
+		INITIAL_VTOKEN_PRICE,
         INDIVIDUAL_MIN_DEPOSIT,
         INSTITUTIONAL_MIN_DEPOSIT,
         MAX_DEPOSITORS
@@ -312,6 +320,7 @@ describe("Create Vault", () => {
         ALLOW_ACCREDITED,
         ALLOW_INSTITUTIONAL,
         ALLOW_QUALIFIED,
+		INITIAL_VTOKEN_PRICE,
         INDIVIDUAL_MIN_DEPOSIT,
         INSTITUTIONAL_MIN_DEPOSIT,
         MAX_DEPOSITORS

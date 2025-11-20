@@ -11,6 +11,7 @@ pub struct VaultCreated {
     pub entry_fee: u16,
     pub exit_fee: u16,
     pub max_allowed_aum: Option<u64>,
+    pub initial_vtoken_price: u32,
 }
 
 #[event]

@@ -425,6 +425,7 @@ export class VaultsSdk {
     allowAccredited: boolean,
     allowInstitutional: boolean,
     allowQualified: boolean,
+	initialVtokenPrice: number,
     individualMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
     institutionalMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
     maxDepositors?: number, // u32, 0 = unlimited, optional defaults to 0
@@ -452,7 +453,8 @@ export class VaultsSdk {
         allowQualified,
         finalIndividualMinDeposit,
         finalInstitutionalMinDeposit,
-        finalMaxDepositors
+        finalMaxDepositors,
+		initialVtokenPrice
       )
       .accounts({
         manager,

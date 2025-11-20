@@ -9,6 +9,7 @@ use crate::constants::PRECISION;
 use crate::state::{TokenWhitelist, TokenWhitelistError, Vault, VaultError};
 
 /// Withdraw all tokens from the vault token account to a user token account based on the withdrawal ratio
+#[allow(clippy::too_many_arguments)]
 pub fn withdraw_all_tokens<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
     user: &Signer<'info>,

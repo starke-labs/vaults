@@ -64,6 +64,7 @@ pub mod vaults {
         individual_min_deposit: u32,
         institutional_min_deposit: u32,
         max_depositors: u32,
+        initial_vtoken_price: u32,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -79,13 +80,13 @@ pub mod vaults {
             individual_min_deposit,
             institutional_min_deposit,
             max_depositors,
+            initial_vtoken_price,
         )
     }
 
     pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
         _close_vault(ctx)
     }
-
 
     pub fn update_vault_fees(
         ctx: Context<UpdateVaultFees>,

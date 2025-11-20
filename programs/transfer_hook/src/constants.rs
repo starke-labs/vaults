@@ -1,1 +1,1 @@
-pub const EXTRA_ACCOUNT_METAS_SEED: &'static [u8] = b"extra-account-metas";
+pub const EXTRA_ACCOUNT_METAS_SEED: &[u8] = b"extra-account-metas";
