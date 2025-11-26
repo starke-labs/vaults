@@ -110,8 +110,22 @@ pub mod vaults {
         _withdraw(ctx, amount)
     }
 
+    pub fn withdraw_in_deposit_token<'info>(
+        ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,
+        amount: u64,
+    ) -> Result<()> {
+        _withdraw_in_deposit_token(ctx, amount)
+    }
+
     pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
         _swap_on_jupiter(ctx, data)
+    }
+
+    pub fn swap_to_deposit_token_on_jupiter(
+        ctx: Context<SwapToDepositTokenOnJupiter>,
+        data: Vec<u8>,
+    ) -> Result<()> {
+        _swap_to_deposit_token_on_jupiter(ctx, data)
     }
 
     pub fn add_user(

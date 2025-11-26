@@ -54,6 +54,17 @@ pub struct Withdrawn {
 }
 
 #[event]
+pub struct WithdrawnInDepositToken {
+    pub vault: Pubkey,
+    pub user: Pubkey,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_burned_amount: u64,
+    pub new_vtoken_supply: u64,
+    pub timestamp: i64,
+    pub deposit_token_mint: Pubkey,
+}
+
+#[event]
 pub struct WhitelistTokenAdded {
     pub mint: Pubkey,
     pub price_feed_id: String,
