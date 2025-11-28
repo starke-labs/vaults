@@ -32,6 +32,7 @@ pub fn _create_vault(
     individual_min_deposit: u32,
     institutional_min_deposit: u32,
     max_depositors: u32,
+    initial_vtoken_price: u32,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -133,6 +134,7 @@ pub fn _create_vault(
         individual_min_deposit,
         institutional_min_deposit,
         max_depositors,
+        initial_vtoken_price,
     )?;
 
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());
@@ -147,6 +149,7 @@ pub fn _create_vault(
         entry_fee: ctx.accounts.vault.entry_fee,
         exit_fee: ctx.accounts.vault.exit_fee,
         max_allowed_aum: ctx.accounts.vault.max_allowed_aum,
+        initial_vtoken_price,
     });
 
     Ok(())
@@ -186,7 +189,6 @@ pub struct CreateVault<'info> {
         mint::authority = vault,
         mint::freeze_authority = vault,
         mint::token_program = token_2022_program,
-        extensions::close_authority::authority = vault,
         extensions::transfer_hook::program_id = transfer_hook_program,
         extensions::transfer_hook::authority = manager,
     )]

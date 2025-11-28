@@ -286,7 +286,7 @@ fn test_add_duplicate_token_to_whitelist() {
     let result = run_ix!(
         program_id,
         ix,
-        vec![
+        [
             (STARKE_AUTHORITY, authority_account),
             (whitelist_pda, token_whitelist_account),
             get_default_clock_account(),

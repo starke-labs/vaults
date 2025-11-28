@@ -207,7 +207,7 @@ fn test_add_duplicate_manager_to_whitelist() {
     let second_result = run_ix!(
         program_id,
         ix,
-        vec![
+        [
             (STARKE_AUTHORITY, authority_account),
             (whitelist_pda, whitelist_account,),
             get_default_clock_account(),

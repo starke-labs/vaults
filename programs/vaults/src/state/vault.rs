@@ -35,6 +35,8 @@ pub struct Vault {
     // Max depositors (0 = unlimited)
     pub max_depositors: u32, // 0 means unlimited
     pub current_depositors: u32,
+
+    pub initial_vtoken_price: u32,
 }
 
 impl Vault {
@@ -67,6 +69,7 @@ impl Vault {
     pub const FEE_UPDATE_DELAY: i64 = 30 * 24 * 60 * 60; // 30 days in seconds
     pub const MAX_FEE: u16 = 10000;
 
+    #[allow(clippy::too_many_arguments)]
     pub fn initialize(
         &mut self,
         manager: Pubkey,
@@ -83,7 +86,9 @@ impl Vault {
         individual_min_deposit: u32,
         institutional_min_deposit: u32,
         max_depositors: u32,
+        initial_vtoken_price: u32,
     ) -> Result<()> {
+        require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(!name.is_empty(), VaultError::NameTooShort);
 
@@ -107,6 +112,7 @@ impl Vault {
         self.institutional_min_deposit = institutional_min_deposit;
         self.max_depositors = max_depositors;
         self.current_depositors = 0;
+        self.initial_vtoken_price = initial_vtoken_price;
 
         Ok(())
     }
@@ -186,6 +192,43 @@ impl Vault {
         Ok(aum)
     }
 
+    /// Assets under management and vault's deposit token balance in USD
+    pub fn get_aum_with_deposit<'info>(
+        &self,
+        remaining_accounts: &'info [AccountInfo<'info>],
+        whitelist: &Account<'info, TokenWhitelist>,
+        vault_key: &Pubkey,
+    ) -> (Result<u64>, Option<u64>) {
+        let vault_balances = match parse_vault_balances(remaining_accounts, whitelist, vault_key) {
+            Ok(v) => v,
+            Err(e) => return (Err(e), None),
+        };
+        let mut deposit_value = None;
+        let aum = vault_balances
+            .iter()
+            .map(|b| {
+                let token_price = verify_price_update_and_get_pyth_price(
+                    whitelist,
+                    &b.token_mint,
+                    &b.price_update,
+                )?;
+                // TODO: Throw error if confidence interval is above threshold
+                //       https://docs.pyth.network/price-feeds/best-practices#confidence-intervals
+                let price_in_aum_decimals = transform_price_to_aum_decimals(&token_price)?;
+                let value = compute_token_value_usd(
+                    b.token_balance,
+                    b.token_decimals,
+                    price_in_aum_decimals,
+                );
+                if b.token_mint == self.deposit_token_mint {
+                    deposit_value = value.as_ref().ok().copied();
+                }
+                value
+            })
+            .sum::<Result<u64>>();
+
+        (aum, deposit_value)
+    }
 
     /// Validates if the vault can accept more deposits based on max AUM limit
     pub fn validate_max_aum(&self, current_aum: u64, deposit_value: u64) -> Result<()> {
@@ -230,7 +273,10 @@ impl Vault {
         };
 
         if min_deposit > 0 {
-            require!(amount >= min_deposit as u64, VaultError::DepositBelowMinimum);
+            require!(
+                amount >= min_deposit as u64,
+                VaultError::DepositBelowMinimum
+            );
         }
 
         Ok(())
@@ -308,8 +354,13 @@ pub enum VaultError {
     FundsRemaining,
     #[msg("No outstanding vtoken supply to collect fees against")]
     NoVtokenSupply,
+    #[msg("Invalid initial price, must be greater than 0")]
+    InvalidInitialPrice,
+    #[msg("User token account not found")]
+    UserTokenAccountNotFound,
+    #[msg("Unauthorized: this instruction can only be called by the authority.")]
+    Unauthorized,
 }
-
 
 #[error_code]
 pub enum VaultCloseError {

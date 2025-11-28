@@ -50,10 +50,19 @@ pub fn calculate_vtokens_to_mint(
     total_aum: u64,
     deposit_value: u64,
     vtoken_supply: u64,
+    initial_vtoken_price: u32,
 ) -> Result<u64> {
-    if total_aum == 0 {
-        // Initial deposit - mint 1:1
-        Ok(deposit_value)
+    if vtoken_supply == 0 {
+        // Initial deposit
+
+        // NOTE: Added initial_vtoken_price
+        // The program was upgraded to add intial_vtoken_price.
+        // Therefore, older vaults will have initial_vtoken_price = 0.
+        // In this case, we want to mint the same amount of vtokens as the deposit amount.
+        // This is the same as having initial_vtoken_price = 1.
+        Ok(deposit_value
+            .checked_div(initial_vtoken_price as u64)
+            .unwrap_or(deposit_value))
     } else {
         // Calculate proportional amount based on AUM
         (deposit_value as u128)

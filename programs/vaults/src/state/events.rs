@@ -11,6 +11,7 @@ pub struct VaultCreated {
     pub entry_fee: u16,
     pub exit_fee: u16,
     pub max_allowed_aum: Option<u64>,
+    pub initial_vtoken_price: u32,
 }
 
 #[event]
@@ -61,6 +62,15 @@ pub struct ManagementFeeCollected {
     pub vtoken_fee_amount: u64,
     pub new_vtoken_supply: u64,
     pub timestamp: i64,
+}
+pub struct WithdrawnInDepositToken {
+    pub vault: Pubkey,
+    pub user: Pubkey,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_burned_amount: u64,
+    pub new_vtoken_supply: u64,
+    pub timestamp: i64,
+    pub deposit_token_mint: Pubkey,
 }
 
 #[event]

@@ -52,19 +52,14 @@ fn _transfer_token<'info>(
         to: to.to_account_info().clone(),
         authority: (*authority).clone(),
     };
-    let cpi_ctx: CpiContext<'_, '_, '_, 'info, TransferChecked<'info>>;
-    match signer_seeds {
-        Some(seeds) => {
-            cpi_ctx = CpiContext::new_with_signer(
-                token_program.to_account_info().clone(),
-                transfer_accounts,
-                seeds,
-            );
-        }
-        None => {
-            cpi_ctx = CpiContext::new(token_program.to_account_info().clone(), transfer_accounts);
-        }
-    }
+    let cpi_ctx: CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> = match signer_seeds {
+        Some(seeds) => CpiContext::new_with_signer(
+            token_program.to_account_info().clone(),
+            transfer_accounts,
+            seeds,
+        ),
+        None => CpiContext::new(token_program.to_account_info().clone(), transfer_accounts),
+    };
     transfer_checked(cpi_ctx, amount, mint.decimals)?;
 
     Ok(())

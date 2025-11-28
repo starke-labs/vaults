@@ -828,6 +828,10 @@
         {
           "name": "max_depositors",
           "type": "u32"
+        },
+        {
+          "name": "initial_vtoken_price",
+          "type": "u32"
         }
       ]
     },
@@ -2073,6 +2077,228 @@
       ]
     },
     {
+      "name": "swap_to_deposit_token_on_jupiter",
+      "discriminator": [
+        238,
+        75,
+        23,
+        76,
+        132,
+        168,
+        206,
+        205
+      ],
+      "accounts": [
+        {
+          "name": "starke_authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "starke_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "input_token_mint"
+        },
+        {
+          "name": "input_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "input_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "jupiter_program",
+          "address": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
       "name": "update_vault_fees",
       "discriminator": [
         202,
@@ -2364,6 +2590,423 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "withdraw_in_deposit_token",
+      "discriminator": [
+        82,
+        4,
+        224,
+        107,
+        1,
+        42,
+        114,
+        26
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "user_vtoken_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_2022_program"
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_token_mint"
+        },
+        {
+          "name": "user_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -2576,6 +3219,19 @@
         219,
         13
       ]
+    },
+    {
+      "name": "WithdrawnInDepositToken",
+      "discriminator": [
+        253,
+        157,
+        21,
+        42,
+        11,
+        82,
+        93,
+        208
+      ]
     }
   ],
   "errors": [
@@ -2673,6 +3329,21 @@
       "code": 6018,
       "name": "FundsRemaining",
       "msg": "Cannot close vault with remaining funds"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidInitialPrice",
+      "msg": "Invalid initial price, must be greater than 0"
+    },
+    {
+      "code": 6020,
+      "name": "UserTokenAccountNotFound",
+      "msg": "User token account not found"
+    },
+    {
+      "code": 6021,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: this instruction can only be called by the authority."
     }
   ],
   "types": [
@@ -3060,6 +3731,10 @@
           {
             "name": "current_depositors",
             "type": "u32"
+          },
+          {
+            "name": "initial_vtoken_price",
+            "type": "u32"
           }
         ]
       }
@@ -3126,6 +3801,10 @@
             "type": {
               "option": "u64"
             }
+          },
+          {
+            "name": "initial_vtoken_price",
+            "type": "u32"
           }
         ]
       }
@@ -3319,6 +3998,42 @@
           {
             "name": "timestamp",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawnInDepositToken",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_burned_amount",
+            "type": "u64"
+          },
+          {
+            "name": "new_vtoken_supply",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "deposit_token_mint",
+            "type": "pubkey"
           }
         ]
       }

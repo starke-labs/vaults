@@ -64,6 +64,7 @@ pub mod vaults {
         individual_min_deposit: u32,
         institutional_min_deposit: u32,
         max_depositors: u32,
+        initial_vtoken_price: u32,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -79,13 +80,13 @@ pub mod vaults {
             individual_min_deposit,
             institutional_min_deposit,
             max_depositors,
+            initial_vtoken_price,
         )
     }
 
     pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
         _close_vault(ctx)
     }
-
 
     pub fn update_vault_fees(
         ctx: Context<UpdateVaultFees>,
@@ -112,9 +113,22 @@ pub mod vaults {
     pub fn collect_management_fee(ctx: Context<CollectManagementFee>) -> Result<()> {
         _collect_management_fee(ctx)
     }
+    pub fn withdraw_in_deposit_token<'info>(
+        ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,
+        amount: u64,
+    ) -> Result<()> {
+        _withdraw_in_deposit_token(ctx, amount)
+    }
 
     pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
         _swap_on_jupiter(ctx, data)
+    }
+
+    pub fn swap_to_deposit_token_on_jupiter(
+        ctx: Context<SwapToDepositTokenOnJupiter>,
+        data: Vec<u8>,
+    ) -> Result<()> {
+        _swap_to_deposit_token_on_jupiter(ctx, data)
     }
 
     pub fn add_user(

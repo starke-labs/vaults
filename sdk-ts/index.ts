@@ -82,7 +82,7 @@ export class VaultsSdk {
     this.provider = new AnchorProvider(
       connection,
       new Wallet(keypair),
-      AnchorProvider.defaultOptions()
+      AnchorProvider.defaultOptions(),
     );
     this.program = new Program(idl, this.provider);
     this.events = new EventHandler(connection, this.program.programId);
@@ -97,7 +97,7 @@ export class VaultsSdk {
     try {
       // @ts-ignore
       return (await this.program.account.starkeConfig.fetch(
-        getStarkeConfigPda()[0]
+        getStarkeConfigPda()[0],
       )) as StarkeConfig;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
@@ -111,7 +111,7 @@ export class VaultsSdk {
     try {
       // @ts-ignore
       return (await this.program.account.tokenWhitelist.fetch(
-        getTokenWhitelistPda()[0]
+        getTokenWhitelistPda()[0],
       )) as TokenWhitelist;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
@@ -125,7 +125,7 @@ export class VaultsSdk {
     try {
       // @ts-ignore
       return (await this.program.account.managerWhitelist.fetch(
-        getManagerWhitelistPda()[0]
+        getManagerWhitelistPda()[0],
       )) as ManagerWhitelist;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
@@ -139,7 +139,7 @@ export class VaultsSdk {
     try {
       // @ts-ignore
       return (await this.program.account.userWhitelist.fetch(
-        getUserWhitelistPda()[0]
+        getUserWhitelistPda()[0],
       )) as UserWhitelist;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
@@ -152,7 +152,7 @@ export class VaultsSdk {
   async fetchWhitelistedToken(mint: PublicKey): Promise<Token> {
     const whitelist = await this.fetchTokenWhitelist();
     const token = whitelist.tokens.find(
-      (token) => token.mint.toBase58() === mint.toBase58()
+      (token) => token.mint.toBase58() === mint.toBase58(),
     );
     if (!token) {
       throw new TokenNotWhitelistedError(mint);
@@ -164,7 +164,7 @@ export class VaultsSdk {
     try {
       // @ts-ignore
       return (await this.program.account.vault.fetch(
-        getVaultPda(manager)[0]
+        getVaultPda(manager)[0],
       )) as Vault;
     } catch (e) {
       if (e.toString().includes("Account does not exist")) {
@@ -175,7 +175,7 @@ export class VaultsSdk {
 
   // Admin instructions
   async initializeStarke(
-    signers: (Keypair | Signer)[]
+    signers: (Keypair | Signer)[],
   ): Promise<TransactionSignature> {
     // Check if starke config is already initialized
     try {
@@ -207,7 +207,7 @@ export class VaultsSdk {
   }
 
   async pauseStarke(
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const starkeConfig = await this.fetchStarkeConfig();
     if (starkeConfig.isPaused) {
@@ -227,7 +227,7 @@ export class VaultsSdk {
   }
 
   async resumeStarke(
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const starkeConfig = await this.fetchStarkeConfig();
     if (!starkeConfig.isPaused) {
@@ -248,11 +248,11 @@ export class VaultsSdk {
 
   async addTokenToWhitelist(
     supportedToken: Token,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const whitelist = await this.fetchTokenWhitelist();
     const tokenInWhitelist = whitelist.tokens.find(
-      (token) => token.mint.toBase58() === supportedToken.mint.toBase58()
+      (token) => token.mint.toBase58() === supportedToken.mint.toBase58(),
     );
     if (tokenInWhitelist) {
       throw new TokenAlreadyInWhitelistError(supportedToken.mint);
@@ -262,7 +262,7 @@ export class VaultsSdk {
       .addToken(
         supportedToken.mint,
         supportedToken.priceFeedId,
-        supportedToken.priceUpdate
+        supportedToken.priceUpdate,
       )
       .accounts({ authority: AUTHORITY_PROGRAM_ID })
       .transaction();
@@ -279,11 +279,11 @@ export class VaultsSdk {
 
   async removeTokenFromWhitelist(
     mint: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const whitelist = await this.fetchTokenWhitelist();
     const tokenInWhitelist = whitelist.tokens.find(
-      (t) => t.mint.toBase58() === mint.toBase58()
+      (t) => t.mint.toBase58() === mint.toBase58(),
     );
     if (!tokenInWhitelist) {
       throw new TokenNotWhitelistedError(mint);
@@ -306,11 +306,11 @@ export class VaultsSdk {
 
   async addManagerToWhitelist(
     manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const whitelist = await this.fetchManagerWhitelist();
     const managerInWhitelist = whitelist.managers.find(
-      (m) => m.toBase58() === manager.toBase58()
+      (m) => m.toBase58() === manager.toBase58(),
     );
     if (managerInWhitelist) {
       throw new ManagerAlreadyInWhitelistError(manager);
@@ -333,11 +333,11 @@ export class VaultsSdk {
 
   async removeManagerFromWhitelist(
     manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const whitelist = await this.fetchManagerWhitelist();
     const managerInWhitelist = whitelist.managers.find(
-      (m) => m.toBase58() === manager.toBase58()
+      (m) => m.toBase58() === manager.toBase58(),
     );
     if (!managerInWhitelist) {
       throw new ManagerNotWhitelistedError(manager);
@@ -361,7 +361,7 @@ export class VaultsSdk {
   async addUserToWhitelist(
     user: PublicKey,
     investorType: InvestorType,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const tx = await this.program.methods
       .addUser(user, investorType)
@@ -380,7 +380,7 @@ export class VaultsSdk {
 
   async removeUserFromWhitelist(
     user: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const tx = await this.program.methods
       .removeUser(user)
@@ -404,7 +404,7 @@ export class VaultsSdk {
     if (
       !tokenProgram ||
       ![TOKEN_PROGRAM_ID.toBase58(), TOKEN_2022_PROGRAM_ID.toBase58()].includes(
-        tokenProgram.toBase58()
+        tokenProgram.toBase58(),
       )
     ) {
       throw new InvalidTokenError(mint);
@@ -425,10 +425,11 @@ export class VaultsSdk {
     allowAccredited: boolean,
     allowInstitutional: boolean,
     allowQualified: boolean,
+    initialVtokenPrice: number,
     individualMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
     institutionalMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
     maxDepositors?: number, // u32, 0 = unlimited, optional defaults to 0
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     // No validation needed - max_allowed_aum can be set or not set for any vault
 
@@ -438,7 +439,7 @@ export class VaultsSdk {
     const finalIndividualMinDeposit = individualMinDeposit ?? 0;
     const finalInstitutionalMinDeposit = institutionalMinDeposit ?? 0;
     const finalMaxDepositors = maxDepositors ?? 0;
-    
+
     const tx = await this.program.methods
       .createVault(
         name,
@@ -452,7 +453,8 @@ export class VaultsSdk {
         allowQualified,
         finalIndividualMinDeposit,
         finalInstitutionalMinDeposit,
-        finalMaxDepositors
+        finalMaxDepositors,
+        initialVtokenPrice,
       )
       .accounts({
         manager,
@@ -468,7 +470,9 @@ export class VaultsSdk {
         e.toString().includes("unauthorized") ||
         e.toString().includes("Signature verification failed")
       ) {
-        throw new SignatureVerificationFailedError(this.provider.wallet.publicKey);
+        throw new SignatureVerificationFailedError(
+          this.provider.wallet.publicKey,
+        );
       } else if (e.toString().includes("already in use")) {
         const [vault] = getVaultPda(this.provider.wallet.publicKey);
         throw new VaultAlreadyCreatedError(vault);
@@ -476,7 +480,7 @@ export class VaultsSdk {
         e
           .toString()
           .includes(
-            "Attempt to debit an account but found no record of a prior credit"
+            "Attempt to debit an account but found no record of a prior credit",
           )
       ) {
         throw new InsufficientBalanceError(this.provider.wallet.publicKey);
@@ -488,7 +492,7 @@ export class VaultsSdk {
         e
           .toString()
           .includes(
-            "caused by account: vtoken_config. Error Code: AccountNotInitialized"
+            "caused by account: vtoken_config. Error Code: AccountNotInitialized",
           )
       ) {
         throw new AccountNotInitializedError("vtoken_config");
@@ -501,10 +505,10 @@ export class VaultsSdk {
 
   async closeVault(
     manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     // Get vault and validate it exists
-	await this.fetchVault(manager);
+    await this.fetchVault(manager);
 
     const tx = await this.program.methods
       .closeVault()
@@ -546,7 +550,7 @@ export class VaultsSdk {
     outputMint: PublicKey,
     amount: BN,
     manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const quoteResponse = await this.jup.quoteGet({
       inputMint: inputMint.toBase58(),
@@ -564,7 +568,7 @@ export class VaultsSdk {
     });
 
     const swapInstruction = constructSwapInstruction(
-      swapIxsResponse.swapInstruction
+      swapIxsResponse.swapInstruction,
     );
 
     const instruction = await this.program.methods
@@ -597,8 +601,8 @@ export class VaultsSdk {
     }).compileToV0Message(
       await getAddressLookupTables(
         this.provider.connection,
-        swapIxsResponse.addressLookupTableAddresses
-      )
+        swapIxsResponse.addressLookupTableAddresses,
+      ),
     );
 
     return await this.provider.sendAndConfirm(
@@ -608,14 +612,14 @@ export class VaultsSdk {
         ...DEFAULT_RETRY_CONFIG,
         skipPreflight: true,
         maxRetries: 3, // Internal retries for network issues
-      }
+      },
     );
   }
 
   // User instructions
   private async getDepositRemainingAccounts(
     vault: PublicKey,
-    whitelistedTokens: Token[]
+    whitelistedTokens: Token[],
   ): Promise<AccountMeta[]> {
     const tokenAccounts =
       await this.provider.connection.getParsedTokenAccountsByOwner(vault, {
@@ -632,10 +636,10 @@ export class VaultsSdk {
       ...token2022Accounts.value,
     ]) {
       const tokenMint = new PublicKey(
-        tokenAccount.account.data.parsed.info.mint
+        tokenAccount.account.data.parsed.info.mint,
       );
       const token = whitelistedTokens.find(
-        (token) => token.mint.toBase58() === tokenMint.toBase58()
+        (token) => token.mint.toBase58() === tokenMint.toBase58(),
       );
       if (!token) continue;
       remainingAccounts.push(
@@ -653,7 +657,7 @@ export class VaultsSdk {
           pubkey: token.priceUpdate,
           isWritable: false,
           isSigner: false,
-        }
+        },
       );
     }
 
@@ -664,18 +668,18 @@ export class VaultsSdk {
     amount: BN,
     depositor: PublicKey,
     manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const whitelistedTokens = (await this.fetchTokenWhitelist()).tokens;
     const remainingAccounts = await this.getDepositRemainingAccounts(
       getVaultPda(manager)[0],
-      whitelistedTokens
+      whitelistedTokens,
     );
 
     // Deposit token
     const vault = await this.fetchVault(manager);
     const depositTokenFromWhitelist = whitelistedTokens.find(
-      (token) => token.mint.toBase58() === vault.depositTokenMint.toBase58()
+      (token) => token.mint.toBase58() === vault.depositTokenMint.toBase58(),
     );
     if (!depositTokenFromWhitelist) {
       throw new TokenNotWhitelistedError(vault.depositTokenMint);
@@ -740,18 +744,17 @@ export class VaultsSdk {
       vtokenMint,
       user,
       false,
-      TOKEN_2022_PROGRAM_ID
+      TOKEN_2022_PROGRAM_ID,
     );
-    const vtokenBalance = await this.provider.connection.getTokenAccountBalance(
-      vtokenAta
-    );
+    const vtokenBalance =
+      await this.provider.connection.getTokenAccountBalance(vtokenAta);
     return new BN(vtokenBalance.value.amount);
   }
 
   private async getWithdrawRemainingAccounts(
     vault: PublicKey,
     withdrawer: PublicKey,
-    whitelistedTokens: Token[]
+    whitelistedTokens: Token[],
   ): Promise<AccountMeta[]> {
     const tokenAccounts =
       await this.provider.connection.getParsedTokenAccountsByOwner(vault, {
@@ -775,17 +778,17 @@ export class VaultsSdk {
       }
 
       const tokenMint = new PublicKey(
-        vaultTokenAccount.account.data.parsed.info.mint
+        vaultTokenAccount.account.data.parsed.info.mint,
       );
       const token = whitelistedTokens.find(
-        (token) => token.mint.toBase58() === tokenMint.toBase58()
+        (token) => token.mint.toBase58() === tokenMint.toBase58(),
       );
       if (!token) continue;
       const userTokenAccount = await getAssociatedTokenAddress(
         tokenMint,
         withdrawer,
         false,
-        programId
+        programId,
       );
 
       remainingAccounts.push(
@@ -808,7 +811,7 @@ export class VaultsSdk {
           pubkey: programId,
           isWritable: false,
           isSigner: false,
-        }
+        },
       );
     }
 
@@ -819,13 +822,13 @@ export class VaultsSdk {
     amount: BN,
     withdrawer: PublicKey,
     manager: PublicKey,
-    signers: (Keypair | Signer)[] = []
+    signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     const whitelistedTokens = (await this.fetchTokenWhitelist()).tokens;
     const remainingAccounts = await this.getWithdrawRemainingAccounts(
       getVaultPda(manager)[0],
       withdrawer,
-      whitelistedTokens
+      whitelistedTokens,
     );
 
     const tx = await this.program.methods
@@ -842,6 +845,47 @@ export class VaultsSdk {
       return await sendAndConfirmWithRetry(this.provider, tx, signers);
     } catch (e) {
       // console.log(e);
+      if (e.toString().includes("Signature verification failed")) {
+        if (e.toString().includes(withdrawer.toBase58())) {
+          throw new SignatureVerificationFailedError(withdrawer);
+        } else if (e.toString().includes(AUTHORITY_PROGRAM_ID.toBase58())) {
+          throw new SignatureVerificationFailedError(AUTHORITY_PROGRAM_ID);
+        }
+      } else if (e.toString().includes("insufficient funds")) {
+        throw new InsufficientBalanceError(withdrawer);
+      }
+      throw e;
+    }
+  }
+  async withdraw_in_deposit_token(
+    amount: BN,
+    withdrawer: PublicKey,
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = [],
+  ): Promise<TransactionSignature> {
+    const whitelistedTokens = (await this.fetchTokenWhitelist()).tokens;
+    const vault = await this.fetchVault(manager);
+    const remainingAccounts = await this.getDepositRemainingAccounts(
+      getVaultPda(manager)[0],
+      whitelistedTokens,
+    );
+
+    const tokenProgram = await this.getTokenProgram(vault.depositTokenMint);
+    const tx = await this.program.methods
+      .withdrawInDepositToken(amount)
+      .accounts({
+        user: withdrawer,
+        manager,
+        depositTokenMint: vault.depositTokenMint,
+        tokenProgram,
+      })
+      .remainingAccounts(remainingAccounts)
+      .signers(signers)
+      .transaction();
+
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
       if (e.toString().includes("Signature verification failed")) {
         if (e.toString().includes(withdrawer.toBase58())) {
           throw new SignatureVerificationFailedError(withdrawer);

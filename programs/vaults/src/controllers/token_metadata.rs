@@ -13,6 +13,7 @@ use anchor_spl::{
 
 use crate::constants::AUM_DECIMALS;
 
+#[allow(clippy::too_many_arguments)]
 pub fn initialize_token_metadata<'info>(
     name: String,
     symbol: String,
@@ -48,6 +49,7 @@ pub fn initialize_token_metadata<'info>(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn update_token_metadata<'info>(
     name: String,
     symbol: String,

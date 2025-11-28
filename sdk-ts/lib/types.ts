@@ -49,6 +49,7 @@ export interface Vault {
   institutionalMinDeposit: number; // u32, 0 = no minimum
   maxDepositors: number; // u32, 0 = unlimited
   currentDepositors: number;
+  initialPrice: number;
 }
 
 export const InvestorType = {
