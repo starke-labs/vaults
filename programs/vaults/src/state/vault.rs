@@ -306,6 +306,8 @@ pub enum VaultError {
     VTokensOutstanding,
     #[msg("Cannot close vault with remaining funds")]
     FundsRemaining,
+    #[msg("No outstanding vtoken supply to collect fees against")]
+    NoVtokenSupply,
 }
 
 

@@ -64,3 +64,47 @@ pub fn calculate_vtokens_to_mint(
             .map(|result| result as u64)
     }
 }
+
+/// Calculates 0.25% (25 basis points) of vToken supply for management fee
+pub fn calculate_management_fee_vtokens(vtoken_supply: u64) -> Result<u64> {
+    if vtoken_supply == 0 {
+        return Ok(0);
+    }
+
+    // 0.25% = 25 basis points
+    const FEE_BPS: u128 = 25;
+    const BASIS_POINTS_DENOMINATOR: u128 = 10_000;
+
+    let denominator = BASIS_POINTS_DENOMINATOR
+        .checked_sub(FEE_BPS)
+        .ok_or(error!(VaultError::NumericOverflow))?;
+
+    let mut amount = (vtoken_supply as u128)
+        .checked_mul(FEE_BPS)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div(denominator)
+        .ok_or(error!(VaultError::NumericOverflow))?;
+
+    if amount == 0 {
+        amount = 1;
+    }
+
+    Ok(amount as u64)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn management_fee_rounds_up() {
+        let supply = 1_000_000u64;
+        let fee = calculate_management_fee_vtokens(supply).unwrap();
+        assert_eq!(fee, 2507);
+    }
+
+    #[test]
+    fn management_fee_zero_supply() {
+        assert_eq!(calculate_management_fee_vtokens(0).unwrap(), 0);
+    }
+}

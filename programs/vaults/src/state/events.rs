@@ -53,6 +53,17 @@ pub struct Withdrawn {
 }
 
 #[event]
+pub struct ManagementFeeCollected {
+    pub vault: Pubkey,
+    pub authority: Pubkey,
+    pub recipient: Pubkey,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_fee_amount: u64,
+    pub new_vtoken_supply: u64,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct WhitelistTokenAdded {
     pub mint: Pubkey,
     pub price_feed_id: String,
