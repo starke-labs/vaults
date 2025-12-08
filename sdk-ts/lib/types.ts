@@ -49,7 +49,9 @@ export interface Vault {
   institutionalMinDeposit: number; // u32, 0 = no minimum
   maxDepositors: number; // u32, 0 = unlimited
   currentDepositors: number;
-  initialPrice: number;
+  initialVtokenPrice: number; // u32
+  lastFeesPaidTimestamp: number; // 0 means never. Resets to 0 when the vault is closed.
+  managementFeeRate: number; // percentage, 2 decimals
 }
 
 export const InvestorType = {

@@ -832,6 +832,10 @@
         {
           "name": "initial_vtoken_price",
           "type": "u32"
+        },
+        {
+          "name": "management_fee_rate",
+          "type": "u16"
         }
       ]
     },
@@ -1438,6 +1442,189 @@
               }
             ]
           }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "mint_management_fees",
+      "discriminator": [
+        14,
+        187,
+        152,
+        157,
+        230,
+        167,
+        33,
+        119
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "manager_vtoken_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "manager"
+              },
+              {
+                "kind": "account",
+                "path": "token_2022_program"
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "system_program",
@@ -2299,68 +2486,6 @@
       ]
     },
     {
-      "name": "update_vault_fees",
-      "discriminator": [
-        202,
-        171,
-        0,
-        218,
-        64,
-        38,
-        201,
-        193
-      ],
-      "accounts": [
-        {
-          "name": "manager",
-          "signer": true
-        },
-        {
-          "name": "vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  84,
-                  65,
-                  82,
-                  75,
-                  69,
-                  95,
-                  86,
-                  65,
-                  85,
-                  76,
-                  84
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "manager"
-              }
-            ]
-          }
-        },
-        {
-          "name": "clock",
-          "address": "SysvarC1ock11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "new_entry_fee",
-          "type": "u16"
-        },
-        {
-          "name": "new_exit_fee",
-          "type": "u16"
-        }
-      ]
-    },
-    {
       "name": "withdraw",
       "discriminator": [
         183,
@@ -3104,6 +3229,19 @@
       ]
     },
     {
+      "name": "ManagementFeeMinted",
+      "discriminator": [
+        68,
+        70,
+        237,
+        177,
+        66,
+        29,
+        228,
+        38
+      ]
+    },
+    {
       "name": "VaultClosed",
       "discriminator": [
         238,
@@ -3127,32 +3265,6 @@
         236,
         78,
         115
-      ]
-    },
-    {
-      "name": "VaultFeesUpdateRequested",
-      "discriminator": [
-        97,
-        3,
-        168,
-        94,
-        226,
-        54,
-        119,
-        191
-      ]
-    },
-    {
-      "name": "VaultFeesUpdated",
-      "discriminator": [
-        251,
-        221,
-        126,
-        24,
-        30,
-        216,
-        100,
-        207
       ]
     },
     {
@@ -3332,18 +3444,33 @@
     },
     {
       "code": 6019,
+      "name": "NoVtokenSupply",
+      "msg": "No outstanding vtoken supply to collect fees against"
+    },
+    {
+      "code": 6020,
       "name": "InvalidInitialPrice",
       "msg": "Invalid initial price, must be greater than 0"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "UserTokenAccountNotFound",
       "msg": "User token account not found"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "Unauthorized",
       "msg": "Unauthorized: this instruction can only be called by the authority."
+    },
+    {
+      "code": 6023,
+      "name": "FeesNotDue",
+      "msg": "Fees not due yet."
+    },
+    {
+      "code": 6024,
+      "name": "InvalidVtokenMint",
+      "msg": "Invalid vtoken mint"
     }
   ],
   "types": [
@@ -3399,6 +3526,38 @@
           },
           {
             "name": "Qualified"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ManagementFeeMinted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_fee_amount",
+            "type": "u64"
+          },
+          {
+            "name": "new_vtoken_supply",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -3735,6 +3894,14 @@
           {
             "name": "initial_vtoken_price",
             "type": "u32"
+          },
+          {
+            "name": "last_fees_paid_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "management_fees_rate",
+            "type": "u16"
           }
         ]
       }
@@ -3789,14 +3956,6 @@
             "type": "i64"
           },
           {
-            "name": "entry_fee",
-            "type": "u16"
-          },
-          {
-            "name": "exit_fee",
-            "type": "u16"
-          },
-          {
             "name": "max_allowed_aum",
             "type": {
               "option": "u64"
@@ -3805,62 +3964,6 @@
           {
             "name": "initial_vtoken_price",
             "type": "u32"
-          }
-        ]
-      }
-    },
-    {
-      "name": "VaultFeesUpdateRequested",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "vault",
-            "type": "pubkey"
-          },
-          {
-            "name": "manager",
-            "type": "pubkey"
-          },
-          {
-            "name": "pending_entry_fee",
-            "type": "u16"
-          },
-          {
-            "name": "pending_exit_fee",
-            "type": "u16"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "VaultFeesUpdated",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "vault",
-            "type": "pubkey"
-          },
-          {
-            "name": "manager",
-            "type": "pubkey"
-          },
-          {
-            "name": "new_entry_fee",
-            "type": "u16"
-          },
-          {
-            "name": "new_exit_fee",
-            "type": "u16"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
           }
         ]
       }

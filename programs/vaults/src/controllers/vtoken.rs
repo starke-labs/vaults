@@ -73,3 +73,21 @@ pub fn calculate_vtokens_to_mint(
             .map(|result| result as u64)
     }
 }
+
+/// Calculates the amount of vtokens to mint based on the management fees rate
+pub fn calculate_management_fees_vtokens_to_mint(vtoken_supply: u64, rate: u16) -> Result<u64> {
+    if rate == 10000 {
+        return Ok(vtoken_supply);
+    }
+
+    // If rate is in percentage, then the formula is:
+    // vtoken_supply * rate / (1 - rate).
+    // Or when normally, when using basis points, then the formula is:
+    // vtoken_supply * rate / (10000 - rate).
+    (vtoken_supply as u128)
+        .checked_mul(rate as u128)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div((10000u16 - rate) as u128)
+        .ok_or(error!(VaultError::NumericOverflow))
+        .map(|result| result as u64)
+}

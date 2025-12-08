@@ -8,28 +8,8 @@ pub struct VaultCreated {
     pub vtoken_mint: Pubkey,
     pub name: String,
     pub timestamp: i64,
-    pub entry_fee: u16,
-    pub exit_fee: u16,
     pub max_allowed_aum: Option<u64>,
     pub initial_vtoken_price: u32,
-}
-
-#[event]
-pub struct VaultFeesUpdateRequested {
-    pub vault: Pubkey,
-    pub manager: Pubkey,
-    pub pending_entry_fee: u16,
-    pub pending_exit_fee: u16,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct VaultFeesUpdated {
-    pub vault: Pubkey,
-    pub manager: Pubkey,
-    pub new_entry_fee: u16,
-    pub new_exit_fee: u16,
-    pub timestamp: i64,
 }
 
 #[event]
@@ -49,6 +29,16 @@ pub struct Withdrawn {
     pub user: Pubkey,
     pub vtoken_mint: Pubkey,
     pub vtoken_burned_amount: u64,
+    pub new_vtoken_supply: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct ManagementFeeMinted {
+    pub vault: Pubkey,
+    pub manager: Pubkey,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_fee_amount: u64,
     pub new_vtoken_supply: u64,
     pub timestamp: i64,
 }
