@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use super::{InvestorType, TokenWhitelist, VaultFeesUpdated};
+use super::{InvestorType, TokenWhitelist};
 use crate::controllers::{
     compute_token_value_usd, parse_vault_balances, transform_price_to_aum_decimals,
     verify_price_update_and_get_pyth_price,
@@ -14,12 +14,21 @@ pub struct Vault {
     pub bump: u8,
     pub mint: Pubkey, // vault token mint
     pub mint_bump: u8,
+
     // Fees
-    pub entry_fee: u16, // percentage, 2 decimals, lowest is 1 (0.01%) and highest is 10000 (100%)
-    pub exit_fee: u16,  // percentage, 2 decimals, lowest is 1 (0.01%) and highest is 10000 (100%)
+    // TODO: Remove these fields before production.
+    // NOTE: They are deprecated in favor of management_fees_rate.
+    #[deprecated = "Use management_fees_rate instead."]
+    pub entry_fee: u16,
+    #[deprecated = "Use management_fees_rate instead."]
+    pub exit_fee: u16,
+    #[deprecated = "Use management_fees_rate instead."]
     pub pending_entry_fee: Option<u16>,
+    #[deprecated = "Use management_fees_rate instead."]
     pub pending_exit_fee: Option<u16>,
+    #[deprecated = "Use management_fees_rate instead."]
     pub fee_update_timestamp: i64,
+
     // Config
     // Maximum amount of aum allowed in vault, if None, there is no maximum
     // USD value in AUM_DECIMALS decimals
@@ -37,6 +46,8 @@ pub struct Vault {
     pub current_depositors: u32,
 
     pub initial_vtoken_price: u32,
+    pub last_fees_paid_timestamp: i64, // 0 means never. Resets to 0 when the vault is closed.
+    pub management_fees_rate: u16,      // percentage, 2 decimals
 }
 
 impl Vault {
@@ -61,13 +72,14 @@ impl Vault {
         + 4  // individual_min_deposit (u32)
         + 4  // institutional_min_deposit (u32)
         + 4  // max_depositors (u32)
-        + 4; // current_depositors (u32)
+        + 4  // current_depositors (u32)
+        + 4  // initial_vtoken_price (u32)
+        + 8  // last_fees_paid_timestamp (i64)
+        + 2; // management_fees_rate (u16)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
-
-    pub const FEE_UPDATE_DELAY: i64 = 30 * 24 * 60 * 60; // 30 days in seconds
-    pub const MAX_FEE: u16 = 10000;
+    pub const MAX_MANAGEMENT_FEE_RATE: u16 = 10000;
 
     #[allow(clippy::too_many_arguments)]
     pub fn initialize(
@@ -87,10 +99,15 @@ impl Vault {
         institutional_min_deposit: u32,
         max_depositors: u32,
         initial_vtoken_price: u32,
+        management_fees_rate: u16,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(!name.is_empty(), VaultError::NameTooShort);
+        require!(
+            management_fees_rate <= Self::MAX_MANAGEMENT_FEE_RATE,
+            VaultError::InvalidFee
+        );
 
         self.manager = manager;
         self.deposit_token_mint = deposit_token_mint;
@@ -98,11 +115,11 @@ impl Vault {
         self.bump = bump;
         self.mint = vtoken_mint;
         self.mint_bump = vtoken_mint_bump;
-        self.entry_fee = 0;
-        self.exit_fee = 0;
-        self.pending_entry_fee = None;
-        self.pending_exit_fee = None;
-        self.fee_update_timestamp = 0;
+        // self.entry_fee = 0;
+        // self.exit_fee = 0;
+        // self.pending_entry_fee = None;
+        // self.pending_exit_fee = None;
+        // self.fee_update_timestamp = 0;
         self.max_allowed_aum = max_allowed_aum;
         self.allow_retail = allow_retail;
         self.allow_accredited = allow_accredited;
@@ -113,57 +130,10 @@ impl Vault {
         self.max_depositors = max_depositors;
         self.current_depositors = 0;
         self.initial_vtoken_price = initial_vtoken_price;
+        self.last_fees_paid_timestamp = 0;
+        self.management_fees_rate = management_fees_rate;
 
         Ok(())
-    }
-
-    pub fn update_fees(
-        &mut self,
-        new_entry_fee: u16,
-        new_exit_fee: u16,
-        current_timestamp: i64,
-    ) -> Result<()> {
-        require!(new_entry_fee <= Self::MAX_FEE, VaultError::InvalidFee);
-        require!(new_exit_fee <= Self::MAX_FEE, VaultError::InvalidFee);
-
-        // Only check delay if there was a previous fee update
-        if self.fee_update_timestamp != 0 {
-            require!(
-                current_timestamp >= self.fee_update_timestamp + Self::FEE_UPDATE_DELAY,
-                VaultError::FeeUpdateDelayNotPassed
-            );
-        }
-
-        self.pending_entry_fee = Some(new_entry_fee);
-        self.pending_exit_fee = Some(new_exit_fee);
-        self.fee_update_timestamp = current_timestamp;
-
-        Ok(())
-    }
-
-    pub fn get_fees(&mut self, current_timestamp: i64, vault_key: &Pubkey) -> Result<(u16, u16)> {
-        if let (Some(pending_entry), Some(pending_exit)) =
-            (self.pending_entry_fee, self.pending_exit_fee)
-        {
-            if current_timestamp >= self.fee_update_timestamp + Self::FEE_UPDATE_DELAY {
-                // Update the fees if the delay period has passed
-                self.entry_fee = pending_entry;
-                self.exit_fee = pending_exit;
-                self.pending_entry_fee = None;
-                self.pending_exit_fee = None;
-                self.fee_update_timestamp = 0;
-
-                emit!(VaultFeesUpdated {
-                    vault: *vault_key,
-                    manager: self.manager,
-                    new_entry_fee: pending_entry,
-                    new_exit_fee: pending_exit,
-                    timestamp: current_timestamp,
-                });
-            }
-        }
-
-        Ok((self.entry_fee, self.exit_fee))
     }
 
     /// Assets under management
@@ -310,6 +280,52 @@ impl Vault {
             .ok_or(VaultError::NumericOverflow)?;
         Ok(())
     }
+
+    /// Return true if fees were NOT paid in the current quarter
+    pub fn can_pay_management_fees(&self, now: i64) -> bool {
+        const SECS_PER_DAY: i64 = 86_400;
+        const DAYS_IN_QUARTERS: [i64; 4] = [90, 91, 92, 92];
+        const DAYS_IN_LEAP_QUARTERS: [i64; 4] = [91, 91, 92, 92];
+
+        let to_year_quarter = |ts: i64| -> (i64, i64) {
+            let mut days = ts / SECS_PER_DAY;
+
+            let mut year = 1970;
+            loop {
+                let year_days = if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
+                    366
+                } else {
+                    365
+                };
+
+                if days < year_days {
+                    break;
+                }
+                days -= year_days;
+                year += 1;
+            }
+
+            let mut quarter = 0;
+            for m in if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
+                DAYS_IN_LEAP_QUARTERS
+            } else {
+                DAYS_IN_QUARTERS
+            } {
+                if days < m {
+                    break;
+                }
+                days -= m;
+                quarter += 1;
+            }
+
+            (year, quarter)
+        };
+
+        let (last_year, last_quarter) = to_year_quarter(self.last_fees_paid_timestamp);
+        let (curr_year, curr_quarter) = to_year_quarter(now);
+
+        last_year != curr_year || last_quarter != curr_quarter
+    }
 }
 
 #[error_code]
@@ -360,6 +376,10 @@ pub enum VaultError {
     UserTokenAccountNotFound,
     #[msg("Unauthorized: this instruction can only be called by the authority.")]
     Unauthorized,
+    #[msg("Fees not due yet.")]
+    FeesNotDue,
+    #[msg("Invalid vtoken mint")]
+    InvalidVtokenMint,
 }
 
 #[error_code]
