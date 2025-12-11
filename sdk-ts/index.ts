@@ -50,8 +50,6 @@ import {
   getTokenWhitelistPda,
   getUserWhitelistPda,
   getVaultPda,
-  getVtokenConfigPda,
-  getVtokenMetadataPda,
   getVtokenMintPda,
 } from "./lib/pdas";
 import { getAddressLookupTables } from "./lib/solana";
@@ -895,6 +893,26 @@ export class VaultsSdk {
       } else if (e.toString().includes("insufficient funds")) {
         throw new InsufficientBalanceError(withdrawer);
       }
+      throw e;
+    }
+  }
+
+  async mintManagementFees(
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = [],
+  ): Promise<TransactionSignature> {
+    await this.fetchVault(manager);
+    let tx = await this.program.methods
+      .mintManagementFees()
+      .accounts({
+        manager,
+      })
+      .transaction();
+    tx.feePayer = manager;
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      console.log(e);
       throw e;
     }
   }

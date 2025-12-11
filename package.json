@@ -19,8 +19,10 @@
     "test:vaults:swap": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/13_swap.test.ts",
     "test:vaults:integrationTest": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/14_integrationTest.test.ts",
     "test:vaults:closeVault": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/15_closeVault.test.ts",
-	"test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts",
-    "test:vaults:withdrawInDepositToken": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/16_withdrawInDepositToken.test.ts"
+    "test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts",
+    "test:vaults:withdrawInDepositToken": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/16_withdrawInDepositToken.test.ts",
+    "test:vaults:mintManagementFees": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/17_mintManagementFees.test.ts",
+    "dhruv8sh": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/dhruv8sh.test.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",

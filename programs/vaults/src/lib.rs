@@ -65,6 +65,7 @@ pub mod vaults {
         institutional_min_deposit: u32,
         max_depositors: u32,
         initial_vtoken_price: u32,
+        management_fee_rate: u16,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -81,19 +82,12 @@ pub mod vaults {
             institutional_min_deposit,
             max_depositors,
             initial_vtoken_price,
+            management_fee_rate,
         )
     }
 
     pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
         _close_vault(ctx)
-    }
-
-    pub fn update_vault_fees(
-        ctx: Context<UpdateVaultFees>,
-        new_entry_fee: u16,
-        new_exit_fee: u16,
-    ) -> Result<()> {
-        _update_vault_fees(ctx, new_entry_fee, new_exit_fee)
     }
 
     pub fn deposit<'info>(
@@ -110,8 +104,8 @@ pub mod vaults {
         _withdraw(ctx, amount)
     }
 
-    pub fn collect_management_fee(ctx: Context<CollectManagementFee>) -> Result<()> {
-        _collect_management_fee(ctx)
+    pub fn mint_management_fees(ctx: Context<MintManagementFees>) -> Result<()> {
+        _mint_management_fees(ctx)
     }
     pub fn withdraw_in_deposit_token<'info>(
         ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,
