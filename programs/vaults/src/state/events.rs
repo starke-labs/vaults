@@ -34,14 +34,24 @@ pub struct Withdrawn {
 }
 
 #[event]
-pub struct ManagementFeeCollected {
+pub struct ManagementFeeMinted {
     pub vault: Pubkey,
-    pub authority: Pubkey,
-    pub recipient: Pubkey,
+    pub manager: Pubkey,
     pub vtoken_mint: Pubkey,
     pub vtoken_fee_amount: u64,
     pub new_vtoken_supply: u64,
     pub timestamp: i64,
+}
+
+#[event]
+pub struct WithdrawnInDepositToken {
+    pub vault: Pubkey,
+    pub user: Pubkey,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_burned_amount: u64,
+    pub new_vtoken_supply: u64,
+    pub timestamp: i64,
+    pub deposit_token_mint: Pubkey,
 }
 
 #[event]

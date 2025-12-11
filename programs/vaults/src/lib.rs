@@ -108,8 +108,8 @@ pub mod vaults {
         _withdraw(ctx, amount)
     }
 
-    pub fn collect_management_fee(ctx: Context<CollectManagementFee>) -> Result<()> {
-        _collect_management_fee(ctx)
+    pub fn mint_management_fees(ctx: Context<MintManagementFees>) -> Result<()> {
+        _mint_management_fees(ctx)
     }
 
     pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
