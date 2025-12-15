@@ -89,6 +89,7 @@ pub struct SetVaultDepositFee<'info> {
     #[account(mut, address = STARKE_AUTHORITY @ StarkeConfigError::Unauthorized)]
     pub authority: Signer<'info>,
 
+    /// CHECK: We can skip checking the manager
     pub manager: UncheckedAccount<'info>,
 
     #[account(
@@ -120,6 +121,7 @@ pub struct EnableOrDisableVaultDepositFee<'info> {
     #[account(mut, address = STARKE_AUTHORITY @ StarkeConfigError::Unauthorized)]
     pub authority: Signer<'info>,
 
+    /// CHECK: We can skip checking the manager
     pub manager: UncheckedAccount<'info>,
 
     #[account(

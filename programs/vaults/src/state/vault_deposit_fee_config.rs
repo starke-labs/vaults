@@ -69,6 +69,28 @@ impl VaultDepositFeeConfig {
         self.enabled = false;
         Ok(())
     }
+
+    /// Calculate the deposit fee amount based on the deposit amount
+    /// Returns the fee amount in the same units as the deposit amount
+    pub fn calculate_fee_amount(&self, deposit_amount: u64) -> Result<u64> {
+        if !self.enabled || self.fee_rate == 0 {
+            return Ok(0);
+        }
+
+        // Calculate fee: deposit_amount * fee_rate / 10000
+        // Using u128 to prevent overflow
+        (deposit_amount as u128)
+            .checked_mul(self.fee_rate as u128)
+            .ok_or(error!(VaultDepositFeeConfigError::NumericOverflow))?
+            .checked_div(10000u128)
+            .ok_or(error!(VaultDepositFeeConfigError::NumericOverflow))
+            .map(|result| result as u64)
+    }
+
+    /// Check if the deposit fee config is initialized
+    pub fn is_initialized(&self) -> bool {
+        self.vault != Pubkey::default()
+    }
 }
 
 #[error_code]
@@ -77,5 +99,9 @@ pub enum VaultDepositFeeConfigError {
     InvalidFeeRate,
     #[msg("Vault mismatch in deposit fee config.")]
     VaultMismatch,
+    #[msg("Account mismatch: platform fee recipient token account does not match fee config.")]
+    PlatformFeeRecipientMismatch,
+    #[msg("Numeric overflow in fee calculation.")]
+    NumericOverflow,
 }
 
