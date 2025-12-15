@@ -22,6 +22,7 @@
     "test:vaults:info": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/info.test.ts",
     "test:vaults:withdrawInDepositToken": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/16_withdrawInDepositToken.test.ts",
     "test:vaults:mintManagementFees": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/17_mintManagementFees.test.ts",
+    "test:vaults:depositFee": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/18_depositFee.test.ts",
     "dhruv8sh": "ts-mocha -p ./tsconfig.json -t 1000000 -r tsconfig-paths/register tests/vaults/dhruv8sh.test.ts"
   },
   "dependencies": {
