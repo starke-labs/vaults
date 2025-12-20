@@ -14,6 +14,8 @@ pub mod swap_to_deposit_token_on_jupiter;
 pub mod user_whitelist;
 pub mod withdraw;
 pub mod withdraw_in_deposit_token;
+pub mod pause_deposits;
+pub mod resume_deposits;
 
 pub use add_manager::*;
 pub use add_token::*;
@@ -31,6 +33,8 @@ pub use swap_to_deposit_token_on_jupiter::*;
 pub use user_whitelist::*;
 pub use withdraw::*;
 pub use withdraw_in_deposit_token::*;
+pub use pause_deposits::*;
+pub use resume_deposits::*;
 
 #[cfg(test)]
 pub mod tests;

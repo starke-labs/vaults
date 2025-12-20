@@ -836,6 +836,14 @@
         {
           "name": "management_fee_rate",
           "type": "u16"
+        },
+        {
+          "name": "individual_max_deposit",
+          "type": "u32"
+        },
+        {
+          "name": "institutional_max_deposit",
+          "type": "u32"
         }
       ]
     },
@@ -1634,6 +1642,81 @@
       "args": []
     },
     {
+      "name": "pause_deposits",
+      "discriminator": [
+        206,
+        186,
+        203,
+        153,
+        253,
+        61,
+        206,
+        122
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "pause_starke",
       "discriminator": [
         205,
@@ -1901,6 +1984,81 @@
           "type": "pubkey"
         }
       ]
+    },
+    {
+      "name": "resume_deposits",
+      "discriminator": [
+        208,
+        78,
+        64,
+        241,
+        58,
+        181,
+        167,
+        66
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
     },
     {
       "name": "resume_starke",
@@ -3471,6 +3629,16 @@
       "code": 6024,
       "name": "InvalidVtokenMint",
       "msg": "Invalid vtoken mint"
+    },
+    {
+      "code": 6025,
+      "name": "DepositsPaused",
+      "msg": "Vault deposits are paused."
+    },
+    {
+      "code": 6026,
+      "name": "DepositAboveMaximum",
+      "msg": "Deposit amount is above maximum"
     }
   ],
   "types": [
@@ -3902,6 +4070,22 @@
           {
             "name": "management_fees_rate",
             "type": "u16"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "VaultState"
+              }
+            }
+          },
+          {
+            "name": "individual_max_deposit",
+            "type": "u32"
+          },
+          {
+            "name": "institutional_max_deposit",
+            "type": "u32"
           }
         ]
       }
@@ -3964,6 +4148,23 @@
           {
             "name": "initial_vtoken_price",
             "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultState",
+      "repr": {
+        "kind": "rust"
+      },
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "DepositPaused"
           }
         ]
       }

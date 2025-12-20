@@ -66,6 +66,8 @@ pub mod vaults {
         max_depositors: u32,
         initial_vtoken_price: u32,
         management_fee_rate: u16,
+        individual_max_deposit: u32,
+        institutional_max_deposit: u32,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -83,6 +85,8 @@ pub mod vaults {
             max_depositors,
             initial_vtoken_price,
             management_fee_rate,
+            individual_max_deposit,
+            institutional_max_deposit,
         )
     }
 
@@ -135,6 +139,14 @@ pub mod vaults {
 
     pub fn remove_user(ctx: Context<ModifyUserWhitelist>, user: Pubkey) -> Result<()> {
         _remove_user(ctx, user)
+    }
+
+    pub fn pause_deposits(ctx: Context<PauseDeposits>) -> Result<()> {
+        _pause_deposits(ctx)
+    }
+
+    pub fn resume_deposits(ctx: Context<ResumeDeposits>) -> Result<()> {
+        _resume_deposits(ctx)
     }
 }
 

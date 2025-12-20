@@ -34,6 +34,8 @@ pub fn _create_vault(
     max_depositors: u32,
     initial_vtoken_price: u32,
     management_fee_rate: u16,
+    individual_max_deposit: u32,
+    institutional_max_deposit: u32,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -137,6 +139,8 @@ pub fn _create_vault(
         max_depositors,
         initial_vtoken_price,
         management_fee_rate,
+        individual_max_deposit,
+        institutional_max_deposit,
     )?;
 
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());

@@ -47,7 +47,23 @@ pub struct Vault {
 
     pub initial_vtoken_price: u32,
     pub last_fees_paid_timestamp: i64, // 0 means never. Resets to 0 when the vault is closed.
-    pub management_fees_rate: u16,      // percentage, 2 decimals
+    pub management_fees_rate: u16,     // percentage, 2 decimals
+    pub state: VaultState,
+    // Deposit configuration (0 = no maximum)
+    pub individual_max_deposit: u32, // For retail/accredited investors, 0 = no minimum
+    pub institutional_max_deposit: u32, // For institutional/qualified investors, 0 = no minimum
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Default)]
+#[repr(u8)]
+pub enum VaultState {
+    #[default]
+    Active,
+    DepositPaused,
+    // WithdrawalPaused,
+    // Liquidated,
+    // Closed,
+    // Frozen,
 }
 
 impl Vault {
@@ -75,7 +91,10 @@ impl Vault {
         + 4  // current_depositors (u32)
         + 4  // initial_vtoken_price (u32)
         + 8  // last_fees_paid_timestamp (i64)
-        + 2; // management_fees_rate (u16)
+        + 2  // management_fees_rate (u16)
+        + 1  // state (u8)
+        + 4  // individual_max_deposit (u32)
+        + 4; // institutional_max_deposit (u32)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -100,6 +119,8 @@ impl Vault {
         max_depositors: u32,
         initial_vtoken_price: u32,
         management_fees_rate: u16,
+        individual_max_deposit: u32,
+        institutional_max_deposit: u32,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
@@ -132,6 +153,8 @@ impl Vault {
         self.initial_vtoken_price = initial_vtoken_price;
         self.last_fees_paid_timestamp = 0;
         self.management_fees_rate = management_fees_rate;
+        self.individual_max_deposit = individual_max_deposit;
+        self.institutional_max_deposit = institutional_max_deposit;
 
         Ok(())
     }
@@ -241,11 +264,21 @@ impl Vault {
             InvestorType::Retail | InvestorType::Accredited => self.individual_min_deposit,
             InvestorType::Institutional | InvestorType::Qualified => self.institutional_min_deposit,
         };
+        let max_deposit = match investor_type {
+            InvestorType::Retail | InvestorType::Accredited => self.individual_max_deposit,
+            InvestorType::Institutional | InvestorType::Qualified => self.institutional_max_deposit,
+        };
 
         if min_deposit > 0 {
             require!(
                 amount >= min_deposit as u64,
                 VaultError::DepositBelowMinimum
+            );
+        }
+        if max_deposit > 0 {
+            require!(
+                amount <= max_deposit as u64,
+                VaultError::DepositAboveMaximum
             );
         }
 
@@ -326,6 +359,13 @@ impl Vault {
 
         last_year != curr_year || last_quarter != curr_quarter
     }
+
+    pub fn pause_deposits(&mut self) {
+        self.state = VaultState::DepositPaused;
+    }
+    pub fn resume_deposits(&mut self) {
+        self.state = VaultState::Active;
+    }
 }
 
 #[error_code]
@@ -380,6 +420,10 @@ pub enum VaultError {
     FeesNotDue,
     #[msg("Invalid vtoken mint")]
     InvalidVtokenMint,
+    #[msg("Vault deposits are paused.")]
+    DepositsPaused,
+    #[msg("Deposit amount is above maximum")]
+    DepositAboveMaximum,
 }
 
 #[error_code]

@@ -427,6 +427,8 @@ export class VaultsSdk {
     individualMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
     institutionalMinDeposit?: number, // u32, 0 = no minimum, optional defaults to 0
     maxDepositors?: number, // u32, 0 = unlimited, optional defaults to 0
+    individualMaxDeposit?: number, // u32, 0 = no maximum, optional defaults to 0
+    institutionalMaxDeposit?: number, // u32, 0 = no maximum, optional defaults to 0
     signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     // No validation needed - max_allowed_aum can be set or not set for any vault
@@ -436,6 +438,8 @@ export class VaultsSdk {
     // Set defaults for optional parameters (0 = no limit/minimum)
     const finalIndividualMinDeposit = individualMinDeposit ?? 0;
     const finalInstitutionalMinDeposit = institutionalMinDeposit ?? 0;
+    const finalIndividualMaxDeposit = individualMaxDeposit ?? 0;
+    const finalInstitutionalMaxDeposit = institutionalMaxDeposit ?? 0;
     const finalMaxDepositors = maxDepositors ?? 0;
 
     const tx = await this.program.methods
@@ -453,6 +457,8 @@ export class VaultsSdk {
         finalInstitutionalMinDeposit,
         finalMaxDepositors,
         initialVtokenPrice,
+        finalIndividualMaxDeposit,
+        finalInstitutionalMaxDeposit,
       )
       .accounts({
         manager,
@@ -904,6 +910,46 @@ export class VaultsSdk {
     await this.fetchVault(manager);
     let tx = await this.program.methods
       .mintManagementFees()
+      .accounts({
+        manager,
+      })
+      .transaction();
+    tx.feePayer = manager;
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  }
+
+  async pauseDeposits(
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = [],
+  ): Promise<TransactionSignature> {
+    await this.fetchVault(manager);
+    const tx = await this.program.methods
+      .pauseDeposits()
+      .accounts({
+        manager,
+      })
+      .transaction();
+    tx.feePayer = manager;
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  }
+
+  async resumeDeposits(
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = [],
+  ): Promise<TransactionSignature> {
+    await this.fetchVault(manager);
+    const tx = await this.program.methods
+      .resumeDeposits()
       .accounts({
         manager,
       })

@@ -52,16 +52,26 @@ export interface Vault {
   initialVtokenPrice: number; // u32
   lastFeesPaidTimestamp: number; // 0 means never. Resets to 0 when the vault is closed.
   managementFeeRate: number; // percentage, 2 decimals
+  state: VaultState;
+  individualMaxDeposit: number; // u32, 0 = no maximum
+  institutionalMaxDeposit: number; // u32, 0 = no maximum
 }
 
 export const InvestorType = {
   Retail: { retail: {} },
   Accredited: { accredited: {} },
   Institutional: { institutional: {} },
-  Qualified: { qualified: {} }
+  Qualified: { qualified: {} },
 } as const;
 
-export type InvestorType = typeof InvestorType[keyof typeof InvestorType];
+export type InvestorType = (typeof InvestorType)[keyof typeof InvestorType];
+
+export const VaultState = {
+  Active: { active: {} },
+  DepositPaused: { depositPaused: {} },
+} as const;
+
+export type VaultState = (typeof VaultState)[keyof typeof VaultState];
 
 export interface UserEntry {
   user: PublicKey;
