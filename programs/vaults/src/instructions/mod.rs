@@ -1,4 +1,4 @@
-zzpub mod add_manager;
+pub mod add_manager;
 pub mod add_token;
 pub mod mint_management_fees;
 pub mod close_vault;
@@ -20,7 +20,8 @@ pub mod resume_deposits;
 
 pub use add_manager::*;
 pub use add_token::*;
-pub use collect_management_fee::*;
+pub use mint_management_fees::*;
+pub use close_vault::*;
 pub use create_vault::*;
 pub use deposit::*;
 pub use initialize_starke::*;

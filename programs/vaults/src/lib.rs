@@ -111,6 +111,12 @@ pub mod vaults {
     pub fn mint_management_fees(ctx: Context<MintManagementFees>) -> Result<()> {
         _mint_management_fees(ctx)
     }
+    pub fn withdraw_in_deposit_token<'info>(
+        ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,
+        amount: u64,
+    ) -> Result<()> {
+        _withdraw_in_deposit_token(ctx, amount)
+    }
 
     pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {
         _swap_on_jupiter(ctx, data)
