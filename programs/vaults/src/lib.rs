@@ -141,14 +141,14 @@ pub mod vaults {
         _remove_user(ctx, user)
     }
 
-<<<<<<< HEAD
     pub fn pause_deposits(ctx: Context<PauseDeposits>) -> Result<()> {
         _pause_deposits(ctx)
     }
 
     pub fn resume_deposits(ctx: Context<ResumeDeposits>) -> Result<()> {
         _resume_deposits(ctx)
-=======
+    }
+
     pub fn set_vault_deposit_fee(
         ctx: Context<SetVaultDepositFee>,
         enabled: bool,
@@ -164,7 +164,6 @@ pub mod vaults {
 
     pub fn disable_vault_deposit_fee(ctx: Context<EnableOrDisableVaultDepositFee>) -> Result<()> {
         _disable_vault_deposit_fee(ctx)
->>>>>>> 8e3b65cd642508cc3625c85194b1dd3f91c1e5f7
     }
 }
 

@@ -10,7 +10,7 @@ use crate::controllers::{
 };
 use crate::state::{
     Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserWhitelist,
-    UserWhitelistError, Vault, VaultDepositFeeConfig, VaultDepositFeeConfigError,
+    UserWhitelistError, Vault, VaultDepositFeeConfig, VaultDepositFeeConfigError, VaultError, VaultState,
 };
 
 pub fn _deposit<'info>(
