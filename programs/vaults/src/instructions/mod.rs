@@ -1,6 +1,7 @@
 pub mod add_manager;
 pub mod add_token;
 pub mod mint_management_fees;
+pub mod mint_performance_fees;
 pub mod close_vault;
 pub mod create_vault;
 pub mod deposit;
@@ -21,6 +22,7 @@ pub mod resume_deposits;
 pub use add_manager::*;
 pub use add_token::*;
 pub use mint_management_fees::*;
+pub use mint_performance_fees::*;
 pub use close_vault::*;
 pub use create_vault::*;
 pub use deposit::*;
