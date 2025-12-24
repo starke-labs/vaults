@@ -68,6 +68,7 @@ pub mod vaults {
         management_fee_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        performance_fees_rate: u16,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -87,6 +88,7 @@ pub mod vaults {
             management_fee_rate,
             individual_max_deposit,
             institutional_max_deposit,
+            performance_fees_rate,
         )
     }
 
@@ -110,6 +112,12 @@ pub mod vaults {
 
     pub fn mint_management_fees(ctx: Context<MintManagementFees>) -> Result<()> {
         _mint_management_fees(ctx)
+    }
+
+    pub fn mint_performance_fees<'info>(
+        ctx: Context<'_, '_, 'info, 'info, MintPerformanceFees<'info>>,
+    ) -> Result<()> {
+        _mint_performance_fees(ctx)
     }
     pub fn withdraw_in_deposit_token<'info>(
         ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,

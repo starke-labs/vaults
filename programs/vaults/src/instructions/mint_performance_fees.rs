@@ -2,7 +2,9 @@ use crate::{
     controllers::{
         calculate_performance_fee_vtokens_to_mint, compute_token_price, mint_vtoken,
     },
-    state::{PerformanceFeeMinted, StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultError},
+    state::{
+        PerformanceFeeMinted, StarkeConfig, StarkeConfigError, TokenWhitelist, Vault, VaultError,
+    },
 };
 use anchor_lang::prelude::*;
 use anchor_spl::{
@@ -11,7 +13,9 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount},
 };
 
-pub fn _mint_performance_fees(ctx: Context<MintPerformanceFees>) -> Result<()> {
+pub fn _mint_performance_fees<'info>(
+    ctx: Context<'_, '_, 'info, 'info, MintPerformanceFees<'info>>,
+) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
         StarkeConfigError::StarkePaused
