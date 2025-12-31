@@ -52,6 +52,10 @@ pub struct Vault {
     // Deposit configuration (0 = no maximum)
     pub individual_max_deposit: u32, // For retail/accredited investors, 0 = no minimum
     pub institutional_max_deposit: u32, // For institutional/qualified investors, 0 = no minimum
+
+    // Platform fees (paid to Starke Finance)
+    pub platform_fees_rate: u16,                    // Platform fee rate in bps (0-10000)
+    pub last_platform_fees_paid_timestamp: i64,     // Last platform fee payment timestamp (0 = never)
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Default)]
@@ -94,7 +98,9 @@ impl Vault {
         + 2  // management_fees_rate (u16)
         + 1  // state (u8)
         + 4  // individual_max_deposit (u32)
-        + 4; // institutional_max_deposit (u32)
+        + 4  // institutional_max_deposit (u32)
+        + 2  // platform_fees_rate (u16)
+        + 8; // last_platform_fees_paid_timestamp (i64)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -121,6 +127,7 @@ impl Vault {
         management_fees_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        platform_fees_rate: u16,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
@@ -155,6 +162,8 @@ impl Vault {
         self.management_fees_rate = management_fees_rate;
         self.individual_max_deposit = individual_max_deposit;
         self.institutional_max_deposit = institutional_max_deposit;
+        self.platform_fees_rate = platform_fees_rate;
+        self.last_platform_fees_paid_timestamp = 0;
 
         Ok(())
     }
@@ -365,6 +374,52 @@ impl Vault {
     }
     pub fn resume_deposits(&mut self) {
         self.state = VaultState::Active;
+    }
+
+    /// Return true if platform fees were NOT paid in the current quarter
+    pub fn can_pay_platform_fees(&self, now: i64) -> bool {
+        const SECS_PER_DAY: i64 = 86_400;
+        const DAYS_IN_QUARTERS: [i64; 4] = [90, 91, 92, 92];
+        const DAYS_IN_LEAP_QUARTERS: [i64; 4] = [91, 91, 92, 92];
+
+        let to_year_quarter = |ts: i64| -> (i64, i64) {
+            let mut days = ts / SECS_PER_DAY;
+
+            let mut year = 1970;
+            loop {
+                let year_days = if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
+                    366
+                } else {
+                    365
+                };
+
+                if days < year_days {
+                    break;
+                }
+                days -= year_days;
+                year += 1;
+            }
+
+            let mut quarter = 0;
+            for m in if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
+                DAYS_IN_LEAP_QUARTERS
+            } else {
+                DAYS_IN_QUARTERS
+            } {
+                if days < m {
+                    break;
+                }
+                days -= m;
+                quarter += 1;
+            }
+
+            (year, quarter)
+        };
+
+        let (last_year, last_quarter) = to_year_quarter(self.last_platform_fees_paid_timestamp);
+        let (curr_year, curr_quarter) = to_year_quarter(now);
+
+        last_year != curr_year || last_quarter != curr_quarter
     }
 }
 

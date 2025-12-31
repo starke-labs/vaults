@@ -68,6 +68,7 @@ pub mod vaults {
         management_fee_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        platform_fee_rate: u16,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -87,6 +88,7 @@ pub mod vaults {
             management_fee_rate,
             individual_max_deposit,
             institutional_max_deposit,
+            platform_fee_rate,
         )
     }
 
@@ -111,6 +113,19 @@ pub mod vaults {
     pub fn mint_management_fees(ctx: Context<MintManagementFees>) -> Result<()> {
         _mint_management_fees(ctx)
     }
+
+    pub fn update_platform_fees(
+        ctx: Context<UpdatePlatformFees>,
+        vault_manager: Pubkey,
+        new_platform_fees_rate: u16,
+    ) -> Result<()> {
+        _update_platform_fees(ctx, vault_manager, new_platform_fees_rate)
+    }
+
+    pub fn mint_platform_fees(ctx: Context<MintPlatformFees>) -> Result<()> {
+        _mint_platform_fees(ctx)
+    }
+
     pub fn withdraw_in_deposit_token<'info>(
         ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,
         amount: u64,

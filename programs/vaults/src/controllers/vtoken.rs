@@ -91,3 +91,19 @@ pub fn calculate_management_fees_vtokens_to_mint(vtoken_supply: u64, rate: u16) 
         .ok_or(error!(VaultError::NumericOverflow))
         .map(|result| result as u64)
 }
+
+/// Calculates the amount of vtokens to mint based on the platform fees rate
+pub fn calculate_platform_fees_vtokens_to_mint(vtoken_supply: u64, rate: u16) -> Result<u64> {
+    if rate == 10000 {
+        return Ok(vtoken_supply);
+    }
+
+    // Formula: vtoken_supply * rate / (10000 - rate)
+    // Same as management fees calculation
+    (vtoken_supply as u128)
+        .checked_mul(rate as u128)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div((10000u16 - rate) as u128)
+        .ok_or(error!(VaultError::NumericOverflow))
+        .map(|result| result as u64)
+}
