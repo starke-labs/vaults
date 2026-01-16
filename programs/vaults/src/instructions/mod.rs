@@ -18,6 +18,7 @@ pub mod withdraw;
 pub mod withdraw_in_deposit_token;
 pub mod pause_deposits;
 pub mod resume_deposits;
+pub mod update_lock_in_period;
 
 pub use add_manager::*;
 pub use add_token::*;
@@ -39,6 +40,7 @@ pub use withdraw::*;
 pub use withdraw_in_deposit_token::*;
 pub use pause_deposits::*;
 pub use resume_deposits::*;
+pub use update_lock_in_period::*;
 
 #[cfg(test)]
 pub mod tests;

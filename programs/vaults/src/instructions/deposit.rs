@@ -9,8 +9,8 @@ use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
 use crate::state::{
-    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserWhitelist,
-    UserWhitelistError, Vault, VaultDepositFeeConfig, VaultDepositFeeConfigError, VaultError, VaultState,
+    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserDepositInfo,
+    UserWhitelist, UserWhitelistError, Vault, VaultDepositFeeConfig, VaultDepositFeeConfigError, VaultError, VaultState,
 };
 
 pub fn _deposit<'info>(
@@ -202,6 +202,21 @@ pub fn _deposit<'info>(
             "New depositor added. Total depositors: {}",
             ctx.accounts.vault.current_depositors
         );
+
+        // Initialize UserDepositInfo for new depositors
+        // Record the lock-in period that applies to this user (0 if None)
+        let lock_in_period = ctx.accounts.vault.lock_in_period_seconds.unwrap_or(0);
+        ctx.accounts.user_deposit_info.initialize(
+            ctx.accounts.user.key(),
+            ctx.accounts.vault.key(),
+            ctx.accounts.clock.unix_timestamp,
+            lock_in_period,
+            ctx.bumps.user_deposit_info,
+        );
+        msg!(
+            "User deposit info initialized with lock-in period: {} seconds",
+            lock_in_period
+        );
     }
 
     msg!("Deposit completed successfully");
@@ -323,6 +338,16 @@ pub struct Deposit<'info> {
         mut,
     )]
     pub platform_fee_recipient_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    // User deposit info (optional - only initialized for new depositors)
+    #[account(
+        init_if_needed,
+        payer = user,
+        space = UserDepositInfo::MAX_SPACE,
+        seeds = [UserDepositInfo::SEED, user.key().as_ref(), vault.key().as_ref()],
+        bump,
+    )]
+    pub user_deposit_info: Box<Account<'info, UserDepositInfo>>,
 
     pub clock: Sysvar<'info, Clock>,
     // Used for deposit token mint
