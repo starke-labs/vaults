@@ -32,7 +32,9 @@ impl ManagerWhitelist {
             ManagerWhitelistError::WhitelistFull
         );
 
-        self.managers.push(manager_pubkey);
+        self.managers
+            .resize(self.managers.len() + 1, manager_pubkey);
+
         Ok(())
     }
 

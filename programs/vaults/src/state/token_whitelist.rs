@@ -66,11 +66,15 @@ impl TokenWhitelist {
             TokenWhitelistError::WhitelistFull
         );
 
-        self.tokens.push(TokenInfo {
-            mint: token_mint,
-            price_feed_id,
-            price_update,
-        });
+        self.tokens.resize(
+            self.tokens.len() + 1,
+            TokenInfo {
+                mint: token_mint,
+                price_feed_id,
+                price_update,
+            },
+        );
+
         Ok(())
     }
 

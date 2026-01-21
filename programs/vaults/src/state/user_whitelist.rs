@@ -50,10 +50,13 @@ impl UserWhitelist {
             existing_user.investor_type = investor_type;
         } else {
             // Add new user
-            self.users.push(UserEntry {
-                user,
-                investor_type,
-            });
+            self.users.resize(
+                self.users.len() + 1,
+                UserEntry {
+                    user,
+                    investor_type,
+                },
+            );
         }
 
         Ok(())
