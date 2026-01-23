@@ -70,6 +70,7 @@ pub mod vaults {
         institutional_max_deposit: u32,
         performance_fees_rate: u16,
         lock_in_period_seconds: Option<u64>,
+        withdrawal_delay_seconds: u64,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -91,6 +92,7 @@ pub mod vaults {
             institutional_max_deposit,
             performance_fees_rate,
             lock_in_period_seconds,
+            withdrawal_delay_seconds,
         )
     }
 
@@ -110,6 +112,19 @@ pub mod vaults {
         amount: u64,
     ) -> Result<()> {
         _withdraw(ctx, amount)
+    }
+
+    pub fn request_withdrawal<'info>(
+        ctx: Context<'_, '_, 'info, 'info, RequestWithdrawal<'info>>,
+        amount: u64,
+    ) -> Result<()> {
+        _request_withdrawal(ctx, amount)
+    }
+
+    pub fn complete_withdrawal<'info>(
+        ctx: Context<'_, '_, 'info, 'info, CompleteWithdrawal<'info>>,
+    ) -> Result<()> {
+        _complete_withdrawal(ctx)
     }
 
     pub fn mint_management_fees(ctx: Context<MintManagementFees>) -> Result<()> {
@@ -173,6 +188,13 @@ pub mod vaults {
         lock_in_period_seconds: Option<u64>,
     ) -> Result<()> {
         _update_lock_in_period(ctx, lock_in_period_seconds)
+    }
+
+    pub fn update_withdrawal_delay(
+        ctx: Context<UpdateWithdrawalDelay>,
+        withdrawal_delay_seconds: u64,
+    ) -> Result<()> {
+        _update_withdrawal_delay(ctx, withdrawal_delay_seconds)
     }
 }
 

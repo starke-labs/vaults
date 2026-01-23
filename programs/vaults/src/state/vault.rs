@@ -63,6 +63,10 @@ pub struct Vault {
     // None = no lock-in period, Some(seconds) = lock-in duration in seconds
     // This can be updated by the manager, but only affects new investors
     pub lock_in_period_seconds: Option<u64>,
+
+    // Withdrawal delay in seconds. 0 = immediate withdrawal. If > 0, users must call
+    // request_withdrawal then complete_withdrawal after the delay.
+    pub withdrawal_delay_seconds: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Default)]
@@ -109,7 +113,8 @@ impl Vault {
         + 2  // performance_fees_rate (u16)
         + 8  // last_perf_fee_token_price (u64)
         + 8  // last_perf_fee_timestamp (i64)
-        + 9; // lock_in_period_seconds (Option<u64>)
+        + 9  // lock_in_period_seconds (Option<u64>)
+        + 8; // withdrawal_delay_seconds (u64)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -121,6 +126,9 @@ impl Vault {
     pub const LOCK_IN_3_MONTHS: u64 = 90 * 24 * 60 * 60;     // 90 days = 7,776,000 seconds
     pub const LOCK_IN_6_MONTHS: u64 = 180 * 24 * 60 * 60;    // 180 days = 15,552,000 seconds
     pub const LOCK_IN_1_YEAR: u64 = 365 * 24 * 60 * 60;      // 365 days = 31,536,000 seconds
+
+    // Max withdrawal delay (1 year)
+    pub const MAX_WITHDRAWAL_DELAY_SECONDS: u64 = 365 * 24 * 60 * 60;
 
     #[allow(clippy::too_many_arguments)]
     pub fn initialize(
@@ -145,6 +153,7 @@ impl Vault {
         institutional_max_deposit: u32,
         performance_fees_rate: u16,
         lock_in_period_seconds: Option<u64>,
+        withdrawal_delay_seconds: u64,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
@@ -168,6 +177,11 @@ impl Vault {
                 VaultError::InvalidLockInPeriod
             );
         }
+
+        require!(
+            withdrawal_delay_seconds <= Self::MAX_WITHDRAWAL_DELAY_SECONDS,
+            VaultError::InvalidWithdrawalDelay
+        );
 
         self.manager = manager;
         self.deposit_token_mint = deposit_token_mint;
@@ -207,6 +221,7 @@ impl Vault {
         };
         self.last_perf_fee_timestamp = 0;
         self.lock_in_period_seconds = lock_in_period_seconds;
+        self.withdrawal_delay_seconds = withdrawal_delay_seconds;
 
         Ok(())
     }
@@ -482,6 +497,14 @@ pub enum VaultError {
     UserDepositInfoNotFound,
     #[msg("Invalid lock-in period. Must be one of: 1 month, 3 months, 6 months, or 1 year")]
     InvalidLockInPeriod,
+    #[msg("Withdrawal delay is enabled for this vault. Use request_withdrawal and complete_withdrawal.")]
+    WithdrawalDelayRequired,
+    #[msg("Withdrawal delay has not expired yet")]
+    WithdrawalDelayNotExpired,
+    #[msg("No pending withdrawal request found")]
+    WithdrawalRequestNotFound,
+    #[msg("Invalid withdrawal delay. Must be between 0 and 1 year (in seconds).")]
+    InvalidWithdrawalDelay,
 }
 
 #[error_code]

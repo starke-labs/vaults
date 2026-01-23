@@ -19,6 +19,11 @@ pub fn _withdraw_in_deposit_token<'info>(
         StarkeConfigError::StarkePaused
     );
 
+    require!(
+        ctx.accounts.vault.withdrawal_delay_seconds == 0,
+        VaultError::WithdrawalDelayRequired
+    );
+
     // Amount should be greater than 0
     require!(amount > 0, VaultError::InvalidAmount);
 

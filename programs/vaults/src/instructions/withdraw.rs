@@ -19,6 +19,11 @@ pub fn _withdraw<'info>(
         StarkeConfigError::StarkePaused
     );
 
+    require!(
+        ctx.accounts.vault.withdrawal_delay_seconds == 0,
+        VaultError::WithdrawalDelayRequired
+    );
+
     msg!("Processing withdrawal request of {} vtokens", amount);
     msg!("User: {}", ctx.accounts.user.key());
     msg!("Vault: {}", ctx.accounts.vault.key());
