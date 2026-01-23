@@ -52,6 +52,21 @@ pub struct Vault {
     // Deposit configuration (0 = no maximum)
     pub individual_max_deposit: u32, // For retail/accredited investors, 0 = no minimum
     pub institutional_max_deposit: u32, // For institutional/qualified investors, 0 = no minimum
+
+    // Performance Fee Configuration
+    pub performance_fees_rate: u16, // in basis points (1000 = 10%), 0 means disabled
+    // High-Water Mark Tracking
+    pub last_perf_fee_token_price: u64, // token price (in AUM_DECIMALS) when last performance fee was taken, 0 means never
+    pub last_perf_fee_timestamp: i64,    // timestamp when last performance fee was taken, 0 means never
+
+    // Lock-in Period Configuration
+    // None = no lock-in period, Some(seconds) = lock-in duration in seconds
+    // This can be updated by the manager, but only affects new investors
+    pub lock_in_period_seconds: Option<u64>,
+
+    // Withdrawal delay in seconds. 0 = immediate withdrawal. If > 0, users must call
+    // request_withdrawal then complete_withdrawal after the delay.
+    pub withdrawal_delay_seconds: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Default)]
@@ -94,11 +109,26 @@ impl Vault {
         + 2  // management_fees_rate (u16)
         + 1  // state (u8)
         + 4  // individual_max_deposit (u32)
-        + 4; // institutional_max_deposit (u32)
+        + 4  // institutional_max_deposit (u32)
+        + 2  // performance_fees_rate (u16)
+        + 8  // last_perf_fee_token_price (u64)
+        + 8  // last_perf_fee_timestamp (i64)
+        + 9  // lock_in_period_seconds (Option<u64>)
+        + 8; // withdrawal_delay_seconds (u64)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
     pub const MAX_MANAGEMENT_FEE_RATE: u16 = 10000;
+    pub const MAX_PERFORMANCE_FEE_RATE: u16 = 10000; // 100% max (in basis points)
+
+    // Lock-in period constants (in seconds)
+    pub const LOCK_IN_1_MONTH: u64 = 30 * 24 * 60 * 60;      // 30 days = 2,592,000 seconds
+    pub const LOCK_IN_3_MONTHS: u64 = 90 * 24 * 60 * 60;     // 90 days = 7,776,000 seconds
+    pub const LOCK_IN_6_MONTHS: u64 = 180 * 24 * 60 * 60;    // 180 days = 15,552,000 seconds
+    pub const LOCK_IN_1_YEAR: u64 = 365 * 24 * 60 * 60;      // 365 days = 31,536,000 seconds
+
+    // Max withdrawal delay (1 year)
+    pub const MAX_WITHDRAWAL_DELAY_SECONDS: u64 = 365 * 24 * 60 * 60;
 
     #[allow(clippy::too_many_arguments)]
     pub fn initialize(
@@ -121,6 +151,9 @@ impl Vault {
         management_fees_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        performance_fees_rate: u16,
+        lock_in_period_seconds: Option<u64>,
+        withdrawal_delay_seconds: u64,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
@@ -128,6 +161,26 @@ impl Vault {
         require!(
             management_fees_rate <= Self::MAX_MANAGEMENT_FEE_RATE,
             VaultError::InvalidFee
+        );
+        require!(
+            performance_fees_rate <= Self::MAX_PERFORMANCE_FEE_RATE,
+            VaultError::InvalidFee
+        );
+
+        // Validate lock-in period if provided (must be one of the allowed periods)
+        if let Some(lock_in) = lock_in_period_seconds {
+            require!(
+                lock_in == Self::LOCK_IN_1_MONTH
+                    || lock_in == Self::LOCK_IN_3_MONTHS
+                    || lock_in == Self::LOCK_IN_6_MONTHS
+                    || lock_in == Self::LOCK_IN_1_YEAR,
+                VaultError::InvalidLockInPeriod
+            );
+        }
+
+        require!(
+            withdrawal_delay_seconds <= Self::MAX_WITHDRAWAL_DELAY_SECONDS,
+            VaultError::InvalidWithdrawalDelay
         );
 
         self.manager = manager;
@@ -155,6 +208,20 @@ impl Vault {
         self.management_fees_rate = management_fees_rate;
         self.individual_max_deposit = individual_max_deposit;
         self.institutional_max_deposit = institutional_max_deposit;
+        self.performance_fees_rate = performance_fees_rate;
+        // Initialize high-water mark to initial token price (converted to AUM_DECIMALS)
+        // If performance fee is disabled (rate = 0), we can leave it at 0
+        self.last_perf_fee_token_price = if performance_fees_rate > 0 {
+            // Convert initial_vtoken_price (u32) to AUM_DECIMALS (u64)
+            // Assuming initial_vtoken_price is in some base units, we need to scale it
+            // For now, we'll set it to 0 and let the first performance fee calculation set it properly
+            0
+        } else {
+            0
+        };
+        self.last_perf_fee_timestamp = 0;
+        self.lock_in_period_seconds = lock_in_period_seconds;
+        self.withdrawal_delay_seconds = withdrawal_delay_seconds;
 
         Ok(())
     }
@@ -424,6 +491,20 @@ pub enum VaultError {
     DepositsPaused,
     #[msg("Deposit amount is above maximum")]
     DepositAboveMaximum,
+    #[msg("Lock-in period has not expired yet")]
+    LockInPeriodNotExpired,
+    #[msg("User deposit info not found")]
+    UserDepositInfoNotFound,
+    #[msg("Invalid lock-in period. Must be one of: 1 month, 3 months, 6 months, or 1 year")]
+    InvalidLockInPeriod,
+    #[msg("Withdrawal delay is enabled for this vault. Use request_withdrawal and complete_withdrawal.")]
+    WithdrawalDelayRequired,
+    #[msg("Withdrawal delay has not expired yet")]
+    WithdrawalDelayNotExpired,
+    #[msg("No pending withdrawal request found")]
+    WithdrawalRequestNotFound,
+    #[msg("Invalid withdrawal delay. Must be between 0 and 1 year (in seconds).")]
+    InvalidWithdrawalDelay,
 }
 
 #[error_code]

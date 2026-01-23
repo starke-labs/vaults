@@ -6,7 +6,7 @@ use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::constants::STARKE_AUTHORITY;
 use crate::controllers::{burn_vtoken, withdraw_all_tokens};
 use crate::state::{
-    StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault, VaultError,
+    StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserDepositInfo, Vault, VaultError,
     Withdrawn,
 };
 
@@ -19,6 +19,11 @@ pub fn _withdraw<'info>(
         StarkeConfigError::StarkePaused
     );
 
+    require!(
+        ctx.accounts.vault.withdrawal_delay_seconds == 0,
+        VaultError::WithdrawalDelayRequired
+    );
+
     msg!("Processing withdrawal request of {} vtokens", amount);
     msg!("User: {}", ctx.accounts.user.key());
     msg!("Vault: {}", ctx.accounts.vault.key());
@@ -26,6 +31,32 @@ pub fn _withdraw<'info>(
 
     // Amount should be greater than 0
     require!(amount > 0, VaultError::InvalidAmount);
+
+    // Check if lock-in period has expired (only if UserDepositInfo exists)
+    // If it doesn't exist, the user deposited before this feature was implemented, so no lock-in applies
+    if !ctx.accounts.user_deposit_info.data_is_empty() {
+        match UserDepositInfo::try_deserialize(&mut &ctx.accounts.user_deposit_info.data.borrow()[..]) {
+            Ok(user_deposit_info) => {
+                if !user_deposit_info.is_lock_in_expired(ctx.accounts.clock.unix_timestamp) {
+                    let elapsed = ctx.accounts.clock.unix_timestamp
+                        .checked_sub(user_deposit_info.first_deposit_timestamp)
+                        .unwrap_or(0);
+                    let remaining = user_deposit_info.lock_in_period_seconds as i64 - elapsed;
+                    msg!(
+                        "Lock-in period not expired. Remaining: {} seconds",
+                        remaining
+                    );
+                    return Err(VaultError::LockInPeriodNotExpired.into());
+                }
+            }
+            Err(_) => {
+                // Account exists but can't be deserialized - treat as no lock-in for safety
+                msg!("UserDepositInfo exists but deserialization failed - allowing withdrawal");
+            }
+        }
+    } else {
+        msg!("UserDepositInfo not found - user deposited before lock-in feature, allowing withdrawal");
+    }
 
     let manager = ctx.accounts.manager.key();
     let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
@@ -137,6 +168,11 @@ pub struct Withdraw<'info> {
         bump = starke_config.bump,
     )]
     pub starke_config: Box<Account<'info, StarkeConfig>>,
+
+    // User deposit info (to check lock-in period)
+    // Optional - may not exist for users who deposited before this feature was implemented
+    /// CHECK: Account may not exist or be uninitialized, we check in the function
+    pub user_deposit_info: UncheckedAccount<'info>,
 
     pub clock: Sysvar<'info, Clock>,
     pub token_2022_program: Program<'info, Token2022>,

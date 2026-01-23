@@ -9,8 +9,8 @@ use crate::controllers::{
     calculate_deposit_token_value, calculate_vtokens_to_mint, mint_vtoken, transfer_token,
 };
 use crate::state::{
-    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserWhitelist,
-    UserWhitelistError, Vault, VaultError, VaultState,
+    Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserDepositInfo,
+    UserWhitelist, UserWhitelistError, Vault, VaultDepositFeeConfig, VaultDepositFeeConfigError, VaultError, VaultState,
 };
 
 pub fn _deposit<'info>(
@@ -59,6 +59,65 @@ pub fn _deposit<'info>(
         .vault
         .validate_max_depositors(is_new_depositor)?;
 
+    // Calculate deposit fee if enabled
+    // First, verify the deposit_fee_config PDA if it exists
+    let (fee_amount, net_deposit_amount, fee_recipient) = {
+        let expected_pda = Pubkey::find_program_address(
+            &[VaultDepositFeeConfig::SEED, ctx.accounts.vault.key().as_ref()],
+            ctx.program_id,
+        );
+        
+        if ctx.accounts.deposit_fee_config.key() != expected_pda.0 {
+            // Account doesn't exist or is wrong address
+            msg!("Deposit fee config not found at expected PDA");
+            (0, amount, None)
+        } else if ctx.accounts.deposit_fee_config.data_is_empty() {
+            msg!("Deposit fee config not initialized");
+            (0, amount, None)
+        } else {
+            match VaultDepositFeeConfig::try_deserialize(
+                &mut &ctx.accounts.deposit_fee_config.data.borrow()[..],
+            ) {
+                Ok(fee_config) => {
+                    if fee_config.is_initialized() && fee_config.enabled {
+                        // Validate that the platform fee recipient token account matches the config
+                        require_keys_eq!(
+                            ctx.accounts.platform_fee_recipient_token_account.owner,
+                            fee_config.platform_fee_recipient,
+                            VaultDepositFeeConfigError::PlatformFeeRecipientMismatch
+                        );
+                        // Validate that the token account mint matches the deposit token mint
+                        require_keys_eq!(
+                            ctx.accounts.platform_fee_recipient_token_account.mint,
+                            ctx.accounts.deposit_token_mint.key(),
+                            VaultDepositFeeConfigError::PlatformFeeRecipientMismatch
+                        );
+                        
+                        let fee = fee_config.calculate_fee_amount(amount)?;
+                        // Defensive check: fee should never exceed deposit amount
+                        // This would only happen if fee_rate > 10000, which is prevented at initialization
+                        require!(
+                            fee <= amount,
+                            VaultDepositFeeConfigError::InvalidFeeRate
+                        );
+                        let net = amount - fee;
+                        msg!("Deposit fee enabled: fee_amount={}, net_deposit_amount={}, recipient={}", 
+                             fee, net, fee_config.platform_fee_recipient);
+                        (fee, net, Some(fee_config.platform_fee_recipient))
+                    } else {
+                        msg!("Deposit fee not enabled or not configured");
+                        (0, amount, None)
+                    }
+                }
+                Err(_) => {
+                    // Account exists but can't be deserialized (shouldn't happen)
+                    msg!("Deposit fee config exists but deserialization failed");
+                    (0, amount, None)
+                }
+            }
+        }
+    };
+
     // Calculate the total AUM using vault's get_aum function
     let total_aum = ctx.accounts.vault.get_aum(
         ctx.remaining_accounts,
@@ -67,15 +126,15 @@ pub fn _deposit<'info>(
     )?;
     msg!("Vault AUM: {}", total_aum);
 
-    // Calculate the USD value of deposit tokens
+    // Calculate the USD value of deposit tokens (using net deposit amount after fee)
     let deposit_value = calculate_deposit_token_value(
         &ctx.accounts.token_whitelist,
         ctx.accounts.deposit_token_mint.key(),
         ctx.accounts.deposit_token_mint.decimals,
-        amount,
+        net_deposit_amount,
         &ctx.accounts.deposit_token_price_update,
     )?;
-    msg!("Deposit value: {}", deposit_value);
+    msg!("Deposit value (net after fee): {}", deposit_value);
 
     // Validate max AUM for private vaults
     ctx.accounts
@@ -91,18 +150,35 @@ pub fn _deposit<'info>(
     )?;
     msg!("Vtokens to mint: {}", vtokens_to_mint);
 
-    // Transfer deposit tokens from depositor to vault
+    // Transfer deposit fee to platform if enabled
+    if fee_amount > 0 && fee_recipient.is_some() {
+        transfer_token(
+            &ctx.accounts.user_deposit_token_account,
+            &ctx.accounts.platform_fee_recipient_token_account,
+            fee_amount,
+            &ctx.accounts.deposit_token_mint,
+            &ctx.accounts.user,
+            &ctx.accounts.token_program,
+        )?;
+        msg!(
+            "{} tokens transferred as fee to platform recipient: {}",
+            fee_amount,
+            ctx.accounts.platform_fee_recipient_token_account.key()
+        );
+    }
+
+    // Transfer net deposit tokens from depositor to vault (amount after fee)
     transfer_token(
         &ctx.accounts.user_deposit_token_account,
         &ctx.accounts.vault_deposit_token_account,
-        amount,
+        net_deposit_amount,
         &ctx.accounts.deposit_token_mint,
         &ctx.accounts.user,
         &ctx.accounts.token_program,
     )?;
     msg!(
-        "{} tokens transferred from user to vault successfully",
-        amount
+        "{} tokens (net after fee) transferred from user to vault successfully",
+        net_deposit_amount
     );
 
     // Mint vtokens to depositor
@@ -125,6 +201,21 @@ pub fn _deposit<'info>(
         msg!(
             "New depositor added. Total depositors: {}",
             ctx.accounts.vault.current_depositors
+        );
+
+        // Initialize UserDepositInfo for new depositors
+        // Record the lock-in period that applies to this user (0 if None)
+        let lock_in_period = ctx.accounts.vault.lock_in_period_seconds.unwrap_or(0);
+        ctx.accounts.user_deposit_info.initialize(
+            ctx.accounts.user.key(),
+            ctx.accounts.vault.key(),
+            ctx.accounts.clock.unix_timestamp,
+            lock_in_period,
+            ctx.bumps.user_deposit_info,
+        );
+        msg!(
+            "User deposit info initialized with lock-in period: {} seconds",
+            lock_in_period
         );
     }
 
@@ -236,6 +327,27 @@ pub struct Deposit<'info> {
         bump = starke_config.bump,
     )]
     pub starke_config: Box<Account<'info, StarkeConfig>>,
+
+    // Deposit fee config (optional - can be uninitialized or not exist)
+    /// CHECK: Account may not exist or be uninitialized, we check in the function
+    pub deposit_fee_config: UncheckedAccount<'info>,
+
+    // Platform fee recipient token account (required but only used if fee is enabled)
+    /// CHECK: Account is validated in the function to match the fee config's recipient
+    #[account(
+        mut,
+    )]
+    pub platform_fee_recipient_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    // User deposit info (optional - only initialized for new depositors)
+    #[account(
+        init_if_needed,
+        payer = user,
+        space = UserDepositInfo::MAX_SPACE,
+        seeds = [UserDepositInfo::SEED, user.key().as_ref(), vault.key().as_ref()],
+        bump,
+    )]
+    pub user_deposit_info: Box<Account<'info, UserDepositInfo>>,
 
     pub clock: Sysvar<'info, Clock>,
     // Used for deposit token mint
