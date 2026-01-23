@@ -1274,6 +1274,13 @@
           }
         },
         {
+          "name": "deposit_fee_config"
+        },
+        {
+          "name": "platform_fee_recipient_token_account",
+          "writable": true
+        },
+        {
           "name": "clock",
           "address": "SysvarC1ock11111111111111111111111111111111"
         },
@@ -1299,6 +1306,244 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "disable_vault_deposit_fee",
+      "discriminator": [
+        220,
+        186,
+        64,
+        209,
+        58,
+        219,
+        233,
+        41
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_fee_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  86,
+                  65,
+                  85,
+                  76,
+                  84,
+                  95,
+                  68,
+                  69,
+                  80,
+                  79,
+                  83,
+                  73,
+                  84,
+                  95,
+                  70,
+                  69,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "enable_vault_deposit_fee",
+      "discriminator": [
+        14,
+        148,
+        65,
+        51,
+        13,
+        151,
+        65,
+        193
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_fee_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  86,
+                  65,
+                  85,
+                  76,
+                  84,
+                  95,
+                  68,
+                  69,
+                  80,
+                  79,
+                  83,
+                  73,
+                  84,
+                  95,
+                  70,
+                  69,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
     },
     {
       "name": "initialize_starke",
@@ -2106,6 +2351,142 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "set_vault_deposit_fee",
+      "discriminator": [
+        147,
+        224,
+        129,
+        74,
+        75,
+        13,
+        63,
+        136
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_fee_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  86,
+                  65,
+                  85,
+                  76,
+                  84,
+                  95,
+                  68,
+                  69,
+                  80,
+                  79,
+                  83,
+                  73,
+                  84,
+                  95,
+                  70,
+                  69,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "name": "fee_rate",
+          "type": "u16"
+        },
+        {
+          "name": "platform_fee_recipient",
+          "type": "pubkey"
+        }
+      ]
     },
     {
       "name": "swap_on_jupiter",
@@ -3370,6 +3751,19 @@
         117,
         119
       ]
+    },
+    {
+      "name": "VaultDepositFeeConfig",
+      "discriminator": [
+        235,
+        114,
+        21,
+        76,
+        119,
+        130,
+        243,
+        246
+      ]
     }
   ],
   "events": [
@@ -4153,18 +4547,29 @@
       }
     },
     {
-      "name": "VaultState",
-      "repr": {
-        "kind": "rust"
-      },
+      "name": "VaultDepositFeeConfig",
       "type": {
-        "kind": "enum",
-        "variants": [
+        "kind": "struct",
+        "fields": [
           {
-            "name": "Active"
+            "name": "vault",
+            "type": "pubkey"
           },
           {
-            "name": "DepositPaused"
+            "name": "enabled",
+            "type": "bool"
+          },
+          {
+            "name": "fee_rate",
+            "type": "u16"
+          },
+          {
+            "name": "platform_fee_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

@@ -36,6 +36,8 @@ pub fn _create_vault(
     management_fee_rate: u16,
     individual_max_deposit: u32,
     institutional_max_deposit: u32,
+    performance_fees_rate: u16,
+    lock_in_period_seconds: Option<u64>,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -141,6 +143,8 @@ pub fn _create_vault(
         management_fee_rate,
         individual_max_deposit,
         institutional_max_deposit,
+        performance_fees_rate,
+        lock_in_period_seconds,
     )?;
 
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());

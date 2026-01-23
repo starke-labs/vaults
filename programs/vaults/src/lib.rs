@@ -68,6 +68,8 @@ pub mod vaults {
         management_fee_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        performance_fees_rate: u16,
+        lock_in_period_seconds: Option<u64>,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -87,6 +89,8 @@ pub mod vaults {
             management_fee_rate,
             individual_max_deposit,
             institutional_max_deposit,
+            performance_fees_rate,
+            lock_in_period_seconds,
         )
     }
 
@@ -110,6 +114,12 @@ pub mod vaults {
 
     pub fn mint_management_fees(ctx: Context<MintManagementFees>) -> Result<()> {
         _mint_management_fees(ctx)
+    }
+
+    pub fn mint_performance_fees<'info>(
+        ctx: Context<'_, '_, 'info, 'info, MintPerformanceFees<'info>>,
+    ) -> Result<()> {
+        _mint_performance_fees(ctx)
     }
     pub fn withdraw_in_deposit_token<'info>(
         ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,
@@ -141,12 +151,28 @@ pub mod vaults {
         _remove_user(ctx, user)
     }
 
-    pub fn pause_deposits(ctx: Context<PauseDeposits>) -> Result<()> {
-        _pause_deposits(ctx)
+    pub fn set_vault_deposit_fee(
+        ctx: Context<SetVaultDepositFee>,
+        enabled: bool,
+        fee_rate: u16,
+        platform_fee_recipient: Pubkey,
+    ) -> Result<()> {
+        _set_vault_deposit_fee(ctx, enabled, fee_rate, platform_fee_recipient)
     }
 
-    pub fn resume_deposits(ctx: Context<ResumeDeposits>) -> Result<()> {
-        _resume_deposits(ctx)
+    pub fn enable_vault_deposit_fee(ctx: Context<EnableOrDisableVaultDepositFee>) -> Result<()> {
+        _enable_vault_deposit_fee(ctx)
+    }
+
+    pub fn disable_vault_deposit_fee(ctx: Context<EnableOrDisableVaultDepositFee>) -> Result<()> {
+        _disable_vault_deposit_fee(ctx)
+    }
+
+    pub fn update_lock_in_period(
+        ctx: Context<UpdateLockInPeriod>,
+        lock_in_period_seconds: Option<u64>,
+    ) -> Result<()> {
+        _update_lock_in_period(ctx, lock_in_period_seconds)
     }
 }
 
