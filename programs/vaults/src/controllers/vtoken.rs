@@ -52,7 +52,7 @@ pub fn calculate_vtokens_to_mint(
     vtoken_supply: u64,
     initial_vtoken_price: u32,
 ) -> Result<u64> {
-    if vtoken_supply == 0 {
+    if vtoken_supply == 0 || total_aum == 0 {
         // Initial deposit
 
         // NOTE: Added initial_vtoken_price
