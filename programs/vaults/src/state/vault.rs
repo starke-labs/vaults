@@ -185,18 +185,15 @@ impl Vault {
         Ok(aum)
     }
 
-    /// Assets under management and vault's deposit token balance in USD
+    /// Assets under management and vault's deposit token price in USD
     pub fn get_aum_with_deposit<'info>(
         &self,
         remaining_accounts: &'info [AccountInfo<'info>],
         whitelist: &Account<'info, TokenWhitelist>,
         vault_key: &Pubkey,
-    ) -> (Result<u64>, Option<u64>) {
-        let vault_balances = match parse_vault_balances(remaining_accounts, whitelist, vault_key) {
-            Ok(v) => v,
-            Err(e) => return (Err(e), None),
-        };
-        let mut deposit_value = None;
+    ) -> Result<(u64, Option<u64>)> {
+        let vault_balances = parse_vault_balances(remaining_accounts, whitelist, vault_key)?;
+        let mut deposit_price = None;
         let aum = vault_balances
             .iter()
             .map(|b| {
@@ -214,13 +211,15 @@ impl Vault {
                     price_in_aum_decimals,
                 );
                 if b.token_mint == self.deposit_token_mint {
-                    deposit_value = value.as_ref().ok().copied();
+                    // Return value of 1 token, to maintain price consistency
+                    deposit_price =
+                        compute_token_value_usd(1, b.token_decimals, price_in_aum_decimals).ok();
                 }
                 value
             })
             .sum::<Result<u64>>();
 
-        (aum, deposit_value)
+        Ok((aum?, deposit_price))
     }
 
     /// Validates if the vault can accept more deposits based on max AUM limit
@@ -424,6 +423,10 @@ pub enum VaultError {
     DepositsPaused,
     #[msg("Deposit amount is above maximum")]
     DepositAboveMaximum,
+    #[msg("Withdraw amount too small.")]
+    WithdrawAmountTooSmall,
+    #[msg("Deposit token supply is zero.")]
+    DepositTokenSupplyZero,
 }
 
 #[error_code]

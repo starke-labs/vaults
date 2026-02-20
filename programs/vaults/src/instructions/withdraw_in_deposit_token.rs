@@ -12,66 +12,74 @@ use crate::state::{
 
 pub fn _withdraw_in_deposit_token<'info>(
     ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositToken<'info>>,
-    amount: u64,
+    vtoken_amount: u64,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
         StarkeConfigError::StarkePaused
     );
 
-    // Amount should be greater than 0
-    require!(amount > 0, VaultError::InvalidAmount);
+    // Withdraw amount should be greater than 0
+    require!(vtoken_amount > 0, VaultError::InvalidAmount);
 
     msg!(
-        "Processing withdrawal for {} vtokens | User: {}, Vault: {}, Vtoken mint: {}",
-        amount,
+        "Processing withdrawal in deposit token for {} vtokens | User: {}, Vault: {}, Vtoken mint: {}",
+        vtoken_amount,
         ctx.accounts.user.key(),
         ctx.accounts.vault.key(),
         ctx.accounts.vtoken_mint.key()
     );
 
-    let (total_aum, deposit_token_value) = match ctx.accounts.vault.get_aum_with_deposit(
+    let (total_aum, deposit_price) = match ctx.accounts.vault.get_aum_with_deposit(
         ctx.remaining_accounts,
         &ctx.accounts.token_whitelist,
         &ctx.accounts.vault.key(),
     ) {
-        (Ok(v), Some(d)) => (v, d),
-        (Err(e), _) => return Err(e),
-        (_, None) => return err!(VaultError::InsufficientFunds),
+        Ok((aum, Some(price))) => (aum, price),
+        Ok((_, None)) => return err!(VaultError::InsufficientFunds),
+        Err(e) => return Err(e),
     };
-    let vtoken_price = total_aum.saturating_div(ctx.accounts.vtoken_mint.supply);
-    let transfer_deposit_token_amount = amount
-        .checked_mul(vtoken_price)
+
+    let vtoken_supply = ctx.accounts.vtoken_mint.supply;
+    require!(vtoken_supply > 0, VaultError::DepositTokenSupplyZero);
+
+    // vtoken_price_usd = aum_usd / vtoken_supply
+    // Therefore, withdraw_amt_in_usd = vtoken_amount_to_withdraw * vtoken_price_usd
+    let withdrawal_value = (vtoken_amount as u128)
+        .checked_mul(total_aum as u128)
         .ok_or(VaultError::NumericOverflow)?
-        .checked_div(deposit_token_value)
+        .checked_div(vtoken_supply as u128)
         .ok_or(VaultError::NumericOverflow)?;
-    // Insufficient deposit token amount to withdraw
+
+    // deposit_token_amount = USD value to be withdrawn / USD price of deposit token
+    let transfer_deposit_token_amount = withdrawal_value
+        .checked_div(deposit_price as u128)
+        .ok_or(VaultError::NumericOverflow)? as u64;
+
+    require!(transfer_deposit_token_amount > 0, VaultError::InvalidAmount);
     require!(
-        amount
-            .checked_mul(vtoken_price)
-            .is_some_and(|v| v <= deposit_token_value),
+        ctx.accounts.vault_deposit_token_account.amount >= transfer_deposit_token_amount,
         VaultError::InsufficientFunds
     );
 
     let manager = ctx.accounts.manager.key();
     let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
 
-    // Check if user will have zero vtokens after withdrawal (becoming a non-depositor)
     let user_balance_before = ctx.accounts.user_vtoken_account.amount;
-    let will_be_zero_balance = user_balance_before == amount;
+    let will_be_zero_balance = user_balance_before == vtoken_amount;
 
-    // Burn vtokens from depositor
+    // Burn vtokens
     burn_vtoken(
         &ctx.accounts.user,
         &ctx.accounts.vtoken_mint,
         &ctx.accounts.user_vtoken_account,
-        amount,
+        vtoken_amount,
         signer_seeds,
         &ctx.accounts.token_2022_program,
     )?;
-    msg!("{} vtokens burned successfully", amount);
 
-    // Decrement depositor count if user withdrew all their tokens
+    msg!("{} vtokens burned successfully", vtoken_amount);
+
     if will_be_zero_balance {
         ctx.accounts.vault.decrement_depositor_count()?;
         msg!(
@@ -80,6 +88,7 @@ pub fn _withdraw_in_deposit_token<'info>(
         );
     }
 
+    // Transfer deposit tokens
     transfer_token_with_signer(
         &ctx.accounts.vault_deposit_token_account,
         &ctx.accounts.user_deposit_token_account,
@@ -90,15 +99,19 @@ pub fn _withdraw_in_deposit_token<'info>(
         &ctx.accounts.token_program,
     )?;
 
-    msg!("Withdrawal completed successfully");
+    msg!(
+        "Withdrawal completed. User received {} deposit tokens",
+        transfer_deposit_token_amount
+    );
 
     emit!(WithdrawnInDepositToken {
         vault: ctx.accounts.vault.key(),
         user: ctx.accounts.user.key(),
         vtoken_mint: ctx.accounts.vtoken_mint.key(),
-        vtoken_burned_amount: amount,
-        // TODO: Check if this is correct
-        new_vtoken_supply: ctx.accounts.vtoken_mint.supply.checked_sub(amount).unwrap(),
+        vtoken_burned_amount: vtoken_amount,
+        new_vtoken_supply: vtoken_supply
+            .checked_sub(vtoken_amount)
+            .ok_or(VaultError::NumericOverflow)?,
         timestamp: ctx.accounts.clock.unix_timestamp,
         deposit_token_mint: ctx.accounts.deposit_token_mint.key(),
     });

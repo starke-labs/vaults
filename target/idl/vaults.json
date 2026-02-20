@@ -3639,6 +3639,16 @@
       "code": 6026,
       "name": "DepositAboveMaximum",
       "msg": "Deposit amount is above maximum"
+    },
+    {
+      "code": 6027,
+      "name": "WithdrawAmountTooSmall",
+      "msg": "Withdraw amount too small."
+    },
+    {
+      "code": 6028,
+      "name": "DepositTokenSupplyZero",
+      "msg": "Deposit token supply is zero."
     }
   ],
   "types": [
