@@ -2441,6 +2441,9 @@
           "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
         },
         {
+          "name": "manager"
+        },
+        {
           "name": "vault",
           "pda": {
             "seeds": [
@@ -2463,7 +2466,7 @@
               },
               {
                 "kind": "account",
-                "path": "starke_authority"
+                "path": "manager"
               }
             ]
           }

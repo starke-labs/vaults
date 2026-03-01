@@ -61,9 +61,9 @@ pub fn _swap_to_deposit_token_on_jupiter(
         .collect();
     msg!("Account infos prepared: {} accounts", accounts_infos.len());
 
-    let authority = ctx.accounts.starke_authority.key();
+    let manager = ctx.accounts.manager.key();
     let signer_seeds: &[&[&[u8]]] =
-        &[&[Vault::SEED, authority.as_ref(), &[ctx.accounts.vault.bump]]];
+        &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
 
     invoke_signed(
         &Instruction {
@@ -85,9 +85,13 @@ pub struct SwapToDepositTokenOnJupiter<'info> {
     #[account(mut, address = STARKE_AUTHORITY @ VaultError::Unauthorized)]
     pub starke_authority: Signer<'info>,
 
+    /// CHECK: Manager is not validated directly; it is used as a seed for the vault PDA,
+    /// so passing an incorrect manager will cause the vault seeds constraint to fail.
+    pub manager: UncheckedAccount<'info>,
+
     // Vault
     #[account(
-        seeds = [Vault::SEED, starke_authority.key().as_ref()],
+        seeds = [Vault::SEED, manager.key().as_ref()],
         bump = vault.bump,
     )]
     pub vault: Box<Account<'info, Vault>>,
