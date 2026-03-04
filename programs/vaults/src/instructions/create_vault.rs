@@ -143,6 +143,7 @@ pub fn _create_vault(
         institutional_max_deposit,
     )?;
 
+    // Create fund page in the app relies on this log message (DON'T CHANGE OR REMOVE)
     msg!("Successfully created vault: {}", ctx.accounts.vault.key());
 
     emit!(VaultCreated {
