@@ -27,6 +27,7 @@ impl StarkeConfig {
 pub enum StarkeConfigError {
     #[msg("Unauthorized")]
     Unauthorized,
+    // App server relies on this log message (DON'T CHANGE OR REMOVE)
     #[msg("Starke is paused")]
     StarkePaused,
 }
