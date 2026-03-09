@@ -26,6 +26,7 @@ export const STARKE_CONFIG_SEED = "STARKE_CONFIG";
 export const VAULT_SEED = "STARKE_VAULT";
 export const VTOKEN_MINT_SEED = "STARKE_VTOKEN_MINT";
 export const VTOKEN_CONFIG_SEED = "STARKE_VTOKEN_CONFIG";
+export const VAULT_DEPOSIT_FEE_CONFIG_SEED = "VAULT_DEPOSIT_FEE_CONFIG";
 export const METADATA_SEED = "metadata";
 export const EXTRA_ACCOUNT_METAS_SEED = "extra-account-metas";
 // PDAs
@@ -67,6 +68,15 @@ export function getVaultPda(manager: PublicKey): [PublicKey, number] {
 export function getVtokenMintPda(vault: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from(VTOKEN_MINT_SEED), vault.toBuffer()],
+    VAULTS_PROGRAM_ID
+  );
+}
+
+export function getVaultDepositFeeConfigPda(
+  vault: PublicKey
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(VAULT_DEPOSIT_FEE_CONFIG_SEED), vault.toBuffer()],
     VAULTS_PROGRAM_ID
   );
 }
