@@ -44,6 +44,16 @@ pub struct ManagementFeeMinted {
 }
 
 #[event]
+pub struct PlatformFeeMinted {
+    pub vault: Pubkey,
+    pub recipient: Pubkey,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_fee_amount: u64,
+    pub new_vtoken_supply: u64,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct WithdrawnInDepositToken {
     pub vault: Pubkey,
     pub user: Pubkey,

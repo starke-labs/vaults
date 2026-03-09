@@ -429,6 +429,7 @@ export class VaultsSdk {
     maxDepositors?: number, // u32, 0 = unlimited, optional defaults to 0
     individualMaxDeposit?: number, // u32, 0 = no maximum, optional defaults to 0
     institutionalMaxDeposit?: number, // u32, 0 = no maximum, optional defaults to 0
+    platformFeeRate?: number, // u16, 0-10000 bps, optional defaults to 0
     signers: (Keypair | Signer)[] = [],
   ): Promise<TransactionSignature> {
     // No validation needed - max_allowed_aum can be set or not set for any vault
@@ -441,6 +442,7 @@ export class VaultsSdk {
     const finalIndividualMaxDeposit = individualMaxDeposit ?? 0;
     const finalInstitutionalMaxDeposit = institutionalMaxDeposit ?? 0;
     const finalMaxDepositors = maxDepositors ?? 0;
+    const finalPlatformFeeRate = platformFeeRate ?? 0;
 
     const tx = await this.program.methods
       .createVault(
@@ -457,8 +459,10 @@ export class VaultsSdk {
         finalInstitutionalMinDeposit,
         finalMaxDepositors,
         initialVtokenPrice,
+        0, // management_fee_rate - hardcoded to 0 for now
         finalIndividualMaxDeposit,
         finalInstitutionalMaxDeposit,
+        finalPlatformFeeRate,
       )
       .accounts({
         manager,
@@ -955,6 +959,47 @@ export class VaultsSdk {
       })
       .transaction();
     tx.feePayer = manager;
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  }
+
+  async updatePlatformFees(
+    vaultManager: PublicKey,
+    newPlatformFeesRate: number,
+    signers: (Keypair | Signer)[] = [],
+  ): Promise<TransactionSignature> {
+    await this.fetchVault(vaultManager);
+    const tx = await this.program.methods
+      .updatePlatformFees(vaultManager, newPlatformFeesRate)
+      .accounts({
+        authority: AUTHORITY_PROGRAM_ID,
+      })
+      .transaction();
+    tx.feePayer = this.provider.wallet.publicKey;
+    try {
+      return await sendAndConfirmWithRetry(this.provider, tx, signers);
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  }
+
+  async mintPlatformFees(
+    manager: PublicKey,
+    signers: (Keypair | Signer)[] = [],
+  ): Promise<TransactionSignature> {
+    await this.fetchVault(manager);
+    const tx = await this.program.methods
+      .mintPlatformFees()
+      .accounts({
+        manager,
+      })
+      .transaction();
+    tx.feePayer = this.provider.wallet.publicKey;
     try {
       return await sendAndConfirmWithRetry(this.provider, tx, signers);
     } catch (e) {

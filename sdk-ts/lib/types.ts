@@ -55,6 +55,8 @@ export interface Vault {
   state: VaultState;
   individualMaxDeposit: number; // u32, 0 = no maximum
   institutionalMaxDeposit: number; // u32, 0 = no maximum
+  platformFeesRate: number; // Platform fee rate in bps (0-10000)
+  lastPlatformFeesPaidTimestamp: number; // Last platform fee payment timestamp (0 = never)
 }
 
 export const InvestorType = {
