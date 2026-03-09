@@ -51,6 +51,7 @@ import {
   getUserWhitelistPda,
   getVaultPda,
   getVtokenMintPda,
+  getVaultDepositFeeConfigPda,
 } from "./lib/pdas";
 import { getAddressLookupTables } from "./lib/solana";
 import {
@@ -690,6 +691,21 @@ export class VaultsSdk {
     }
     const tokenProgram = await this.getTokenProgram(vault.depositTokenMint);
 
+    // Get deposit fee config PDA (may not exist if fee is not configured)
+    const [vaultPda] = getVaultPda(manager);
+    const [depositFeeConfigPda] = getVaultDepositFeeConfigPda(vaultPda);
+
+    // Get platform fee recipient token account
+    // Use authority's token account as default (fee may not be enabled)
+    // The program will validate this matches the fee config if fee is enabled
+    const platformFeeRecipientTokenAccount =
+      await getAssociatedTokenAddress(
+        vault.depositTokenMint,
+        AUTHORITY_PROGRAM_ID,
+        false,
+        tokenProgram
+      );
+
     // Tx
     const tx = await this.program.methods
       .deposit(amount)
@@ -699,6 +715,8 @@ export class VaultsSdk {
         authority: AUTHORITY_PROGRAM_ID,
         depositTokenMint: vault.depositTokenMint,
         depositTokenPriceUpdate: depositTokenFromWhitelist.priceUpdate,
+        depositFeeConfig: depositFeeConfigPda,
+        platformFeeRecipientTokenAccount,
         tokenProgram,
       })
       .remainingAccounts(remainingAccounts)

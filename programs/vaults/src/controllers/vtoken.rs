@@ -91,3 +91,57 @@ pub fn calculate_management_fees_vtokens_to_mint(vtoken_supply: u64, rate: u16) 
         .ok_or(error!(VaultError::NumericOverflow))
         .map(|result| result as u64)
 }
+
+/// Calculates the current token price (NAV per vToken) in AUM_DECIMALS
+/// Formula: Token Price = AUM / vToken Supply
+pub fn compute_token_price(aum: u64, vtoken_supply: u64) -> Result<u64> {
+    require!(vtoken_supply > 0, VaultError::NoVtokenSupply);
+
+    // Token price = AUM / vToken Supply
+    // Both are already in AUM_DECIMALS, so result is also in AUM_DECIMALS
+    (aum as u128)
+        .checked_mul(1u128) // No scaling needed since both are in same decimals
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div(vtoken_supply as u128)
+        .ok_or(error!(VaultError::NumericOverflow))
+        .map(|result| result as u64)
+}
+
+/// Calculates the amount of vtokens to mint as performance fee
+/// Formula: Max(CurrentPrice - LastPrice, 0) × TotalSupply × (FeeRate / CurrentPrice)
+/// Where:
+/// - CurrentPrice: current token price in AUM_DECIMALS
+/// - LastPrice: high-water mark (last_perf_fee_token_price) in AUM_DECIMALS
+/// - TotalSupply: current vToken supply
+/// - FeeRate: performance fee rate in basis points (1000 = 10%)
+pub fn calculate_performance_fee_vtokens_to_mint(
+    current_token_price: u64,
+    last_perf_fee_token_price: u64,
+    vtoken_supply: u64,
+    fee_rate: u16,
+) -> Result<u64> {
+    // Check if current price exceeds high-water mark
+    if current_token_price <= last_perf_fee_token_price {
+        // No profit above high-water mark, no fee
+        return Ok(0);
+    }
+
+    // Calculate price delta (profit above high-water mark)
+    let price_delta = current_token_price
+        .checked_sub(last_perf_fee_token_price)
+        .ok_or(error!(VaultError::NumericOverflow))?;
+
+    // Formula: (Price Delta × vToken Supply × Fee Rate) / (10,000 × Current Price)
+    // This gives us the vTokens to mint
+    let vtokens_to_mint = (price_delta as u128)
+        .checked_mul(vtoken_supply as u128)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_mul(fee_rate as u128)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div(10_000u128)
+        .ok_or(error!(VaultError::NumericOverflow))?
+        .checked_div(current_token_price as u128)
+        .ok_or(error!(VaultError::NumericOverflow))?;
+
+    Ok(vtokens_to_mint as u64)
+}

@@ -86,3 +86,16 @@ pub struct VaultClosed {
     pub manager: Pubkey,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct PerformanceFeeMinted {
+    pub vault: Pubkey,
+    pub manager: Pubkey,
+    pub vtoken_mint: Pubkey,
+    pub vtoken_fee_amount: u64,
+    pub new_vtoken_supply: u64,
+    pub current_token_price: u64,        // Token price at time of fee (in AUM_DECIMALS)
+    pub high_water_mark: u64,            // New high-water mark (in AUM_DECIMALS)
+    pub previous_high_water_mark: u64,   // Previous high-water mark (in AUM_DECIMALS)
+    pub timestamp: i64,
+}

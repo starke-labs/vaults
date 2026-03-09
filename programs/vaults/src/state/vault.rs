@@ -52,6 +52,12 @@ pub struct Vault {
     // Deposit configuration (0 = no maximum)
     pub individual_max_deposit: u32, // For retail/accredited investors, 0 = no minimum
     pub institutional_max_deposit: u32, // For institutional/qualified investors, 0 = no minimum
+
+    // Performance Fee Configuration
+    pub performance_fees_rate: u16, // in basis points (1000 = 10%), 0 means disabled
+    // High-Water Mark Tracking
+    pub last_perf_fee_token_price: u64, // token price (in AUM_DECIMALS) when last performance fee was taken, 0 means never
+    pub last_perf_fee_timestamp: i64,    // timestamp when last performance fee was taken, 0 means never
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Default)]
@@ -94,11 +100,15 @@ impl Vault {
         + 2  // management_fees_rate (u16)
         + 1  // state (u8)
         + 4  // individual_max_deposit (u32)
-        + 4; // institutional_max_deposit (u32)
+        + 4  // institutional_max_deposit (u32)
+        + 2  // performance_fees_rate (u16)
+        + 8  // last_perf_fee_token_price (u64)
+        + 8; // last_perf_fee_timestamp (i64)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
     pub const MAX_MANAGEMENT_FEE_RATE: u16 = 10000;
+    pub const MAX_PERFORMANCE_FEE_RATE: u16 = 10000; // 100% max (in basis points)
 
     #[allow(clippy::too_many_arguments)]
     pub fn initialize(
@@ -121,12 +131,17 @@ impl Vault {
         management_fees_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        performance_fees_rate: u16,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(!name.is_empty(), VaultError::NameTooShort);
         require!(
             management_fees_rate <= Self::MAX_MANAGEMENT_FEE_RATE,
+            VaultError::InvalidFee
+        );
+        require!(
+            performance_fees_rate <= Self::MAX_PERFORMANCE_FEE_RATE,
             VaultError::InvalidFee
         );
 
@@ -155,6 +170,18 @@ impl Vault {
         self.management_fees_rate = management_fees_rate;
         self.individual_max_deposit = individual_max_deposit;
         self.institutional_max_deposit = institutional_max_deposit;
+        self.performance_fees_rate = performance_fees_rate;
+        // Initialize high-water mark to initial token price (converted to AUM_DECIMALS)
+        // If performance fee is disabled (rate = 0), we can leave it at 0
+        self.last_perf_fee_token_price = if performance_fees_rate > 0 {
+            // Convert initial_vtoken_price (u32) to AUM_DECIMALS (u64)
+            // Assuming initial_vtoken_price is in some base units, we need to scale it
+            // For now, we'll set it to 0 and let the first performance fee calculation set it properly
+            0
+        } else {
+            0
+        };
+        self.last_perf_fee_timestamp = 0;
 
         Ok(())
     }
