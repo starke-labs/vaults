@@ -89,6 +89,7 @@ pub fn _deposit<'info>(
         ctx.accounts.vtoken_mint.supply,
         ctx.accounts.vault.initial_vtoken_price,
     )?;
+    // Deposit fund page in the app relies on this log message (DON'T CHANGE OR REMOVE)
     msg!("Vtokens to mint: {}", vtokens_to_mint);
 
     // Transfer deposit tokens from depositor to vault
