@@ -202,6 +202,7 @@ fn withdraw_token<'info>(
     let token_balance = from.amount;
     msg!("Vault token account balance: {}", token_balance);
     let amount = calculate_token_withdrawal_amount(token_balance, withdrawal_ratio)?;
+    // Redeem fund page in the app relies on this log message (DON'T CHANGE OR REMOVE)
     msg!("Amount to withdraw: {}", amount);
 
     // Transfer tokens from vault to withdrawer
