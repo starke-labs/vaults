@@ -242,6 +242,14 @@
               "name": "InvestorType"
             }
           }
+        },
+        {
+          "name": "investor_tier",
+          "type": {
+            "defined": {
+              "name": "InvestorTier"
+            }
+          }
         }
       ]
     },
@@ -843,6 +851,26 @@
         },
         {
           "name": "institutional_max_deposit",
+          "type": "u32"
+        },
+        {
+          "name": "allow_individual",
+          "type": "bool"
+        },
+        {
+          "name": "allow_entity",
+          "type": "bool"
+        },
+        {
+          "name": "allow_basic",
+          "type": "bool"
+        },
+        {
+          "name": "entity_max_deposit",
+          "type": "u32"
+        },
+        {
+          "name": "entity_min_deposit",
           "type": "u32"
         }
       ]
@@ -2441,7 +2469,10 @@
           "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
         },
         {
-          "name": "manager"
+          "name": "manager",
+          "docs": [
+            "so passing an incorrect manager will cause the vault seeds constraint to fail."
+          ]
         },
         {
           "name": "vault",
@@ -3781,21 +3812,32 @@
       }
     },
     {
-      "name": "InvestorType",
+      "name": "InvestorTier",
       "type": {
         "kind": "enum",
         "variants": [
           {
-            "name": "Retail"
+            "name": "Basic"
           },
           {
             "name": "Accredited"
           },
           {
-            "name": "Institutional"
+            "name": "Qualified"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvestorType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Entity"
           },
           {
-            "name": "Qualified"
+            "name": "Individual"
           }
         ]
       }
@@ -4040,6 +4082,14 @@
                 "name": "InvestorType"
               }
             }
+          },
+          {
+            "name": "investor_tier",
+            "type": {
+              "defined": {
+                "name": "InvestorTier"
+              }
+            }
           }
         ]
       }
@@ -4187,6 +4237,26 @@
           },
           {
             "name": "institutional_max_deposit",
+            "type": "u32"
+          },
+          {
+            "name": "allow_individual",
+            "type": "bool"
+          },
+          {
+            "name": "allow_entity",
+            "type": "bool"
+          },
+          {
+            "name": "allow_basic",
+            "type": "bool"
+          },
+          {
+            "name": "entity_max_deposit",
+            "type": "u32"
+          },
+          {
+            "name": "entity_min_deposit",
             "type": "u32"
           }
         ]

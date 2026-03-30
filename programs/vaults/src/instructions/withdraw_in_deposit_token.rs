@@ -80,14 +80,6 @@ pub fn _withdraw_in_deposit_token<'info>(
 
     msg!("{} vtokens burned successfully", vtoken_amount);
 
-    if will_be_zero_balance {
-        ctx.accounts.vault.decrement_depositor_count()?;
-        msg!(
-            "Depositor removed. Total depositors: {}",
-            ctx.accounts.vault.current_depositors
-        );
-    }
-
     // Transfer deposit tokens
     transfer_token_with_signer(
         &ctx.accounts.vault_deposit_token_account,
@@ -98,6 +90,15 @@ pub fn _withdraw_in_deposit_token<'info>(
         signer_seeds,
         &ctx.accounts.token_program,
     )?;
+
+    // Decrement depositor count AFTER vault-authority CPIs to avoid overwrite
+    if will_be_zero_balance {
+        ctx.accounts.vault.decrement_depositor_count()?;
+        msg!(
+            "Depositor removed. Total depositors: {}",
+            ctx.accounts.vault.current_depositors
+        );
+    }
 
     msg!(
         "Withdrawal completed. User received {} deposit tokens",

@@ -2,9 +2,14 @@ use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
 pub enum InvestorType {
-    Retail,
+    Entity,
+    Individual,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub enum InvestorTier {
+    Basic,
     Accredited,
-    Institutional,
     Qualified,
 }
 
@@ -12,6 +17,7 @@ pub enum InvestorType {
 pub struct UserEntry {
     pub user: Pubkey,
     pub investor_type: InvestorType,
+    pub investor_tier: InvestorTier,
 }
 
 #[account]
@@ -38,7 +44,7 @@ impl UserWhitelist {
         Ok(())
     }
 
-    pub fn add_user(&mut self, user: Pubkey, investor_type: InvestorType) -> Result<()> {
+    pub fn add_user(&mut self, user: Pubkey, investor_type: InvestorType, investor_tier: InvestorTier) -> Result<()> {
         require!(
             self.users.len() < Self::MAX_USERS,
             UserWhitelistError::WhitelistFull
@@ -46,8 +52,9 @@ impl UserWhitelist {
 
         // Check if user already exists
         if let Some(existing_user) = self.users.iter_mut().find(|u| u.user == user) {
-            // Update existing user's investor type
+            // Update existing user's investor type and tier
             existing_user.investor_type = investor_type;
+            existing_user.investor_tier = investor_tier;
         } else {
             // Add new user
             self.users.resize(
@@ -55,6 +62,7 @@ impl UserWhitelist {
                 UserEntry {
                     user,
                     investor_type,
+                    investor_tier,
                 },
             );
         }
@@ -74,11 +82,11 @@ impl UserWhitelist {
         Ok(())
     }
 
-    pub fn get_user_type(&self, user: &Pubkey) -> Option<InvestorType> {
+    pub fn get_user_classification(&self, user: &Pubkey) -> Option<(InvestorType, InvestorTier)> {
         self.users
             .iter()
             .find(|u| u.user == *user)
-            .map(|u| u.investor_type.clone())
+            .map(|u| (u.investor_type.clone(), u.investor_tier.clone()))
     }
 
     pub fn is_user_whitelisted(&self, user: &Pubkey) -> bool {
@@ -88,7 +96,8 @@ impl UserWhitelist {
 
 impl UserEntry {
     pub const MAX_SPACE: usize = 32 // user pubkey
-        + 1; // investor_type enum (u8)
+        + 1  // investor_type enum (u8)
+        + 1; // investor_tier enum (u8)
 }
 
 #[error_code]

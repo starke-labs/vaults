@@ -36,6 +36,11 @@ pub fn _create_vault(
     management_fee_rate: u16,
     individual_max_deposit: u32,
     institutional_max_deposit: u32,
+    allow_individual: bool,
+    allow_entity: bool,
+    allow_basic: bool,
+    entity_max_deposit: u32,
+    entity_min_deposit: u32,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -141,6 +146,11 @@ pub fn _create_vault(
         management_fee_rate,
         individual_max_deposit,
         institutional_max_deposit,
+        allow_individual,
+        allow_entity,
+        allow_basic,
+        entity_max_deposit,
+        entity_min_deposit,
     )?;
 
     // Create fund page in the app relies on this log message (DON'T CHANGE OR REMOVE)

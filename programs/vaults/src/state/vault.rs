@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use super::{InvestorType, TokenWhitelist};
+use super::{InvestorTier, InvestorType, TokenWhitelist};
 use crate::controllers::{
     compute_token_value_usd, parse_vault_balances, transform_price_to_aum_decimals,
     verify_price_update_and_get_pyth_price,
@@ -52,6 +52,11 @@ pub struct Vault {
     // Deposit configuration (0 = no maximum)
     pub individual_max_deposit: u32, // For retail/accredited investors, 0 = no minimum
     pub institutional_max_deposit: u32, // For institutional/qualified investors, 0 = no minimum
+    pub allow_individual: bool,
+    pub allow_entity: bool,
+    pub allow_basic: bool,
+    pub entity_max_deposit: u32,     // For entity investors, 0 = no minimum
+    pub entity_min_deposit: u32,     // For entity investors, 0 = no minimum
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Default)]
@@ -94,7 +99,12 @@ impl Vault {
         + 2  // management_fees_rate (u16)
         + 1  // state (u8)
         + 4  // individual_max_deposit (u32)
-        + 4; // institutional_max_deposit (u32)
+        + 4  // institutional_max_deposit (u32)
+        + 1  // allow_individual (bool)
+        + 1  // allow_entity (bool)
+        + 1  // allow_basic (bool)
+        + 4  // entity_max_deposit (u32)
+        + 4; // entity_min_deposit (u32)
 
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
@@ -121,6 +131,11 @@ impl Vault {
         management_fees_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        allow_individual: bool,
+        allow_entity: bool,
+        allow_basic: bool,
+        entity_max_deposit: u32,
+        entity_min_deposit: u32,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
@@ -155,6 +170,11 @@ impl Vault {
         self.management_fees_rate = management_fees_rate;
         self.individual_max_deposit = individual_max_deposit;
         self.institutional_max_deposit = institutional_max_deposit;
+        self.allow_individual = allow_individual;
+        self.allow_entity = allow_entity;
+        self.allow_basic = allow_basic;
+        self.entity_max_deposit = entity_max_deposit;
+        self.entity_min_deposit = entity_min_deposit;
 
         Ok(())
     }
@@ -236,16 +256,26 @@ impl Vault {
         Ok(())
     }
 
-    /// Validates if the user's investor type is allowed in this vault
-    pub fn validate_investor_type(&self, investor_type: &InvestorType) -> Result<()> {
-        let is_allowed = match investor_type {
-            InvestorType::Retail => self.allow_retail,
-            InvestorType::Accredited => self.allow_accredited,
-            InvestorType::Institutional => self.allow_institutional,
-            InvestorType::Qualified => self.allow_qualified,
+    /// Validates if the user's investor type and tier are allowed in this vault
+    pub fn validate_investor_type(
+        &self,
+        investor_type: &InvestorType,
+        investor_tier: &InvestorTier,
+    ) -> Result<()> {
+        let type_allowed = match investor_type {
+            InvestorType::Individual => self.allow_individual,
+            InvestorType::Entity => self.allow_entity,
+        };
+        let tier_allowed = match investor_tier {
+            InvestorTier::Basic => self.allow_basic,
+            InvestorTier::Accredited => self.allow_accredited,
+            InvestorTier::Qualified => self.allow_qualified,
         };
 
-        require!(is_allowed, VaultError::InvestorTypeNotAllowed);
+        require!(
+            type_allowed && tier_allowed,
+            VaultError::InvestorTypeNotAllowed
+        );
         Ok(())
     }
 
@@ -260,12 +290,12 @@ impl Vault {
 
         // Check minimum deposit amount based on investor type (0 = no minimum)
         let min_deposit = match investor_type {
-            InvestorType::Retail | InvestorType::Accredited => self.individual_min_deposit,
-            InvestorType::Institutional | InvestorType::Qualified => self.institutional_min_deposit,
+            InvestorType::Individual => self.individual_min_deposit,
+            InvestorType::Entity => self.entity_min_deposit,
         };
         let max_deposit = match investor_type {
-            InvestorType::Retail | InvestorType::Accredited => self.individual_max_deposit,
-            InvestorType::Institutional | InvestorType::Qualified => self.institutional_max_deposit,
+            InvestorType::Individual => self.individual_max_deposit,
+            InvestorType::Entity => self.entity_max_deposit,
         };
 
         if min_deposit > 0 {

@@ -45,12 +45,6 @@ pub fn _withdraw<'info>(
     )?;
     msg!("{} vtokens burned successfully", amount);
 
-    // Decrement depositor count if user withdrew all their tokens
-    if will_be_zero_balance {
-        ctx.accounts.vault.decrement_depositor_count()?;
-        msg!("Depositor removed. Total depositors: {}", ctx.accounts.vault.current_depositors);
-    }
-
     // Process withdrawals for all tokens in the vault
     withdraw_all_tokens(
         ctx.remaining_accounts,
@@ -63,6 +57,12 @@ pub fn _withdraw<'info>(
         &ctx.accounts.associated_token_program,
         &ctx.accounts.system_program,
     )?;
+
+    // Decrement depositor count AFTER vault-authority CPIs to avoid overwrite
+    if will_be_zero_balance {
+        ctx.accounts.vault.decrement_depositor_count()?;
+        msg!("Depositor removed. Total depositors: {}", ctx.accounts.vault.current_depositors);
+    }
 
     msg!("Withdrawal completed successfully");
 

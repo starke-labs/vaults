@@ -2,13 +2,14 @@ use anchor_lang::prelude::*;
 
 use crate::constants::STARKE_AUTHORITY;
 use crate::state::{
-    InvestorType, StarkeConfig, StarkeConfigError, UserWhitelist, UserWhitelistError,
+    InvestorTier, InvestorType, StarkeConfig, StarkeConfigError, UserWhitelist, UserWhitelistError,
 };
 
 pub fn _add_user(
     ctx: Context<ModifyUserWhitelist>,
     user: Pubkey,
     investor_type: InvestorType,
+    investor_tier: InvestorTier,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -16,9 +17,9 @@ pub fn _add_user(
     );
 
     msg!("Adding user to whitelist: {}", user);
-    msg!("Investor type: {:?}", investor_type);
+    msg!("Investor type: {:?}, tier: {:?}", investor_type, investor_tier);
 
-    ctx.accounts.user_whitelist.add_user(user, investor_type)?;
+    ctx.accounts.user_whitelist.add_user(user, investor_type, investor_tier)?;
 
     msg!("Successfully added user to whitelist");
     Ok(())

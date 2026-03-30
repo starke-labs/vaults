@@ -35,16 +35,16 @@ pub fn _deposit<'info>(
         ctx.accounts.deposit_token_mint.key()
     );
 
-    // Validate user is whitelisted and get their investor type
-    let investor_type = ctx
+    // Validate user is whitelisted and get their investor classification
+    let (investor_type, investor_tier) = ctx
         .accounts
         .user_whitelist
-        .get_user_type(&ctx.accounts.user.key())
+        .get_user_classification(&ctx.accounts.user.key())
         .ok_or(UserWhitelistError::UserNotWhitelisted)?;
-    msg!("User investor type: {:?}", investor_type);
+    msg!("User investor type: {:?}, tier: {:?}", investor_type, investor_tier);
 
-    // Validate investor type is allowed for this vault
-    ctx.accounts.vault.validate_investor_type(&investor_type)?;
+    // Validate investor type and tier are allowed for this vault
+    ctx.accounts.vault.validate_investor_type(&investor_type, &investor_tier)?;
 
     // Validate deposit amount based on investor type
     ctx.accounts

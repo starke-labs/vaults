@@ -8,7 +8,7 @@ mod instructions;
 pub mod state;
 
 use instructions::*;
-use state::InvestorType;
+use state::{InvestorTier, InvestorType};
 
 declare_id!("3NVg4ib33KsgP8RUmCmgrbsKJnvtuhUQp2JN92NMbTiB");
 
@@ -68,6 +68,11 @@ pub mod vaults {
         management_fee_rate: u16,
         individual_max_deposit: u32,
         institutional_max_deposit: u32,
+        allow_individual: bool,
+        allow_entity: bool,
+        allow_basic: bool,
+        entity_max_deposit: u32,
+        entity_min_deposit: u32,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -87,6 +92,11 @@ pub mod vaults {
             management_fee_rate,
             individual_max_deposit,
             institutional_max_deposit,
+            allow_individual,
+            allow_entity,
+            allow_basic,
+            entity_max_deposit,
+            entity_min_deposit,
         )
     }
 
@@ -134,8 +144,9 @@ pub mod vaults {
         ctx: Context<ModifyUserWhitelist>,
         user: Pubkey,
         investor_type: InvestorType,
+        investor_tier: InvestorTier,
     ) -> Result<()> {
-        _add_user(ctx, user, investor_type)
+        _add_user(ctx, user, investor_type, investor_tier)
     }
 
     pub fn remove_user(ctx: Context<ModifyUserWhitelist>, user: Pubkey) -> Result<()> {
