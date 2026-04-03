@@ -79,6 +79,11 @@ describe("Vtoken Transferrability", () => {
       TOKEN_2022_PROGRAM_ID
     );
     const tx = new Transaction().add(instruction);
-    const txSig = await sendAndConfirmTransaction(connection, tx, [tester]);
+    try {
+      await sendAndConfirmTransaction(connection, tx, [tester]);
+      expect.fail("non-transferrable vtoken transfer should have failed");
+    } catch {
+      /* transfer hook rejects */
+    }
   });
 });

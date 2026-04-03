@@ -1,5 +1,10 @@
 import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionSignature,
+} from "@solana/web3.js";
 
 import idl from "@starke/idl/transfer_hook.json";
 
@@ -35,5 +40,18 @@ export class TransferHookSdk {
     }
   }
 
-  // TODO: Implement sdk method for instruction `set_vtoken_is_transferrable`
+  async setVtokenIsTransferrable(
+    vTokenMint: PublicKey,
+    vtokenIsTransferrable: boolean,
+  ): Promise<TransactionSignature> {
+    const [vtokenConfigPda] = getVtokenConfigPda(vTokenMint);
+    return await this.program.methods
+      .setVtokenIsTransferrable(vtokenIsTransferrable)
+      .accounts({
+        manager: this.provider.wallet.publicKey,
+        mint: vTokenMint,
+        vtokenConfig: vtokenConfigPda,
+      })
+      .rpc();
+  }
 }
