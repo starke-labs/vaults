@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::state::{StarkeConfig, Vault, VaultError};
 
-pub fn _pause_deposits(ctx: Context<PauseDeposits>) -> Result<()> {
+pub fn _pause_deposits(ctx: Context<PauseOrResumeDeposits>) -> Result<()> {
     msg!(
         "Processing deposits pause request for vault: {} by manager: {}",
         ctx.accounts.vault.key(),
@@ -17,12 +17,29 @@ pub fn _pause_deposits(ctx: Context<PauseDeposits>) -> Result<()> {
 
     // Pause deposits
     ctx.accounts.vault.pause_deposits();
+    Ok(())
+}
 
+pub fn _resume_deposits(ctx: Context<PauseOrResumeDeposits>) -> Result<()> {
+    msg!(
+        "Processing deposits resume request for vault: {} by manager: {}",
+        ctx.accounts.vault.key(),
+        ctx.accounts.manager.key()
+    );
+
+    // Check program pause
+    require!(
+        !ctx.accounts.starke_config.is_paused,
+        crate::state::StarkeConfigError::StarkePaused
+    );
+
+    // Resume deposits
+    ctx.accounts.vault.resume_deposits();
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct PauseDeposits<'info> {
+pub struct PauseOrResumeDeposits<'info> {
     // Vault manager
     #[account(mut)]
     pub manager: Signer<'info>,

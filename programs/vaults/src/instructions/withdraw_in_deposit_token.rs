@@ -36,7 +36,7 @@ pub fn _withdraw_in_deposit_token<'info>(
         &ctx.accounts.vault.key(),
     ) {
         Ok((aum, Some(price))) => (aum, price),
-        Ok((_, None)) => return err!(VaultError::InsufficientFunds),
+        Ok((_, None)) => return err!(VaultError::UserTokenAccountNotFound),
         Err(e) => return Err(e),
     };
 

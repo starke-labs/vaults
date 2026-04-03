@@ -68,8 +68,7 @@ pub fn _swap_to_deposit_token_on_jupiter<'info>(
     msg!("Accounts prepared: {} accounts", accounts.len());
 
     let manager = ctx.accounts.manager.key();
-    let signer_seeds: &[&[&[u8]]] =
-        &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
+    let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
 
     invoke_signed(
         &Instruction {

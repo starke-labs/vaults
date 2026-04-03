@@ -8,7 +8,7 @@ mod instructions;
 pub mod state;
 
 use instructions::*;
-use state::{InvestorTier, InvestorType};
+use state::{InvestorTier, InvestorType, InvestorTypeWithRange};
 
 declare_id!("3NVg4ib33KsgP8RUmCmgrbsKJnvtuhUQp2JN92NMbTiB");
 
@@ -56,23 +56,13 @@ pub mod vaults {
         symbol: String,
         uri: String,
         vtoken_is_transferrable: bool,
-        max_allowed_aum: Option<u64>,
-        allow_retail: bool,
-        allow_accredited: bool,
-        allow_institutional: bool,
-        allow_qualified: bool,
-        individual_min_deposit: u32,
-        institutional_min_deposit: u32,
-        max_depositors: u32,
+        max_allowed_aum: u64,
         initial_vtoken_price: u32,
+        allowed_investor_types: Vec<InvestorType>,
+        allowed_investor_tiers: Vec<InvestorTier>,
+        range_allowed_per_investor_type: Vec<InvestorTypeWithRange>,
+        max_depositors: u32,
         management_fee_rate: u16,
-        individual_max_deposit: u32,
-        institutional_max_deposit: u32,
-        allow_individual: bool,
-        allow_entity: bool,
-        allow_basic: bool,
-        entity_max_deposit: u32,
-        entity_min_deposit: u32,
     ) -> Result<()> {
         _create_vault(
             ctx,
@@ -81,22 +71,12 @@ pub mod vaults {
             uri,
             vtoken_is_transferrable,
             max_allowed_aum,
-            allow_retail,
-            allow_accredited,
-            allow_institutional,
-            allow_qualified,
-            individual_min_deposit,
-            institutional_min_deposit,
-            max_depositors,
             initial_vtoken_price,
+            allowed_investor_types,
+            allowed_investor_tiers,
+            range_allowed_per_investor_type,
+            max_depositors,
             management_fee_rate,
-            individual_max_deposit,
-            institutional_max_deposit,
-            allow_individual,
-            allow_entity,
-            allow_basic,
-            entity_max_deposit,
-            entity_min_deposit,
         )
     }
 
@@ -153,11 +133,15 @@ pub mod vaults {
         _remove_user(ctx, user)
     }
 
-    pub fn pause_deposits(ctx: Context<PauseDeposits>) -> Result<()> {
+    pub fn migrate_user_whitelist(ctx: Context<MigrateUserWhitelist>) -> Result<()> {
+        _migrate_user_whitelist(ctx)
+    }
+
+    pub fn pause_deposits(ctx: Context<PauseOrResumeDeposits>) -> Result<()> {
         _pause_deposits(ctx)
     }
 
-    pub fn resume_deposits(ctx: Context<ResumeDeposits>) -> Result<()> {
+    pub fn resume_deposits(ctx: Context<PauseOrResumeDeposits>) -> Result<()> {
         _resume_deposits(ctx)
     }
 }

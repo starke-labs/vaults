@@ -1,16 +1,33 @@
 use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, Debug, PartialEq)]
+#[repr(u16)]
 pub enum InvestorType {
-    Entity,
-    Individual,
+    Unknown = 1 << 0,
+    Entity = 1 << 1,
+    Individual = 1 << 2,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, Debug, PartialEq)]
+pub struct InvestorTypeWithRange {
+    pub investor_type: InvestorType,
+    pub min_deposit: u64,
+    pub max_deposit: u64,
+}
+
+impl InvestorTypeWithRange {
+    // Borsh serializes enum variants as 1 byte regardless of #[repr(u16)],
+    // so InvestorType is 1 byte on-chain, not 2. repr(u16) only affects
+    // in-memory layout for bitwise operations (e.g. `as u16`).
+    pub const MAX_SPACE: usize = 1 + 8 + 8; // 1-byte enum variant + u64 + u64
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, Debug, PartialEq)]
+#[repr(u16)]
 pub enum InvestorTier {
-    Basic,
-    Accredited,
-    Qualified,
+    Basic = 1 << 0,
+    Accredited = 1 << 1,
+    Qualified = 1 << 2,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -44,7 +61,12 @@ impl UserWhitelist {
         Ok(())
     }
 
-    pub fn add_user(&mut self, user: Pubkey, investor_type: InvestorType, investor_tier: InvestorTier) -> Result<()> {
+    pub fn add_user(
+        &mut self,
+        user: Pubkey,
+        investor_type: InvestorType,
+        investor_tier: InvestorTier,
+    ) -> Result<()> {
         require!(
             self.users.len() < Self::MAX_USERS,
             UserWhitelistError::WhitelistFull
@@ -86,7 +108,7 @@ impl UserWhitelist {
         self.users
             .iter()
             .find(|u| u.user == *user)
-            .map(|u| (u.investor_type.clone(), u.investor_tier.clone()))
+            .map(|u| (u.investor_type, u.investor_tier))
     }
 
     pub fn is_user_whitelisted(&self, user: &Pubkey) -> bool {
@@ -96,8 +118,8 @@ impl UserWhitelist {
 
 impl UserEntry {
     pub const MAX_SPACE: usize = 32 // user pubkey
-        + 1  // investor_type enum (u8)
-        + 1; // investor_tier enum (u8)
+        + 1  // investor_type (Borsh enum variant index, 1 byte)
+        + 1; // investor_tier (Borsh enum variant index, 1 byte)
 }
 
 #[error_code]
@@ -112,4 +134,6 @@ pub enum UserWhitelistError {
     InvalidInvestorType,
     #[msg("Unauthorized access")]
     UnauthorizedAccess,
+    #[msg("User whitelist has already been migrated to the current format")]
+    AlreadyMigrated,
 }

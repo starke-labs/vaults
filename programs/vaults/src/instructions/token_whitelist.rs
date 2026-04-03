@@ -1,5 +1,7 @@
-use crate::constants::STARKE_AUTHORITY;
-use crate::state::{TokenWhitelist, TokenWhitelistError, WhitelistTokenAdded};
+use crate::{
+    constants::STARKE_AUTHORITY,
+    state::{TokenWhitelist, TokenWhitelistError, WhitelistTokenAdded, WhitelistTokenRemoved},
+};
 use anchor_lang::prelude::*;
 
 pub fn _add_token(
@@ -22,6 +24,21 @@ pub fn _add_token(
         mint: token,
         price_feed_id,
         price_update,
+        timestamp: ctx.accounts.clock.unix_timestamp,
+    });
+
+    Ok(())
+}
+
+pub fn _remove_token(ctx: Context<ModifyTokenWhitelist>, token: Pubkey) -> Result<()> {
+    msg!("Processing request to remove token: {}", token);
+
+    ctx.accounts.token_whitelist.remove_token(&token)?;
+
+    msg!("Successfully removed token from whitelist");
+
+    emit!(WhitelistTokenRemoved {
+        mint: token,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 

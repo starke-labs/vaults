@@ -12,8 +12,8 @@ use crate::{
     constants::AUM_DECIMALS,
     controllers::{initialize_token_metadata, initialize_vtoken_config, update_token_metadata},
     state::{
-        ManagerWhitelist, ManagerWhitelistError, StarkeConfig, StarkeConfigError, TokenWhitelist,
-        TokenWhitelistError, Vault, VaultCreated,
+        InvestorTier, InvestorType, InvestorTypeWithRange, ManagerWhitelist, ManagerWhitelistError,
+        StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, Vault, VaultCreated,
     },
 };
 
@@ -24,23 +24,13 @@ pub fn _create_vault(
     symbol: String,
     uri: String,
     vtoken_is_transferrable: bool,
-    max_allowed_aum: Option<u64>,
-    allow_retail: bool,
-    allow_accredited: bool,
-    allow_institutional: bool,
-    allow_qualified: bool,
-    individual_min_deposit: u32,
-    institutional_min_deposit: u32,
-    max_depositors: u32,
+    max_allowed_aum: u64,
     initial_vtoken_price: u32,
+    allowed_investor_types: Vec<InvestorType>,
+    allowed_investor_tiers: Vec<InvestorTier>,
+    range_allowed_per_investor_type: Vec<InvestorTypeWithRange>,
+    max_depositors: u32,
     management_fee_rate: u16,
-    individual_max_deposit: u32,
-    institutional_max_deposit: u32,
-    allow_individual: bool,
-    allow_entity: bool,
-    allow_basic: bool,
-    entity_max_deposit: u32,
-    entity_min_deposit: u32,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -56,24 +46,12 @@ pub fn _create_vault(
     msg!("Name: {}", name);
     msg!("Creating vault with investor type restrictions");
 
-    if individual_min_deposit > 0 {
-        msg!(
-            "Individual minimum deposit amount: {}",
-            individual_min_deposit
-        );
-    }
-    if institutional_min_deposit > 0 {
-        msg!(
-            "Institutional minimum deposit amount: {}",
-            institutional_min_deposit
-        );
-    }
     if max_depositors > 0 {
         msg!("Maximum depositors: {}", max_depositors);
     }
 
-    if let Some(max_aum) = max_allowed_aum {
-        msg!("Maximum allowed AUM: {}", max_aum);
+    if max_allowed_aum > 0 {
+        msg!("Maximum allowed AUM: {}", max_allowed_aum);
     }
 
     // Vault seeds
@@ -128,29 +106,23 @@ pub fn _create_vault(
 
     // Initialize vault
     ctx.accounts.vault.initialize(
-        ctx.accounts.manager.key(),
-        ctx.accounts.deposit_token_mint.key(),
-        name,
-        ctx.bumps.vault,
-        ctx.accounts.vtoken_mint.key(),
-        ctx.bumps.vtoken_mint,
-        max_allowed_aum,
-        allow_retail,
-        allow_accredited,
-        allow_institutional,
-        allow_qualified,
-        individual_min_deposit,
-        institutional_min_deposit,
-        max_depositors,
-        initial_vtoken_price,
-        management_fee_rate,
-        individual_max_deposit,
-        institutional_max_deposit,
-        allow_individual,
-        allow_entity,
-        allow_basic,
-        entity_max_deposit,
-        entity_min_deposit,
+        ctx.accounts.manager.key(),            // manager
+        ctx.accounts.deposit_token_mint.key(), // deposit_token_mint
+        name.clone(),                          // name
+        ctx.bumps.vault,                       // bump
+        ctx.accounts.vtoken_mint.key(),        // vtoken_mint
+        ctx.bumps.vtoken_mint,                 // vtoken_mint_bump
+        max_allowed_aum,                       // max_allowed_aum
+        initial_vtoken_price,                  // initial_vtoken_price
+        allowed_investor_types
+            .into_iter()
+            .fold(0, |acc, x| acc | x as u16), // allowed_investor_types
+        allowed_investor_tiers
+            .into_iter()
+            .fold(0, |acc, x| acc | x as u16), // allowed_investor_tiers
+        range_allowed_per_investor_type,       // min_max_deposits_per_investor_type
+        max_depositors,                        // max_depositors
+        management_fee_rate,                   // management_fees_rate
     )?;
 
     // Create fund page in the app relies on this log message (DON'T CHANGE OR REMOVE)
@@ -164,7 +136,12 @@ pub fn _create_vault(
         name: ctx.accounts.vault.name.to_string(),
         timestamp: ctx.accounts.clock.unix_timestamp,
         max_allowed_aum: ctx.accounts.vault.max_allowed_aum,
-        initial_vtoken_price,
+        initial_vtoken_price: ctx.accounts.vault.initial_vtoken_price,
+        allowed_investor_types: ctx.accounts.vault.allowed_investor_types,
+        allowed_investor_tiers: ctx.accounts.vault.allowed_investor_tiers,
+        range_allowed_per_investor_type: ctx.accounts.vault.range_allowed_per_investor_type.clone(),
+        max_depositors: ctx.accounts.vault.max_depositors,
+        management_fee_rate: ctx.accounts.vault.management_fees_rate,
     });
 
     Ok(())

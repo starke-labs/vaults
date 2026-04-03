@@ -61,7 +61,10 @@ pub fn _withdraw<'info>(
     // Decrement depositor count AFTER vault-authority CPIs to avoid overwrite
     if will_be_zero_balance {
         ctx.accounts.vault.decrement_depositor_count()?;
-        msg!("Depositor removed. Total depositors: {}", ctx.accounts.vault.current_depositors);
+        msg!(
+            "Depositor removed. Total depositors: {}",
+            ctx.accounts.vault.current_depositors
+        );
     }
 
     msg!("Withdrawal completed successfully");
@@ -71,8 +74,12 @@ pub fn _withdraw<'info>(
         user: ctx.accounts.user.key(),
         vtoken_mint: ctx.accounts.vtoken_mint.key(),
         vtoken_burned_amount: amount,
-        // TODO: Check if this is correct
-        new_vtoken_supply: ctx.accounts.vtoken_mint.supply.checked_sub(amount).unwrap(),
+        new_vtoken_supply: ctx
+            .accounts
+            .vtoken_mint
+            .supply
+            .checked_sub(amount)
+            .ok_or(VaultError::NumericOverflow)?,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 

@@ -1,7 +1,7 @@
 use super::*;
 use crate::{
     constants::STARKE_AUTHORITY,
-    instructions::tests::common_utils::{new_default_account, get_default_clock_account},
+    instructions::tests::common_utils::{get_default_clock_account, new_default_account},
     program::Vaults,
     state::{TokenInfo, TokenWhitelist},
 };

@@ -17,9 +17,15 @@ pub fn _add_user(
     );
 
     msg!("Adding user to whitelist: {}", user);
-    msg!("Investor type: {:?}, tier: {:?}", investor_type, investor_tier);
+    msg!(
+        "Investor type: {:?}, tier: {:?}",
+        investor_type,
+        investor_tier
+    );
 
-    ctx.accounts.user_whitelist.add_user(user, investor_type, investor_tier)?;
+    ctx.accounts
+        .user_whitelist
+        .add_user(user, investor_type, investor_tier)?;
 
     msg!("Successfully added user to whitelist");
     Ok(())

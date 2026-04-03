@@ -41,15 +41,21 @@ pub fn _deposit<'info>(
         .user_whitelist
         .get_user_classification(&ctx.accounts.user.key())
         .ok_or(UserWhitelistError::UserNotWhitelisted)?;
-    msg!("User investor type: {:?}, tier: {:?}", investor_type, investor_tier);
+    msg!(
+        "User investor type: {:?}, tier: {:?}",
+        investor_type,
+        investor_tier
+    );
 
     // Validate investor type and tier are allowed for this vault
-    ctx.accounts.vault.validate_investor_type(&investor_type, &investor_tier)?;
+    ctx.accounts
+        .vault
+        .validate_investor_type(investor_type, investor_tier)?;
 
     // Validate deposit amount based on investor type
     ctx.accounts
         .vault
-        .validate_deposit_amount_by_type(amount, &investor_type)?;
+        .validate_deposit_amount_by_type(amount, investor_type)?;
 
     // Check if this is a new depositor (first time depositing)
     let is_new_depositor = ctx.accounts.vtoken_account.amount == 0;
@@ -137,8 +143,12 @@ pub fn _deposit<'info>(
         deposit_amount: amount,
         vtoken_mint: ctx.accounts.vtoken_mint.key(),
         vtoken_minted_amount: vtokens_to_mint,
-        // TODO: Check if this is correct
-        new_vtoken_supply: ctx.accounts.vtoken_mint.supply + vtokens_to_mint,
+        new_vtoken_supply: ctx
+            .accounts
+            .vtoken_mint
+            .supply
+            .checked_add(vtokens_to_mint)
+            .ok_or(VaultError::NumericOverflow)?,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });
 

@@ -1,7 +1,7 @@
 use super::*;
 use crate::{
     constants::STARKE_AUTHORITY,
-    instructions::tests::common_utils::{new_default_account, get_default_clock_account},
+    instructions::tests::common_utils::{get_default_clock_account, new_default_account},
     program::Vaults,
     state::ManagerWhitelist,
 };
@@ -37,7 +37,8 @@ fn test_add_manager_to_whitelist() {
 
     // Manager details
     let manager = Pubkey::new_unique();
-    let (whitelist_pda, bump) = Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
+    let (whitelist_pda, bump) =
+        Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
     let whitelist_state = ManagerWhitelist {
         managers: vec![],
         bump,
@@ -90,7 +91,8 @@ fn test_add_manager_unauth_access() {
 
     // Manager details
     let manager = Pubkey::new_unique();
-    let (whitelist_pda, bump) = Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
+    let (whitelist_pda, bump) =
+        Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
     let whitelist_state = ManagerWhitelist {
         managers: vec![],
         bump,
@@ -192,7 +194,8 @@ fn test_add_duplicate_manager_to_whitelist() {
 
     // Manager details
     let manager = Pubkey::new_unique();
-    let (whitelist_pda, bump) = Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
+    let (whitelist_pda, bump) =
+        Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
     let whitelist_state = ManagerWhitelist {
         managers: vec![manager],
         bump,

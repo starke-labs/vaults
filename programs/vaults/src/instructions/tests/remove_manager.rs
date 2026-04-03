@@ -1,7 +1,7 @@
 use super::*;
 use crate::{
     constants::STARKE_AUTHORITY,
-    instructions::tests::common_utils::{new_default_account, get_default_clock_account},
+    instructions::tests::common_utils::{get_default_clock_account, new_default_account},
     program::Vaults,
     state::ManagerWhitelist,
 };
@@ -135,8 +135,7 @@ fn test_remove_manager_bump_seed_constraint_violation() {
 
     // Manager details : bump ignored
     let manager = Pubkey::new_unique();
-    let (whitelist_pda, _) =
-        Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
+    let (whitelist_pda, _) = Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
 
     // Initial whitelist state: manager is already included
     let whitelist_state = ManagerWhitelist {
@@ -172,8 +171,7 @@ fn test_remove_manager_whitelist_pubkey_constraint_violation() {
 
     // Manager details
     let manager = Pubkey::new_unique();
-    let (_, bump) =
-        Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
+    let (_, bump) = Pubkey::find_program_address(&[ManagerWhitelist::SEED], &program_id);
     let whitelist_pda = Pubkey::new_unique(); // Instead have a fake pubkey
 
     // Initial whitelist state: manager is already included

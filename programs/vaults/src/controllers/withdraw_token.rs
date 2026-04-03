@@ -191,9 +191,6 @@ fn withdraw_token<'info>(
     signer_seeds: &[&[&[u8]]],
     token_program: &Interface<'info, TokenInterface>,
 ) -> Result<()> {
-    // TODO: Throw error if to account (user token account) key doesn't match
-    //       the one associated with the user and the mint
-    // require!(...)
     msg!("Processing withdrawal for mint: {}", mint.key());
     msg!("From account: {}", from.key());
     msg!("To account: {}", to.key());

@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::STARKE_AUTHORITY;
-use crate::state::{ManagerWhitelist, ManagerWhitelistError, WhitelistManagerAdded};
+use crate::state::{
+    ManagerWhitelist, ManagerWhitelistError, WhitelistManagerAdded, WhitelistManagerRemoved,
+};
 
 pub fn _add_manager(ctx: Context<ModifyManagerWhitelist>, manager_pubkey: Pubkey) -> Result<()> {
     msg!("Processing request to add manager: {}", manager_pubkey);
@@ -11,6 +13,23 @@ pub fn _add_manager(ctx: Context<ModifyManagerWhitelist>, manager_pubkey: Pubkey
     msg!("Successfully added manager to whitelist");
 
     emit!(WhitelistManagerAdded {
+        manager: manager_pubkey,
+        timestamp: ctx.accounts.clock.unix_timestamp,
+    });
+
+    Ok(())
+}
+
+pub fn _remove_manager(ctx: Context<ModifyManagerWhitelist>, manager_pubkey: Pubkey) -> Result<()> {
+    msg!("Processing request to remove manager: {}", manager_pubkey);
+
+    ctx.accounts
+        .manager_whitelist
+        .remove_manager(&manager_pubkey)?;
+
+    msg!("Successfully removed manager from whitelist");
+
+    emit!(WhitelistManagerRemoved {
         manager: manager_pubkey,
         timestamp: ctx.accounts.clock.unix_timestamp,
     });

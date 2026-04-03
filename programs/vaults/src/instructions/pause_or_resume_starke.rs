@@ -4,7 +4,10 @@ use crate::{constants::STARKE_AUTHORITY, state::StarkeConfig, state::StarkeConfi
 
 pub fn _pause_starke(ctx: Context<PauseOrResumeStarke>) -> Result<()> {
     ctx.accounts.starke_config.update_pause_status(true)?;
-
+    Ok(())
+}
+pub fn _resume_starke(ctx: Context<PauseOrResumeStarke>) -> Result<()> {
+    ctx.accounts.starke_config.update_pause_status(false)?;
     Ok(())
 }
 

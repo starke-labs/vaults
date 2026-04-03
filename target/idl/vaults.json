@@ -805,73 +805,49 @@
         },
         {
           "name": "max_allowed_aum",
-          "type": {
-            "option": "u64"
-          }
-        },
-        {
-          "name": "allow_retail",
-          "type": "bool"
-        },
-        {
-          "name": "allow_accredited",
-          "type": "bool"
-        },
-        {
-          "name": "allow_institutional",
-          "type": "bool"
-        },
-        {
-          "name": "allow_qualified",
-          "type": "bool"
-        },
-        {
-          "name": "individual_min_deposit",
-          "type": "u32"
-        },
-        {
-          "name": "institutional_min_deposit",
-          "type": "u32"
-        },
-        {
-          "name": "max_depositors",
-          "type": "u32"
+          "type": "u64"
         },
         {
           "name": "initial_vtoken_price",
           "type": "u32"
         },
         {
+          "name": "allowed_investor_types",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "InvestorType"
+              }
+            }
+          }
+        },
+        {
+          "name": "allowed_investor_tiers",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "InvestorTier"
+              }
+            }
+          }
+        },
+        {
+          "name": "range_allowed_per_investor_type",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "InvestorTypeWithRange"
+              }
+            }
+          }
+        },
+        {
+          "name": "max_depositors",
+          "type": "u32"
+        },
+        {
           "name": "management_fee_rate",
           "type": "u16"
-        },
-        {
-          "name": "individual_max_deposit",
-          "type": "u32"
-        },
-        {
-          "name": "institutional_max_deposit",
-          "type": "u32"
-        },
-        {
-          "name": "allow_individual",
-          "type": "bool"
-        },
-        {
-          "name": "allow_entity",
-          "type": "bool"
-        },
-        {
-          "name": "allow_basic",
-          "type": "bool"
-        },
-        {
-          "name": "entity_max_deposit",
-          "type": "u32"
-        },
-        {
-          "name": "entity_min_deposit",
-          "type": "u32"
         }
       ]
     },
@@ -1474,6 +1450,66 @@
                   70,
                   73,
                   71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "migrate_user_whitelist",
+      "discriminator": [
+        24,
+        252,
+        127,
+        191,
+        225,
+        237,
+        151,
+        101
+      ],
+      "accounts": [
+        {
+          "name": "starke_authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "user_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
                 ]
               }
             ]
@@ -3636,12 +3672,12 @@
     {
       "code": 6001,
       "name": "NameTooShort",
-      "msg": "Name must be 32 characters or less"
+      "msg": "Name must be 1 character or more"
     },
     {
       "code": 6002,
       "name": "NameTooLong",
-      "msg": "Name must be 1 character or more"
+      "msg": "Name must be 32 characters or less"
     },
     {
       "code": 6003,
@@ -3772,6 +3808,16 @@
       "code": 6028,
       "name": "DepositTokenSupplyZero",
       "msg": "Deposit token supply is zero."
+    },
+    {
+      "code": 6029,
+      "name": "TooManyRangeEntries",
+      "msg": "Too many range entries, maximum is 16"
+    },
+    {
+      "code": 6030,
+      "name": "InvalidDepositRange",
+      "msg": "Invalid deposit range: min_deposit exceeds max_deposit"
     }
   ],
   "types": [
@@ -3813,6 +3859,9 @@
     },
     {
       "name": "InvestorTier",
+      "repr": {
+        "kind": "rust"
+      },
       "type": {
         "kind": "enum",
         "variants": [
@@ -3830,14 +3879,44 @@
     },
     {
       "name": "InvestorType",
+      "repr": {
+        "kind": "rust"
+      },
       "type": {
         "kind": "enum",
         "variants": [
+          {
+            "name": "Unknown"
+          },
           {
             "name": "Entity"
           },
           {
             "name": "Individual"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvestorTypeWithRange",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "investor_type",
+            "type": {
+              "defined": {
+                "name": "InvestorType"
+              }
+            }
+          },
+          {
+            "name": "min_deposit",
+            "type": "u64"
+          },
+          {
+            "name": "max_deposit",
+            "type": "u64"
           }
         ]
       }
@@ -4150,58 +4229,30 @@
             "type": "u8"
           },
           {
-            "name": "entry_fee",
-            "type": "u16"
-          },
-          {
-            "name": "exit_fee",
-            "type": "u16"
-          },
-          {
-            "name": "pending_entry_fee",
-            "type": {
-              "option": "u16"
-            }
-          },
-          {
-            "name": "pending_exit_fee",
-            "type": {
-              "option": "u16"
-            }
-          },
-          {
-            "name": "fee_update_timestamp",
-            "type": "i64"
-          },
-          {
             "name": "max_allowed_aum",
+            "type": "u64"
+          },
+          {
+            "name": "initial_vtoken_price",
+            "type": "u32"
+          },
+          {
+            "name": "allowed_investor_types",
+            "type": "u16"
+          },
+          {
+            "name": "allowed_investor_tiers",
+            "type": "u16"
+          },
+          {
+            "name": "range_allowed_per_investor_type",
             "type": {
-              "option": "u64"
+              "vec": {
+                "defined": {
+                  "name": "InvestorTypeWithRange"
+                }
+              }
             }
-          },
-          {
-            "name": "allow_retail",
-            "type": "bool"
-          },
-          {
-            "name": "allow_accredited",
-            "type": "bool"
-          },
-          {
-            "name": "allow_institutional",
-            "type": "bool"
-          },
-          {
-            "name": "allow_qualified",
-            "type": "bool"
-          },
-          {
-            "name": "individual_min_deposit",
-            "type": "u32"
-          },
-          {
-            "name": "institutional_min_deposit",
-            "type": "u32"
           },
           {
             "name": "max_depositors",
@@ -4212,18 +4263,6 @@
             "type": "u32"
           },
           {
-            "name": "initial_vtoken_price",
-            "type": "u32"
-          },
-          {
-            "name": "last_fees_paid_timestamp",
-            "type": "i64"
-          },
-          {
-            "name": "management_fees_rate",
-            "type": "u16"
-          },
-          {
             "name": "state",
             "type": {
               "defined": {
@@ -4232,32 +4271,12 @@
             }
           },
           {
-            "name": "individual_max_deposit",
-            "type": "u32"
+            "name": "last_fees_paid_timestamp",
+            "type": "i64"
           },
           {
-            "name": "institutional_max_deposit",
-            "type": "u32"
-          },
-          {
-            "name": "allow_individual",
-            "type": "bool"
-          },
-          {
-            "name": "allow_entity",
-            "type": "bool"
-          },
-          {
-            "name": "allow_basic",
-            "type": "bool"
-          },
-          {
-            "name": "entity_max_deposit",
-            "type": "u32"
-          },
-          {
-            "name": "entity_min_deposit",
-            "type": "u32"
+            "name": "management_fees_rate",
+            "type": "u16"
           }
         ]
       }
@@ -4313,13 +4332,37 @@
           },
           {
             "name": "max_allowed_aum",
-            "type": {
-              "option": "u64"
-            }
+            "type": "u64"
           },
           {
             "name": "initial_vtoken_price",
             "type": "u32"
+          },
+          {
+            "name": "allowed_investor_types",
+            "type": "u16"
+          },
+          {
+            "name": "allowed_investor_tiers",
+            "type": "u16"
+          },
+          {
+            "name": "range_allowed_per_investor_type",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "InvestorTypeWithRange"
+                }
+              }
+            }
+          },
+          {
+            "name": "max_depositors",
+            "type": "u32"
+          },
+          {
+            "name": "management_fee_rate",
+            "type": "u16"
           }
         ]
       }

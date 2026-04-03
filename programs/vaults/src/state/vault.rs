@@ -1,10 +1,14 @@
 use anchor_lang::prelude::*;
 
 use super::{InvestorTier, InvestorType, TokenWhitelist};
-use crate::controllers::{
-    compute_token_value_usd, parse_vault_balances, transform_price_to_aum_decimals,
-    verify_price_update_and_get_pyth_price,
+use crate::{
+    controllers::{
+        compute_token_value_usd, parse_vault_balances, transform_price_to_aum_decimals,
+        verify_price_update_and_get_pyth_price,
+    },
+    state::InvestorTypeWithRange,
 };
+use std::mem::size_of;
 
 #[account]
 pub struct Vault {
@@ -15,48 +19,25 @@ pub struct Vault {
     pub mint: Pubkey, // vault token mint
     pub mint_bump: u8,
 
-    // Fees
-    // TODO: Remove these fields before production.
-    // NOTE: They are deprecated in favor of management_fees_rate.
-    #[deprecated = "Use management_fees_rate instead."]
-    pub entry_fee: u16,
-    #[deprecated = "Use management_fees_rate instead."]
-    pub exit_fee: u16,
-    #[deprecated = "Use management_fees_rate instead."]
-    pub pending_entry_fee: Option<u16>,
-    #[deprecated = "Use management_fees_rate instead."]
-    pub pending_exit_fee: Option<u16>,
-    #[deprecated = "Use management_fees_rate instead."]
-    pub fee_update_timestamp: i64,
+    // AUM configuration
+    pub max_allowed_aum: u64, // In AUM_DECIMALS decimals, 0 means no maximum
+    pub initial_vtoken_price: u32,
 
-    // Config
-    // Maximum amount of aum allowed in vault, if None, there is no maximum
-    // USD value in AUM_DECIMALS decimals
-    pub max_allowed_aum: Option<u64>, // None means no maximum
-    // New investor permission settings
-    pub allow_retail: bool,
-    pub allow_accredited: bool,
-    pub allow_institutional: bool,
-    pub allow_qualified: bool,
-    // Deposit configuration (0 = no minimum)
-    pub individual_min_deposit: u32, // For retail/accredited investors, 0 = no minimum
-    pub institutional_min_deposit: u32, // For institutional/qualified investors, 0 = no minimum
-    // Max depositors (0 = unlimited)
+    // Investor permission settings
+    pub allowed_investor_types: u16,
+    pub allowed_investor_tiers: u16,
+    pub range_allowed_per_investor_type: Vec<InvestorTypeWithRange>,
+
+    // Deposit configuration
     pub max_depositors: u32, // 0 means unlimited
     pub current_depositors: u32,
 
-    pub initial_vtoken_price: u32,
+    // State
+    pub state: VaultState,
+
+    // Fees
     pub last_fees_paid_timestamp: i64, // 0 means never. Resets to 0 when the vault is closed.
     pub management_fees_rate: u16,     // percentage, 2 decimals
-    pub state: VaultState,
-    // Deposit configuration (0 = no maximum)
-    pub individual_max_deposit: u32, // For retail/accredited investors, 0 = no minimum
-    pub institutional_max_deposit: u32, // For institutional/qualified investors, 0 = no minimum
-    pub allow_individual: bool,
-    pub allow_entity: bool,
-    pub allow_basic: bool,
-    pub entity_max_deposit: u32,     // For entity investors, 0 = no minimum
-    pub entity_min_deposit: u32,     // For entity investors, 0 = no minimum
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Default)]
@@ -65,47 +46,30 @@ pub enum VaultState {
     #[default]
     Active,
     DepositPaused,
-    // WithdrawalPaused,
-    // Liquidated,
-    // Closed,
-    // Frozen,
 }
 
 impl Vault {
     pub const MAX_SPACE: usize = 8  // discriminator
-        + 32 // manager pubkey
-        + 32 // deposit token mint pubkey
-        + 4  // name length (u32)
-        + 32 // name (max 32 bytes)
-        + 1  // bump
-        + 32 // vault token mint pubkey
-        + 1  // vault token mint bump
-        + 2  // entry fee (u16)
-        + 2  // exit fee (u16)
-        + 3  // pending_entry_fee (Option<u16>)
-        + 3  // pending_exit_fee (Option<u16>)
-        + 8  // fee_update_timestamp (i64)
-        + 9  // max_allowed_aum (Option<u64>)
-        + 1  // allow_retail (bool)
-        + 1  // allow_accredited (bool)
-        + 1  // allow_institutional (bool)
-        + 1  // allow_qualified (bool)
-        + 4  // individual_min_deposit (u32)
-        + 4  // institutional_min_deposit (u32)
-        + 4  // max_depositors (u32)
-        + 4  // current_depositors (u32)
-        + 4  // initial_vtoken_price (u32)
-        + 8  // last_fees_paid_timestamp (i64)
-        + 2  // management_fees_rate (u16)
-        + 1  // state (u8)
-        + 4  // individual_max_deposit (u32)
-        + 4  // institutional_max_deposit (u32)
-        + 1  // allow_individual (bool)
-        + 1  // allow_entity (bool)
-        + 1  // allow_basic (bool)
-        + 4  // entity_max_deposit (u32)
-        + 4; // entity_min_deposit (u32)
+        + size_of::<Pubkey>()       // manager pubkey
+        + size_of::<Pubkey>()       // deposit token mint pubkey
+        + 4                         // name length (u32)
+        + 32                        // name (max 32 bytes)
+        + 1                         // bump
+        + size_of::<Pubkey>()       // vtoken mint pubkey
+        + 1                         // vtoken mint bump
+        + size_of::<u64>()          // max allowed AUM
+        + size_of::<u32>()          // initial vtoken price
+        + size_of::<u16>()          // allowed investor types
+        + size_of::<u16>()          // allowed investor tiers
+        + 4                         // range_allowed_per_investor_type vector length
+        + InvestorTypeWithRange::MAX_SPACE * Self::MAX_RANGE_ENTRIES // range_allowed_per_investor_type vector
+        + size_of::<u32>()          // max depositors
+        + size_of::<u32>()          // current depositors
+        + size_of::<VaultState>()   // vault state
+        + size_of::<i64>()          // last fees paid timestamp
+        + size_of::<u16>(); // management fees rate
 
+    pub const MAX_RANGE_ENTRIES: usize = 16;
     pub const SEED: &'static [u8] = b"STARKE_VAULT";
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
     pub const MAX_MANAGEMENT_FEE_RATE: u16 = 10000;
@@ -119,23 +83,13 @@ impl Vault {
         bump: u8,
         vtoken_mint: Pubkey,
         vtoken_mint_bump: u8,
-        max_allowed_aum: Option<u64>,
-        allow_retail: bool,
-        allow_accredited: bool,
-        allow_institutional: bool,
-        allow_qualified: bool,
-        individual_min_deposit: u32,
-        institutional_min_deposit: u32,
-        max_depositors: u32,
+        max_allowed_aum: u64,
         initial_vtoken_price: u32,
+        allowed_investor_types: u16,
+        allowed_investor_tiers: u16,
+        range_allowed_per_investor_type: Vec<InvestorTypeWithRange>,
+        max_depositors: u32,
         management_fees_rate: u16,
-        individual_max_deposit: u32,
-        institutional_max_deposit: u32,
-        allow_individual: bool,
-        allow_entity: bool,
-        allow_basic: bool,
-        entity_max_deposit: u32,
-        entity_min_deposit: u32,
     ) -> Result<()> {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
@@ -144,37 +98,33 @@ impl Vault {
             management_fees_rate <= Self::MAX_MANAGEMENT_FEE_RATE,
             VaultError::InvalidFee
         );
+        require!(
+            range_allowed_per_investor_type.len() <= Self::MAX_RANGE_ENTRIES,
+            VaultError::TooManyRangeEntries
+        );
+        for r in &range_allowed_per_investor_type {
+            require!(
+                r.max_deposit == 0 || r.min_deposit <= r.max_deposit,
+                VaultError::InvalidDepositRange
+            );
+        }
 
         self.manager = manager;
         self.deposit_token_mint = deposit_token_mint;
-        self.name = name.to_string();
+        self.name = name;
         self.bump = bump;
         self.mint = vtoken_mint;
         self.mint_bump = vtoken_mint_bump;
-        // self.entry_fee = 0;
-        // self.exit_fee = 0;
-        // self.pending_entry_fee = None;
-        // self.pending_exit_fee = None;
-        // self.fee_update_timestamp = 0;
         self.max_allowed_aum = max_allowed_aum;
-        self.allow_retail = allow_retail;
-        self.allow_accredited = allow_accredited;
-        self.allow_institutional = allow_institutional;
-        self.allow_qualified = allow_qualified;
-        self.individual_min_deposit = individual_min_deposit;
-        self.institutional_min_deposit = institutional_min_deposit;
+        self.initial_vtoken_price = initial_vtoken_price;
+        self.allowed_investor_types = allowed_investor_types;
+        self.allowed_investor_tiers = allowed_investor_tiers;
+        self.range_allowed_per_investor_type = range_allowed_per_investor_type;
         self.max_depositors = max_depositors;
         self.current_depositors = 0;
-        self.initial_vtoken_price = initial_vtoken_price;
+        self.state = VaultState::Active;
         self.last_fees_paid_timestamp = 0;
         self.management_fees_rate = management_fees_rate;
-        self.individual_max_deposit = individual_max_deposit;
-        self.institutional_max_deposit = institutional_max_deposit;
-        self.allow_individual = allow_individual;
-        self.allow_entity = allow_entity;
-        self.allow_basic = allow_basic;
-        self.entity_max_deposit = entity_max_deposit;
-        self.entity_min_deposit = entity_min_deposit;
 
         Ok(())
     }
@@ -245,12 +195,12 @@ impl Vault {
     /// Validates if the vault can accept more deposits based on max AUM limit
     pub fn validate_max_aum(&self, current_aum: u64, deposit_value: u64) -> Result<()> {
         // Check max AUM if it's set
-        if let Some(max_aum) = self.max_allowed_aum {
+        if self.max_allowed_aum > 0 {
             let new_aum = current_aum
                 .checked_add(deposit_value)
                 .ok_or(VaultError::NumericOverflow)?;
 
-            require!(new_aum <= max_aum, VaultError::MaxAumExceeded);
+            require!(new_aum <= self.max_allowed_aum, VaultError::MaxAumExceeded);
         }
 
         Ok(())
@@ -259,21 +209,14 @@ impl Vault {
     /// Validates if the user's investor type and tier are allowed in this vault
     pub fn validate_investor_type(
         &self,
-        investor_type: &InvestorType,
-        investor_tier: &InvestorTier,
+        investor_type: InvestorType,
+        investor_tier: InvestorTier,
     ) -> Result<()> {
-        let type_allowed = match investor_type {
-            InvestorType::Individual => self.allow_individual,
-            InvestorType::Entity => self.allow_entity,
-        };
-        let tier_allowed = match investor_tier {
-            InvestorTier::Basic => self.allow_basic,
-            InvestorTier::Accredited => self.allow_accredited,
-            InvestorTier::Qualified => self.allow_qualified,
-        };
-
         require!(
-            type_allowed && tier_allowed,
+            (self.allowed_investor_types == 0
+                || self.allowed_investor_types & investor_type as u16 > 0)
+                && (self.allowed_investor_tiers == 0
+                    || self.allowed_investor_tiers & investor_tier as u16 > 0),
             VaultError::InvestorTypeNotAllowed
         );
         Ok(())
@@ -283,34 +226,21 @@ impl Vault {
     pub fn validate_deposit_amount_by_type(
         &self,
         amount: u64,
-        investor_type: &InvestorType,
+        investor_type: InvestorType,
     ) -> Result<()> {
-        // Check if amount is not zero
         require!(amount > 0, VaultError::InvalidAmount);
 
-        // Check minimum deposit amount based on investor type (0 = no minimum)
-        let min_deposit = match investor_type {
-            InvestorType::Individual => self.individual_min_deposit,
-            InvestorType::Entity => self.entity_min_deposit,
-        };
-        let max_deposit = match investor_type {
-            InvestorType::Individual => self.individual_max_deposit,
-            InvestorType::Entity => self.entity_max_deposit,
-        };
-
-        if min_deposit > 0 {
-            require!(
-                amount >= min_deposit as u64,
-                VaultError::DepositBelowMinimum
-            );
+        for r in &self.range_allowed_per_investor_type {
+            if r.investor_type == investor_type {
+                if r.min_deposit > 0 {
+                    require!(amount >= r.min_deposit, VaultError::DepositBelowMinimum);
+                }
+                if r.max_deposit > 0 {
+                    require!(amount <= r.max_deposit, VaultError::DepositAboveMaximum);
+                }
+                return Ok(());
+            }
         }
-        if max_deposit > 0 {
-            require!(
-                amount <= max_deposit as u64,
-                VaultError::DepositAboveMaximum
-            );
-        }
-
         Ok(())
     }
 
@@ -401,9 +331,9 @@ impl Vault {
 pub enum VaultError {
     #[msg("Invalid deposit token")]
     InvalidDepositToken,
-    #[msg("Name must be 32 characters or less")]
-    NameTooShort,
     #[msg("Name must be 1 character or more")]
+    NameTooShort,
+    #[msg("Name must be 32 characters or less")]
     NameTooLong,
     #[msg("Numeric overflow")]
     NumericOverflow,
@@ -457,6 +387,10 @@ pub enum VaultError {
     WithdrawAmountTooSmall,
     #[msg("Deposit token supply is zero.")]
     DepositTokenSupplyZero,
+    #[msg("Too many range entries, maximum is 16")]
+    TooManyRangeEntries,
+    #[msg("Invalid deposit range: min_deposit exceeds max_deposit")]
+    InvalidDepositRange,
 }
 
 #[error_code]

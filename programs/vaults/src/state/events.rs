@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::state::InvestorTypeWithRange;
+
 #[event]
 pub struct VaultCreated {
     pub vault: Pubkey,
@@ -8,8 +10,13 @@ pub struct VaultCreated {
     pub vtoken_mint: Pubkey,
     pub name: String,
     pub timestamp: i64,
-    pub max_allowed_aum: Option<u64>,
+    pub max_allowed_aum: u64, // 0 means no limit
     pub initial_vtoken_price: u32,
+    pub allowed_investor_types: u16,
+    pub allowed_investor_tiers: u16,
+    pub range_allowed_per_investor_type: Vec<InvestorTypeWithRange>,
+    pub max_depositors: u32,
+    pub management_fee_rate: u16,
 }
 
 #[event]

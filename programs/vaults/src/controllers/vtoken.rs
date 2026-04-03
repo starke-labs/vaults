@@ -52,17 +52,18 @@ pub fn calculate_vtokens_to_mint(
     vtoken_supply: u64,
     initial_vtoken_price: u32,
 ) -> Result<u64> {
-    if vtoken_supply == 0 || total_aum == 0 {
-        // Initial deposit
-
-        // NOTE: Added initial_vtoken_price
-        // The program was upgraded to add intial_vtoken_price.
-        // Therefore, older vaults will have initial_vtoken_price = 0.
-        // In this case, we want to mint the same amount of vtokens as the deposit amount.
-        // This is the same as having initial_vtoken_price = 1.
+    if vtoken_supply == 0 && total_aum == 0 {
+        // Initial deposit.
+        //
+        // NOTE: Older vaults upgraded to add initial_vtoken_price will have it = 0.
+        // In that case, mint 1:1 with deposit value (same as price = 1).
         Ok(deposit_value
             .checked_div(initial_vtoken_price as u64)
             .unwrap_or(deposit_value))
+    } else if vtoken_supply > 0 && total_aum == 0 {
+        // Inconsistent state: vtokens exist but vault has no AUM.
+        // Cannot price new vtokens; reject the deposit.
+        err!(VaultError::DepositTokenSupplyZero)
     } else {
         // Calculate proportional amount based on AUM
         (deposit_value as u128)
