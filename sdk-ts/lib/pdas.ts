@@ -5,7 +5,7 @@ import { PublicKey } from "@solana/web3.js";
 // );
 // !!TODO: Find a way to get the program id from the IDL
 export const VAULTS_PROGRAM_ID = new PublicKey(
-  "3NVg4ib33KsgP8RUmCmgrbsKJnvtuhUQp2JN92NMbTiB"
+  "56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch"
 );
 export const TRANSFER_HOOK_PROGRAM_ID = new PublicKey(
   "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"

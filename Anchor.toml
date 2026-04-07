@@ -11,7 +11,7 @@ skip-lint = false
 #       correct as this needs to track the Jupiter mainnet program ID
 jupiter = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 transfer_hook = "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
-vaults = "3NVg4ib33KsgP8RUmCmgrbsKJnvtuhUQp2JN92NMbTiB"
+vaults = "56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch"
 
 [registry]
 url = "https://api.apr.dev"

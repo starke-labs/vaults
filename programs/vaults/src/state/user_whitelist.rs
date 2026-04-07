@@ -45,7 +45,7 @@ pub struct UserWhitelist {
 }
 
 impl UserWhitelist {
-    pub const MAX_USERS: usize = 300;
+    pub const MAX_USERS: usize = 200;
     pub const MAX_SPACE: usize = 8 // discriminator
         + 32 // authority
         + 1  // bump
