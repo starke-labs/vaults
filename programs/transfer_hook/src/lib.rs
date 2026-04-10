@@ -210,7 +210,8 @@ pub struct SetVtokenIsTransferrableAccounts<'info> {
     #[account(
         mut,
         seeds = [VtokenConfig::SEED, mint.key().as_ref()],
-        bump
+        bump,
+        constraint = vtoken_config.manager == manager.key() @ TransferHookError::Unauthorized
     )]
     pub vtoken_config: Account<'info, VtokenConfig>,
 }
