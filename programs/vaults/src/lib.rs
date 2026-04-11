@@ -144,6 +144,37 @@ pub mod vaults {
     pub fn resume_deposits(ctx: Context<PauseOrResumeDeposits>) -> Result<()> {
         _resume_deposits(ctx)
     }
+
+    pub fn pause_withdraws(ctx: Context<PauseOrResumeWithdraws>) -> Result<()> {
+        _pause_withdraws(ctx)
+    }
+
+    pub fn resume_withdraws(ctx: Context<PauseOrResumeWithdraws>) -> Result<()> {
+        _resume_withdraws(ctx)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn update_fund(
+        ctx: Context<UpdateFund>,
+        max_allowed_aum: u64,
+        allowed_investor_types: Vec<InvestorType>,
+        allowed_investor_tiers: Vec<InvestorTier>,
+        range_allowed_per_investor_type: Vec<InvestorTypeWithRange>,
+        max_depositors: u32,
+        management_fee_rate: u16,
+        is_transferrable: bool,
+    ) -> Result<()> {
+        _update_fund(
+            ctx,
+            max_allowed_aum,
+            allowed_investor_types,
+            allowed_investor_tiers,
+            range_allowed_per_investor_type,
+            max_depositors,
+            management_fee_rate,
+            is_transferrable,
+        )
+    }
 }
 
 #[cfg(not(feature = "no-entrypoint"))]

@@ -1828,6 +1828,81 @@
       "args": []
     },
     {
+      "name": "pause_withdraws",
+      "discriminator": [
+        120,
+        167,
+        44,
+        38,
+        5,
+        154,
+        215,
+        144
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "remove_manager",
       "discriminator": [
         150,
@@ -2145,6 +2220,81 @@
         {
           "name": "starke_config",
           "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "resume_withdraws",
+      "discriminator": [
+        39,
+        85,
+        160,
+        76,
+        180,
+        200,
+        12,
+        173
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
           "pda": {
             "seeds": [
               {
@@ -2799,6 +2949,211 @@
         {
           "name": "aum_accounts_len",
           "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_fund",
+      "discriminator": [
+        132,
+        171,
+        13,
+        83,
+        34,
+        122,
+        82,
+        155
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "transfer_hook_program"
+            }
+          }
+        },
+        {
+          "name": "transfer_hook_program",
+          "address": "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "max_allowed_aum",
+          "type": "u64"
+        },
+        {
+          "name": "allowed_investor_types",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "InvestorType"
+              }
+            }
+          }
+        },
+        {
+          "name": "allowed_investor_tiers",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "InvestorTier"
+              }
+            }
+          }
+        },
+        {
+          "name": "range_allowed_per_investor_type",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "InvestorTypeWithRange"
+              }
+            }
+          }
+        },
+        {
+          "name": "max_depositors",
+          "type": "u32"
+        },
+        {
+          "name": "management_fee_rate",
+          "type": "u16"
+        },
+        {
+          "name": "is_transferrable",
+          "type": "bool"
         }
       ]
     },
@@ -3529,6 +3884,19 @@
         117,
         119
       ]
+    },
+    {
+      "name": "VtokenConfig",
+      "discriminator": [
+        248,
+        233,
+        25,
+        144,
+        125,
+        175,
+        99,
+        250
+      ]
     }
   ],
   "events": [
@@ -3796,26 +4164,31 @@
     },
     {
       "code": 6026,
+      "name": "WithdrawsPaused",
+      "msg": "Vault withdrawals are paused."
+    },
+    {
+      "code": 6027,
       "name": "DepositAboveMaximum",
       "msg": "Deposit amount is above maximum"
     },
     {
-      "code": 6027,
+      "code": 6028,
       "name": "WithdrawAmountTooSmall",
       "msg": "Withdraw amount too small."
     },
     {
-      "code": 6028,
+      "code": 6029,
       "name": "DepositTokenSupplyZero",
       "msg": "Deposit token supply is zero."
     },
     {
-      "code": 6029,
+      "code": 6030,
       "name": "TooManyRangeEntries",
       "msg": "Too many range entries, maximum is 16"
     },
     {
-      "code": 6030,
+      "code": 6031,
       "name": "InvalidDepositRange",
       "msg": "Invalid deposit range: min_deposit exceeds max_deposit"
     }
@@ -4380,6 +4753,12 @@
           },
           {
             "name": "DepositPaused"
+          },
+          {
+            "name": "WithdrawPaused"
+          },
+          {
+            "name": "DepositWithdrawPaused"
           }
         ]
       }
@@ -4413,6 +4792,30 @@
           },
           {
             "name": "Full"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VtokenConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vtoken_is_transferrable",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

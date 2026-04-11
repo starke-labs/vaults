@@ -10,7 +10,7 @@ use crate::controllers::{
 };
 use crate::state::{
     Deposited, StarkeConfig, StarkeConfigError, TokenWhitelist, TokenWhitelistError, UserWhitelist,
-    UserWhitelistError, Vault, VaultError, VaultState,
+    UserWhitelistError, Vault, VaultError,
 };
 
 pub fn _deposit<'info>(
@@ -23,7 +23,7 @@ pub fn _deposit<'info>(
     );
 
     require!(
-        ctx.accounts.vault.state != VaultState::DepositPaused,
+        !ctx.accounts.vault.is_deposit_paused(),
         VaultError::DepositsPaused
     );
 

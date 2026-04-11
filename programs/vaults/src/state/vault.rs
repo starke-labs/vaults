@@ -46,6 +46,8 @@ pub enum VaultState {
     #[default]
     Active,
     DepositPaused,
+    WithdrawPaused,
+    DepositWithdrawPaused,
 }
 
 impl Vault {
@@ -74,6 +76,28 @@ impl Vault {
     pub const VTOKEN_MINT_SEED: &'static [u8] = b"STARKE_VTOKEN_MINT";
     pub const MAX_MANAGEMENT_FEE_RATE: u16 = 10000;
 
+    fn validate_fund_config(
+        management_fees_rate: u16,
+        range_allowed_per_investor_type: &[InvestorTypeWithRange],
+    ) -> Result<()> {
+        require!(
+            management_fees_rate <= Self::MAX_MANAGEMENT_FEE_RATE,
+            VaultError::InvalidFee
+        );
+        require!(
+            range_allowed_per_investor_type.len() <= Self::MAX_RANGE_ENTRIES,
+            VaultError::TooManyRangeEntries
+        );
+        for r in range_allowed_per_investor_type {
+            require!(
+                r.max_deposit == 0 || r.min_deposit <= r.max_deposit,
+                VaultError::InvalidDepositRange
+            );
+        }
+
+        Ok(())
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn initialize(
         &mut self,
@@ -94,20 +118,7 @@ impl Vault {
         require!(initial_vtoken_price > 0, VaultError::InvalidInitialPrice);
         require!(name.len() <= 32, VaultError::NameTooLong);
         require!(!name.is_empty(), VaultError::NameTooShort);
-        require!(
-            management_fees_rate <= Self::MAX_MANAGEMENT_FEE_RATE,
-            VaultError::InvalidFee
-        );
-        require!(
-            range_allowed_per_investor_type.len() <= Self::MAX_RANGE_ENTRIES,
-            VaultError::TooManyRangeEntries
-        );
-        for r in &range_allowed_per_investor_type {
-            require!(
-                r.max_deposit == 0 || r.min_deposit <= r.max_deposit,
-                VaultError::InvalidDepositRange
-            );
-        }
+        Self::validate_fund_config(management_fees_rate, &range_allowed_per_investor_type)?;
 
         self.manager = manager;
         self.deposit_token_mint = deposit_token_mint;
@@ -319,11 +330,86 @@ impl Vault {
         last_year != curr_year || last_quarter != curr_quarter
     }
 
+    pub fn is_deposit_paused(&self) -> bool {
+        matches!(
+            self.state,
+            VaultState::DepositPaused | VaultState::DepositWithdrawPaused
+        )
+    }
+    pub fn is_withdraw_paused(&self) -> bool {
+        matches!(
+            self.state,
+            VaultState::WithdrawPaused | VaultState::DepositWithdrawPaused
+        )
+    }
+
     pub fn pause_deposits(&mut self) {
-        self.state = VaultState::DepositPaused;
+        match self.state {
+            VaultState::WithdrawPaused => {
+                self.state = VaultState::DepositWithdrawPaused;
+            }
+            VaultState::DepositWithdrawPaused => {}
+            _ => {
+                self.state = VaultState::DepositPaused;
+            }
+        }
     }
     pub fn resume_deposits(&mut self) {
-        self.state = VaultState::Active;
+        match self.state {
+            VaultState::DepositWithdrawPaused => {
+                self.state = VaultState::WithdrawPaused;
+            }
+            VaultState::DepositPaused => {
+                self.state = VaultState::Active;
+            }
+            _ => {}
+        }
+    }
+    pub fn pause_withdraws(&mut self) {
+        match self.state {
+            VaultState::DepositPaused => {
+                self.state = VaultState::DepositWithdrawPaused;
+            }
+            VaultState::DepositWithdrawPaused => {}
+            _ => {
+                self.state = VaultState::WithdrawPaused;
+            }
+        }
+    }
+    pub fn resume_withdraws(&mut self) {
+        match self.state {
+            VaultState::DepositWithdrawPaused => {
+                self.state = VaultState::DepositPaused;
+            }
+            VaultState::WithdrawPaused => {
+                self.state = VaultState::Active;
+            }
+            _ => {}
+        }
+    }
+    pub fn update_fund(
+        &mut self,
+        max_allowed_aum: u64,
+        allowed_investor_types: Vec<InvestorType>,
+        allowed_investor_tiers: Vec<InvestorTier>,
+        range_allowed_per_investor_type: Vec<InvestorTypeWithRange>,
+        max_depositors: u32,
+        management_fee_rate: u16,
+    ) -> Result<()> {
+        Self::validate_fund_config(management_fee_rate, &range_allowed_per_investor_type)?;
+
+        self.max_allowed_aum = max_allowed_aum;
+        self.allowed_investor_types = allowed_investor_types
+            .into_iter()
+            .fold(0, |acc, x| acc | x as u16);
+        self.allowed_investor_tiers = allowed_investor_tiers
+            .into_iter()
+            .fold(0, |acc, x| acc | x as u16);
+        self.range_allowed_per_investor_type = range_allowed_per_investor_type;
+        self.max_depositors = max_depositors;
+        self.management_fees_rate = management_fee_rate;
+
+        Ok(())
     }
 }
 
@@ -381,6 +467,8 @@ pub enum VaultError {
     InvalidVtokenMint,
     #[msg("Vault deposits are paused.")]
     DepositsPaused,
+    #[msg("Vault withdrawals are paused.")]
+    WithdrawsPaused,
     #[msg("Deposit amount is above maximum")]
     DepositAboveMaximum,
     #[msg("Withdraw amount too small.")]

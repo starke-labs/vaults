@@ -19,6 +19,11 @@ pub fn _withdraw_in_deposit_token<'info>(
         StarkeConfigError::StarkePaused
     );
 
+    require!(
+        !ctx.accounts.vault.is_withdraw_paused(),
+        VaultError::WithdrawsPaused
+    );
+
     // Withdraw amount should be greater than 0
     require!(vtoken_amount > 0, VaultError::InvalidAmount);
 
