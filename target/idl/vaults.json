@@ -2945,10 +2945,6 @@
         {
           "name": "data",
           "type": "bytes"
-        },
-        {
-          "name": "aum_accounts_len",
-          "type": "u64"
         }
       ]
     },
@@ -4034,163 +4030,33 @@
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidDepositToken",
-      "msg": "Invalid deposit token"
+      "name": "WhitelistFull",
+      "msg": "User whitelist is full"
     },
     {
       "code": 6001,
-      "name": "NameTooShort",
-      "msg": "Name must be 1 character or more"
+      "name": "UserNotFound",
+      "msg": "User not found in whitelist"
     },
     {
       "code": 6002,
-      "name": "NameTooLong",
-      "msg": "Name must be 32 characters or less"
+      "name": "UserNotWhitelisted",
+      "msg": "User not whitelisted"
     },
     {
       "code": 6003,
-      "name": "NumericOverflow",
-      "msg": "Numeric overflow"
+      "name": "InvalidInvestorType",
+      "msg": "Invalid investor type for this vault"
     },
     {
       "code": 6004,
-      "name": "InsufficientFunds",
-      "msg": "Insufficient funds for withdrawal"
+      "name": "UnauthorizedAccess",
+      "msg": "Unauthorized access"
     },
     {
       "code": 6005,
-      "name": "InvalidFee",
-      "msg": "Invalid fee"
-    },
-    {
-      "code": 6006,
-      "name": "FeeUpdateDelayNotPassed",
-      "msg": "Fee update delay not passed"
-    },
-    {
-      "code": 6007,
-      "name": "MintAndTokenAccountMismatch",
-      "msg": "Mint and token account mismatch"
-    },
-    {
-      "code": 6008,
-      "name": "VaultAndTokenAccountMismatch",
-      "msg": "Vault and token account mismatch"
-    },
-    {
-      "code": 6009,
-      "name": "UserAndTokenAccountMismatch",
-      "msg": "User and token account mismatch"
-    },
-    {
-      "code": 6010,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount"
-    },
-    {
-      "code": 6011,
-      "name": "PriceConfidenceTooLow",
-      "msg": "Price confidence too low"
-    },
-    {
-      "code": 6012,
-      "name": "DepositBelowMinimum",
-      "msg": "Deposit amount is below minimum"
-    },
-    {
-      "code": 6013,
-      "name": "MaxAumExceeded",
-      "msg": "Maximum AUM limit exceeded"
-    },
-    {
-      "code": 6014,
-      "name": "InvestorTypeNotAllowed",
-      "msg": "Investor type not allowed for this vault"
-    },
-    {
-      "code": 6015,
-      "name": "MaxDepositorsExceeded",
-      "msg": "Maximum depositors limit exceeded"
-    },
-    {
-      "code": 6016,
-      "name": "VaultHasActiveDepositors",
-      "msg": "Cannot close vault with active depositors"
-    },
-    {
-      "code": 6017,
-      "name": "VTokensOutstanding",
-      "msg": "Cannot close vault with outstanding vtokens"
-    },
-    {
-      "code": 6018,
-      "name": "FundsRemaining",
-      "msg": "Cannot close vault with remaining funds"
-    },
-    {
-      "code": 6019,
-      "name": "NoVtokenSupply",
-      "msg": "No outstanding vtoken supply to collect fees against"
-    },
-    {
-      "code": 6020,
-      "name": "InvalidInitialPrice",
-      "msg": "Invalid initial price, must be greater than 0"
-    },
-    {
-      "code": 6021,
-      "name": "UserTokenAccountNotFound",
-      "msg": "User token account not found"
-    },
-    {
-      "code": 6022,
-      "name": "Unauthorized",
-      "msg": "Unauthorized: this instruction can only be called by the authority."
-    },
-    {
-      "code": 6023,
-      "name": "FeesNotDue",
-      "msg": "Fees not due yet."
-    },
-    {
-      "code": 6024,
-      "name": "InvalidVtokenMint",
-      "msg": "Invalid vtoken mint"
-    },
-    {
-      "code": 6025,
-      "name": "DepositsPaused",
-      "msg": "Vault deposits are paused."
-    },
-    {
-      "code": 6026,
-      "name": "WithdrawsPaused",
-      "msg": "Vault withdrawals are paused."
-    },
-    {
-      "code": 6027,
-      "name": "DepositAboveMaximum",
-      "msg": "Deposit amount is above maximum"
-    },
-    {
-      "code": 6028,
-      "name": "WithdrawAmountTooSmall",
-      "msg": "Withdraw amount too small."
-    },
-    {
-      "code": 6029,
-      "name": "DepositTokenSupplyZero",
-      "msg": "Deposit token supply is zero."
-    },
-    {
-      "code": 6030,
-      "name": "TooManyRangeEntries",
-      "msg": "Too many range entries, maximum is 16"
-    },
-    {
-      "code": 6031,
-      "name": "InvalidDepositRange",
-      "msg": "Invalid deposit range: min_deposit exceeds max_deposit"
+      "name": "AlreadyMigrated",
+      "msg": "User whitelist has already been migrated to the current format"
     }
   ],
   "types": [

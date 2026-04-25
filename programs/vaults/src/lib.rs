@@ -115,9 +115,8 @@ pub mod vaults {
     pub fn swap_to_deposit_token_on_jupiter<'info>(
         ctx: Context<'_, '_, 'info, 'info, SwapToDepositTokenOnJupiter<'info>>,
         data: Vec<u8>,
-        aum_accounts_len: u64,
     ) -> Result<()> {
-        _swap_to_deposit_token_on_jupiter(ctx, data, aum_accounts_len)
+        _swap_to_deposit_token_on_jupiter(ctx, data)
     }
 
     pub fn add_user(

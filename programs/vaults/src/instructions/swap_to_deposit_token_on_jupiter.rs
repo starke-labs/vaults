@@ -12,10 +12,9 @@ use crate::{
     },
 };
 
-pub fn _swap_to_deposit_token_on_jupiter<'info>(
-    ctx: Context<'_, '_, 'info, 'info, SwapToDepositTokenOnJupiter<'info>>,
+pub fn _swap_to_deposit_token_on_jupiter(
+    ctx: Context<SwapToDepositTokenOnJupiter>,
     data: Vec<u8>,
-    aum_accounts_len: u64,
 ) -> Result<()> {
     require!(
         !ctx.accounts.starke_config.is_paused,
@@ -23,49 +22,39 @@ pub fn _swap_to_deposit_token_on_jupiter<'info>(
     );
 
     msg!("Processing Jupiter swap request");
+    msg!("Manager: {}", ctx.accounts.manager.key());
     msg!("Vault: {}", ctx.accounts.vault.key());
     msg!("Input token: {}", ctx.accounts.input_token_mint.key());
-    msg!("Output token: {}", ctx.accounts.vault.deposit_token_mint);
+    msg!("Deposit token: {}", ctx.accounts.vault.deposit_token_mint);
     msg!("Jupiter program: {}", ctx.accounts.jupiter_program.key);
     msg!("Data size: {} bytes", data.len());
 
-    let (aum_accounts, jupiter_accounts) =
-        ctx.remaining_accounts.split_at(aum_accounts_len as usize);
-
-    if aum_accounts_len > 0 {
-        let aum = ctx.accounts.vault.get_aum(
-            aum_accounts,
-            &ctx.accounts.token_whitelist,
-            &ctx.accounts.vault.key(),
-        )?;
-        msg!("Vault AUM before swap: {}", aum);
-    }
-
-    let vault_key = ctx.accounts.vault.key();
-    let (accounts, accounts_infos): (Vec<AccountMeta>, Vec<AccountInfo>) = jupiter_accounts
+    let accounts: Vec<AccountMeta> = ctx
+        .remaining_accounts
         .iter()
-        .map(|acc| {
-            let is_signer = acc.key == &vault_key || acc.is_signer;
-            (
-                AccountMeta {
-                    pubkey: *acc.key,
-                    is_signer,
-                    is_writable: acc.is_writable,
-                },
-                AccountInfo {
-                    key: acc.key,
-                    is_signer,
-                    is_writable: acc.is_writable,
-                    lamports: acc.lamports.clone(),
-                    data: acc.data.clone(),
-                    owner: acc.owner,
-                    rent_epoch: acc.rent_epoch,
-                    executable: acc.executable,
-                },
-            )
+        .map(|acc| AccountMeta {
+            pubkey: *acc.key,
+            is_signer: acc.key == &ctx.accounts.vault.key() || acc.is_signer,
+            is_writable: acc.is_writable,
         })
-        .unzip();
-    msg!("Accounts prepared: {} accounts", accounts.len());
+        .collect();
+    msg!("Account metas prepared: {} accounts", accounts.len());
+
+    let accounts_infos: Vec<AccountInfo> = ctx
+        .remaining_accounts
+        .iter()
+        .map(|acc| AccountInfo {
+            key: acc.key,
+            is_signer: acc.key == &ctx.accounts.vault.key() || acc.is_signer,
+            is_writable: acc.is_writable,
+            lamports: acc.lamports.clone(),
+            data: acc.data.clone(),
+            owner: acc.owner,
+            rent_epoch: acc.rent_epoch,
+            executable: acc.executable,
+        })
+        .collect();
+    msg!("Account infos prepared: {} accounts", accounts_infos.len());
 
     let manager = ctx.accounts.manager.key();
     let signer_seeds: &[&[&[u8]]] = &[&[Vault::SEED, manager.as_ref(), &[ctx.accounts.vault.bump]]];
