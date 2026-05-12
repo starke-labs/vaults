@@ -12,7 +12,7 @@ use constants::EXTRA_ACCOUNT_METAS_SEED;
 use state::VtokenConfig;
 use std::io::Write;
 
-declare_id!("strkHzBMzxA8KaHXZWq8KLS9BjSWPJt4oktM8C9mdbi");
+declare_id!("Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz");
 
 #[error_code]
 pub enum TransferHookError {
