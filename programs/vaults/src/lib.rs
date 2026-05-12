@@ -10,7 +10,7 @@ pub mod state;
 use instructions::*;
 use state::{InvestorTier, InvestorType, InvestorTypeWithRange};
 
-declare_id!("56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch");
+declare_id!("strkZuEKmsh5fQZqJPrHZNMVNEXwa1oszC8rETr6i5t");
 
 #[program]
 pub mod vaults {

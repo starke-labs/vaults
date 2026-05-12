@@ -1,5 +1,5 @@
 {
-  "address": "56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch",
+  "address": "strkZuEKmsh5fQZqJPrHZNMVNEXwa1oszC8rETr6i5t",
   "metadata": {
     "name": "vaults",
     "version": "0.1.0",
@@ -447,7 +447,7 @@
         },
         {
           "name": "transfer_hook_program",
-          "address": "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
+          "address": "strkHzBMzxA8KaHXZWq8KLS9BjSWPJt4oktM8C9mdbi"
         },
         {
           "name": "token_2022_program",
@@ -760,7 +760,7 @@
         },
         {
           "name": "transfer_hook_program",
-          "address": "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
+          "address": "strkHzBMzxA8KaHXZWq8KLS9BjSWPJt4oktM8C9mdbi"
         },
         {
           "name": "instructions",
@@ -3097,7 +3097,7 @@
         },
         {
           "name": "transfer_hook_program",
-          "address": "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
+          "address": "strkHzBMzxA8KaHXZWq8KLS9BjSWPJt4oktM8C9mdbi"
         },
         {
           "name": "token_2022_program",

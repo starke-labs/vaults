@@ -10,8 +10,8 @@ skip-lint = false
 # NOTE: Running anchor keys sync updates this ID, which is not
 #       correct as this needs to track the Jupiter mainnet program ID
 jupiter = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
-transfer_hook = "Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"
-vaults = "56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch"
+transfer_hook = "strkHzBMzxA8KaHXZWq8KLS9BjSWPJt4oktM8C9mdbi"
+vaults = "strkZuEKmsh5fQZqJPrHZNMVNEXwa1oszC8rETr6i5t"
 
 [registry]
 url = "https://api.apr.dev"
