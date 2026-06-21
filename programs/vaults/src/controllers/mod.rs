@@ -1,4 +1,5 @@
 mod deposit_token;
+mod pyth_pro_price;
 mod token;
 mod token_account;
 mod token_metadata;
@@ -10,6 +11,7 @@ mod whitelist;
 mod withdraw_token;
 
 pub use deposit_token::*;
+pub use pyth_pro_price::*;
 pub use token::*;
 pub use token_account::*;
 pub use token_metadata::*;

@@ -76,6 +76,17 @@ pub struct WhitelistTokenRemoved {
 }
 
 #[event]
+pub struct TokenOracleConfigUpdated {
+    pub mint: Pubkey,
+    pub price_feed_id: u32,
+    pub channel_id: u8,
+    pub max_age_seconds: u64,
+    pub confidence_threshold_bps: u64,
+    pub is_active: bool,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct WhitelistManagerAdded {
     pub manager: Pubkey,
     pub timestamp: i64,

@@ -1,6 +1,7 @@
 pub mod close_vault;
 pub mod create_vault;
 pub mod deposit;
+pub mod deposit_pyth_pro;
 pub mod initialize_starke;
 pub mod manager_whitelist;
 pub mod migrate_user_whitelist;
@@ -10,15 +11,18 @@ pub mod pause_or_resume_starke;
 pub mod pause_or_resume_withdraws;
 pub mod swap_on_jupiter;
 pub mod swap_to_deposit_token_on_jupiter;
+pub mod token_oracle_config;
 pub mod token_whitelist;
+pub mod update_fund;
 pub mod user_whitelist;
 pub mod withdraw;
 pub mod withdraw_in_deposit_token;
-pub mod update_fund;
+pub mod withdraw_in_deposit_token_pyth_pro;
 
 pub use close_vault::*;
 pub use create_vault::*;
 pub use deposit::*;
+pub use deposit_pyth_pro::*;
 pub use initialize_starke::*;
 pub use manager_whitelist::*;
 pub use migrate_user_whitelist::*;
@@ -28,11 +32,13 @@ pub use pause_or_resume_starke::*;
 pub use pause_or_resume_withdraws::*;
 pub use swap_on_jupiter::*;
 pub use swap_to_deposit_token_on_jupiter::*;
+pub use token_oracle_config::*;
 pub use token_whitelist::*;
+pub use update_fund::*;
 pub use user_whitelist::*;
 pub use withdraw::*;
 pub use withdraw_in_deposit_token::*;
-pub use update_fund::*;
+pub use withdraw_in_deposit_token_pyth_pro::*;
 
 #[cfg(test)]
 pub mod tests;

@@ -41,6 +41,26 @@ pub mod vaults {
         _remove_token(ctx, token)
     }
 
+    pub fn set_token_pyth_pro_oracle(
+        ctx: Context<SetTokenPythProOracle>,
+        mint: Pubkey,
+        price_feed_id: u32,
+        channel_id: u8,
+        max_age_seconds: Option<u64>,
+        confidence_threshold_bps: Option<u64>,
+        is_active: bool,
+    ) -> Result<()> {
+        _set_token_pyth_pro_oracle(
+            ctx,
+            mint,
+            price_feed_id,
+            channel_id,
+            max_age_seconds,
+            confidence_threshold_bps,
+            is_active,
+        )
+    }
+
     pub fn add_manager(ctx: Context<ModifyManagerWhitelist>, manager: Pubkey) -> Result<()> {
         _add_manager(ctx, manager)
     }
@@ -91,6 +111,22 @@ pub mod vaults {
         _deposit(ctx, amount)
     }
 
+    pub fn deposit_pyth_pro<'info>(
+        ctx: Context<'_, '_, 'info, 'info, DepositPythPro<'info>>,
+        amount: u64,
+        price_message: Vec<u8>,
+        ed25519_instruction_index: u16,
+        signature_index: u8,
+    ) -> Result<()> {
+        _deposit_pyth_pro(
+            ctx,
+            amount,
+            price_message,
+            ed25519_instruction_index,
+            signature_index,
+        )
+    }
+
     pub fn withdraw<'info>(
         ctx: Context<'_, '_, 'info, 'info, Withdraw<'info>>,
         amount: u64,
@@ -106,6 +142,22 @@ pub mod vaults {
         amount: u64,
     ) -> Result<()> {
         _withdraw_in_deposit_token(ctx, amount)
+    }
+
+    pub fn withdraw_in_deposit_token_pyth_pro<'info>(
+        ctx: Context<'_, '_, 'info, 'info, WithdrawInDepositTokenPythPro<'info>>,
+        amount: u64,
+        price_message: Vec<u8>,
+        ed25519_instruction_index: u16,
+        signature_index: u8,
+    ) -> Result<()> {
+        _withdraw_in_deposit_token_pyth_pro(
+            ctx,
+            amount,
+            price_message,
+            ed25519_instruction_index,
+            signature_index,
+        )
     }
 
     pub fn swap_on_jupiter(ctx: Context<SwapOnJupiter>, data: Vec<u8>) -> Result<()> {

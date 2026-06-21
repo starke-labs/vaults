@@ -479,6 +479,18 @@ pub enum VaultError {
     TooManyRangeEntries,
     #[msg("Invalid deposit range: min_deposit exceeds max_deposit")]
     InvalidDepositRange,
+    #[msg("Invalid oracle message")]
+    InvalidOracleMessage,
+    #[msg("Oracle price not found")]
+    OraclePriceNotFound,
+    #[msg("Oracle price too old")]
+    OraclePriceTooOld,
+    #[msg("Invalid oracle price")]
+    InvalidOraclePrice,
+    #[msg("Invalid oracle channel")]
+    InvalidOracleChannel,
+    #[msg("Invalid remaining accounts")]
+    InvalidRemainingAccounts,
 }
 
 #[error_code]

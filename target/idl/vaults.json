@@ -1305,6 +1305,578 @@
       ]
     },
     {
+      "name": "deposit_pyth_pro",
+      "discriminator": [
+        42,
+        245,
+        210,
+        71,
+        251,
+        107,
+        15,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "user_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vtoken_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_2022_program"
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_token_mint"
+        },
+        {
+          "name": "deposit_token_oracle_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  79,
+                  82,
+                  65,
+                  67,
+                  76,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pyth_lazer_program",
+          "address": "pytd2yyk641x7ak7mkaasSJVXh6YYZnC7wTmtgAyxPt"
+        },
+        {
+          "name": "pyth_lazer_storage",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  111,
+                  114,
+                  97,
+                  103,
+                  101
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                12,
+                74,
+                159,
+                176,
+                3,
+                249,
+                12,
+                128,
+                32,
+                17,
+                101,
+                150,
+                154,
+                165,
+                132,
+                195,
+                182,
+                126,
+                234,
+                138,
+                69,
+                43,
+                85,
+                3,
+                6,
+                14,
+                175,
+                224,
+                214,
+                116,
+                116,
+                91
+              ]
+            }
+          }
+        },
+        {
+          "name": "pyth_lazer_treasury",
+          "writable": true
+        },
+        {
+          "name": "instructions",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "price_message",
+          "type": "bytes"
+        },
+        {
+          "name": "ed25519_instruction_index",
+          "type": "u16"
+        },
+        {
+          "name": "signature_index",
+          "type": "u8"
+        }
+      ]
+    },
+    {
       "name": "initialize_starke",
       "discriminator": [
         16,
@@ -2320,6 +2892,142 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "set_token_pyth_pro_oracle",
+      "discriminator": [
+        8,
+        28,
+        14,
+        186,
+        107,
+        70,
+        41,
+        0
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_oracle_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  79,
+                  82,
+                  65,
+                  67,
+                  76,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "price_feed_id",
+          "type": "u32"
+        },
+        {
+          "name": "channel_id",
+          "type": "u8"
+        },
+        {
+          "name": "max_age_seconds",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "confidence_threshold_bps",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "is_active",
+          "type": "bool"
+        }
+      ]
     },
     {
       "name": "swap_on_jupiter",
@@ -3800,6 +4508,545 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "withdraw_in_deposit_token_pyth_pro",
+      "discriminator": [
+        101,
+        180,
+        198,
+        213,
+        153,
+        34,
+        72,
+        122
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "address": "STRK1me6eFLDYGKYqbn2oyHsaxiCHe8GDWQnnSGiScS"
+        },
+        {
+          "name": "manager"
+        },
+        {
+          "name": "user_vtoken_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_2022_program"
+              },
+              {
+                "kind": "account",
+                "path": "vtoken_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  65,
+                  85,
+                  76,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "manager"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vtoken_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  86,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  77,
+                  73,
+                  78,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  87,
+                  72,
+                  73,
+                  84,
+                  69,
+                  76,
+                  73,
+                  83,
+                  84
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deposit_token_mint"
+        },
+        {
+          "name": "deposit_token_oracle_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  84,
+                  79,
+                  75,
+                  69,
+                  78,
+                  95,
+                  79,
+                  82,
+                  65,
+                  67,
+                  76,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault_deposit_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "vault"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deposit_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "starke_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  84,
+                  65,
+                  82,
+                  75,
+                  69,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pyth_lazer_program",
+          "address": "pytd2yyk641x7ak7mkaasSJVXh6YYZnC7wTmtgAyxPt"
+        },
+        {
+          "name": "pyth_lazer_storage",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  111,
+                  114,
+                  97,
+                  103,
+                  101
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                12,
+                74,
+                159,
+                176,
+                3,
+                249,
+                12,
+                128,
+                32,
+                17,
+                101,
+                150,
+                154,
+                165,
+                132,
+                195,
+                182,
+                126,
+                234,
+                138,
+                69,
+                43,
+                85,
+                3,
+                6,
+                14,
+                175,
+                224,
+                214,
+                116,
+                116,
+                91
+              ]
+            }
+          }
+        },
+        {
+          "name": "pyth_lazer_treasury",
+          "writable": true
+        },
+        {
+          "name": "instructions",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "price_message",
+          "type": "bytes"
+        },
+        {
+          "name": "ed25519_instruction_index",
+          "type": "u16"
+        },
+        {
+          "name": "signature_index",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -3840,6 +5087,32 @@
         6,
         254,
         182
+      ]
+    },
+    {
+      "name": "Storage",
+      "discriminator": [
+        209,
+        117,
+        255,
+        185,
+        196,
+        175,
+        68,
+        9
+      ]
+    },
+    {
+      "name": "TokenOracleConfig",
+      "discriminator": [
+        90,
+        96,
+        185,
+        20,
+        22,
+        230,
+        150,
+        70
       ]
     },
     {
@@ -3920,6 +5193,19 @@
         29,
         228,
         38
+      ]
+    },
+    {
+      "name": "TokenOracleConfigUpdated",
+      "discriminator": [
+        43,
+        164,
+        160,
+        7,
+        62,
+        58,
+        124,
+        152
       ]
     },
     {
@@ -4187,6 +5473,36 @@
       "code": 6031,
       "name": "InvalidDepositRange",
       "msg": "Invalid deposit range: min_deposit exceeds max_deposit"
+    },
+    {
+      "code": 6032,
+      "name": "InvalidOracleMessage",
+      "msg": "Invalid oracle message"
+    },
+    {
+      "code": 6033,
+      "name": "OraclePriceNotFound",
+      "msg": "Oracle price not found"
+    },
+    {
+      "code": 6034,
+      "name": "OraclePriceTooOld",
+      "msg": "Oracle price too old"
+    },
+    {
+      "code": 6035,
+      "name": "InvalidOraclePrice",
+      "msg": "Invalid oracle price"
+    },
+    {
+      "code": 6036,
+      "name": "InvalidOracleChannel",
+      "msg": "Invalid oracle channel"
+    },
+    {
+      "code": 6037,
+      "name": "InvalidRemainingAccounts",
+      "msg": "Invalid remaining accounts"
     }
   ],
   "types": [
@@ -4341,6 +5657,20 @@
       }
     },
     {
+      "name": "OracleProvider",
+      "repr": {
+        "kind": "rust"
+      },
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "PythPro"
+          }
+        ]
+      }
+    },
+    {
       "name": "PriceFeedMessage",
       "repr": {
         "kind": "c"
@@ -4465,6 +5795,86 @@
       }
     },
     {
+      "name": "Storage",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "top_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "single_update_fee_in_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "num_trusted_signers",
+            "type": "u8"
+          },
+          {
+            "name": "trusted_signers",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "TrustedSignerInfo",
+                    "generics": [
+                      {
+                        "kind": "type",
+                        "type": "pubkey"
+                      }
+                    ]
+                  }
+                },
+                5
+              ]
+            }
+          },
+          {
+            "name": "num_trusted_ecdsa_signers",
+            "type": "u8"
+          },
+          {
+            "name": "trusted_ecdsa_signers",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "TrustedSignerInfo",
+                    "generics": [
+                      {
+                        "kind": "type",
+                        "type": {
+                          "array": [
+                            "u8",
+                            20
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                2
+              ]
+            }
+          },
+          {
+            "name": "_extra_space",
+            "type": {
+              "array": [
+                "u8",
+                43
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "TokenInfo",
       "type": {
         "kind": "struct",
@@ -4480,6 +5890,94 @@
           {
             "name": "price_update",
             "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenOracleConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "provider",
+            "type": {
+              "defined": {
+                "name": "OracleProvider"
+              }
+            }
+          },
+          {
+            "name": "pyth_pro_price_feed_id",
+            "type": "u32"
+          },
+          {
+            "name": "pyth_pro_channel_id",
+            "type": "u8"
+          },
+          {
+            "name": "max_age_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "confidence_threshold_bps",
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenOracleConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "price_feed_id",
+            "type": "u32"
+          },
+          {
+            "name": "channel_id",
+            "type": "u8"
+          },
+          {
+            "name": "max_age_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "confidence_threshold_bps",
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -4510,6 +6008,30 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TrustedSignerInfo",
+      "generics": [
+        {
+          "kind": "type",
+          "name": "T"
+        }
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pubkey",
+            "type": {
+              "generic": "T"
+            }
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
           }
         ]
       }
