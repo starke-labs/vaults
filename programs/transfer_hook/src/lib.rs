@@ -11,7 +11,7 @@ pub mod state;
 use constants::EXTRA_ACCOUNT_METAS_SEED;
 use state::VtokenConfig;
 use std::io::Write;
-
+#[cfg(not(feature = "devnet"))]
 declare_id!("Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz");
 
 #[error_code]
@@ -241,4 +241,27 @@ pub struct CloseExtraAccountMetasAccounts<'info> {
     pub extra_account_metas: AccountInfo<'info>,
 
     pub mint: InterfaceAccount<'info, Mint>,
+}
+
+// Devnet program ID. The mainnet ID stays on its original line above so a default build is byte-identical.
+#[cfg(feature = "devnet")]
+declare_id!("8x1M8d2hJrD2cFhLN2SkDnaE3anSZ46EuexoewN9SgWn");
+
+/// Guards the program ID selected by the `devnet` feature.
+/// A default build must always carry the mainnet ID.
+#[cfg(test)]
+mod program_id_tests {
+    use super::*;
+
+    #[cfg(not(feature = "devnet"))]
+    #[test]
+    fn default_build_uses_mainnet_program_id() {
+        assert_eq!(ID, pubkey!("Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"));
+    }
+
+    #[cfg(feature = "devnet")]
+    #[test]
+    fn devnet_build_uses_devnet_program_id() {
+        assert_eq!(ID, pubkey!("8x1M8d2hJrD2cFhLN2SkDnaE3anSZ46EuexoewN9SgWn"));
+    }
 }

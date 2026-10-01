@@ -9,7 +9,7 @@ pub mod state;
 
 use instructions::*;
 use state::{InvestorTier, InvestorType, InvestorTypeWithRange};
-
+#[cfg(not(feature = "devnet"))]
 declare_id!("56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch");
 
 #[program]
@@ -240,3 +240,7 @@ security_txt! {
     preferred_languages: "en",
     source_code: "https://github.com/starke-labs/vaults"
 }
+
+// Devnet program ID. The mainnet ID stays on its original line above so a default build is byte-identical.
+#[cfg(feature = "devnet")]
+declare_id!("6UgbFY4Q8VQA67Zw4jsBjTzAVpFZWphVs32Efe4m6qho");
