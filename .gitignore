@@ -9,3 +9,5 @@ test-ledger
 .env
 deploy
 .vscode
+*-keypair.json
+*keypair*.json
