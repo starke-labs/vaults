@@ -191,7 +191,7 @@ pub fn transform_oracle_price_to_aum_decimals(price: &OraclePrice) -> Result<u64
         .try_into()
         .map_err(|_| error!(VaultError::NumericOverflow))
 }
-
+#[allow(clippy::manual_is_multiple_of)]
 pub fn parse_vault_balances_for_pyth_pro<'info>(
     remaining_accounts: &'info [AccountInfo<'info>],
     whitelist: &Account<'info, TokenWhitelist>,

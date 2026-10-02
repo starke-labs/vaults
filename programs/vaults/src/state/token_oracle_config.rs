@@ -33,7 +33,7 @@ impl TokenOracleConfig {
         1 + // is_active
         8 + // updated_at
         1; // bump
-
+    #[allow(clippy::too_many_arguments)]
     pub fn set_pyth_pro(
         &mut self,
         authority: Pubkey,
