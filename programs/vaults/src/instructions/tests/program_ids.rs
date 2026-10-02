@@ -1,5 +1,5 @@
 //! Guards the cluster-specific addresses selected by the `devnet` feature.
-//! A default build must always carry the mainnet addresses.
+//! A default build must always carry the staging addresses (production IDs live on `main`).
 
 use anchor_lang::prelude::*;
 
@@ -7,7 +7,7 @@ use crate::constants::STARKE_AUTHORITY;
 
 #[cfg(not(feature = "devnet"))]
 #[test]
-fn default_build_uses_mainnet_addresses() {
+fn default_build_uses_staging_addresses() {
     assert_eq!(
         crate::ID,
         pubkey!("56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch")

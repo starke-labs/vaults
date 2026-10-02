@@ -241,6 +241,6 @@ security_txt! {
     source_code: "https://github.com/starke-labs/vaults"
 }
 
-// Devnet program ID. The mainnet ID stays on its original line above so a default build is byte-identical.
+// Devnet program ID. The staging ID stays on its original line above so a default build is byte-identical.
 #[cfg(feature = "devnet")]
 declare_id!("6UgbFY4Q8VQA67Zw4jsBjTzAVpFZWphVs32Efe4m6qho");

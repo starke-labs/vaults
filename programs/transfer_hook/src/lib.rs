@@ -243,19 +243,19 @@ pub struct CloseExtraAccountMetasAccounts<'info> {
     pub mint: InterfaceAccount<'info, Mint>,
 }
 
-// Devnet program ID. The mainnet ID stays on its original line above so a default build is byte-identical.
+// Devnet program ID. The staging ID stays on its original line above so a default build is byte-identical.
 #[cfg(feature = "devnet")]
 declare_id!("8x1M8d2hJrD2cFhLN2SkDnaE3anSZ46EuexoewN9SgWn");
 
 /// Guards the program ID selected by the `devnet` feature.
-/// A default build must always carry the mainnet ID.
+/// A default build must always carry the staging ID.
 #[cfg(test)]
 mod program_id_tests {
     use super::*;
 
     #[cfg(not(feature = "devnet"))]
     #[test]
-    fn default_build_uses_mainnet_program_id() {
+    fn default_build_uses_staging_program_id() {
         assert_eq!(ID, pubkey!("Gk7syLzEbk46Ez6Fr9pApPPhTJMDavKxiN9JHAtfhZCz"));
     }
 
