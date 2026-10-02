@@ -2,6 +2,7 @@ pub mod add_manager;
 pub mod add_token;
 pub mod common_utils;
 pub mod pause_stark;
+pub mod program_ids;
 pub mod remove_manager;
 pub mod remove_token;
 pub mod resume_stark;
