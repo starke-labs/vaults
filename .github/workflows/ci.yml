@@ -131,9 +131,16 @@ jobs:
             !target/deploy
           key: build-${{ runner.os }}-rust-${{ env.RUST_VERSION }}-solana-${{ env.SOLANA_VERSION }}-${{ hashFiles('Cargo.lock') }}
 
+      # Anchor 0.31 runs `anchor keys sync` on its own when target/deploy does not exist, which rewrites
+      # every declare_id! and Anchor.toml with fresh random IDs. Creating the empty folder prevents that.
       # The Mollusk tests load target/deploy/*.so, so build before testing.
       - name: anchor build (default)
-        run: anchor build
+        run: |
+          mkdir -p target/deploy
+          anchor build
+
+      - name: Build changed no tracked source files
+        run: git diff --exit-code -- . ':(exclude)target/idl'
 
       - name: cargo test (default)
         run: cargo test
@@ -150,10 +157,10 @@ jobs:
         run: anchor build
 
       # Fails if the committed IDL differs from the default build (e.g. a devnet IDL committed by mistake),
-      # or if the build produced an IDL file that is not committed.
+      # or if the build produced an IDL file that is not committed. Also fails if any other tracked file changed.
       - name: Committed IDL matches the default build
         run: |
-          git diff --exit-code -- target/idl
+          git diff --exit-code
           untracked="$(git status --porcelain -- target/idl)"
           if [ -n "$untracked" ]; then
             echo "Untracked or changed IDL files:"
