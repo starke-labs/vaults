@@ -1,0 +1,200 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [sandpit]
+    # labeled/unlabeled re-run the checks when the no-program-change label is added or removed.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [sandpit]
+
+# Read-only token; this workflow uses no secrets.
+permissions:
+  contents: read
+
+# A newer push cancels the outdated run for the same PR or branch.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_VERSION: 1.98.1
+  SOLANA_VERSION: 2.1.0
+  # SHA-256 of solana-release-x86_64-unknown-linux-gnu.tar.bz2 from the anza-xyz/agave v2.1.0 release.
+  SOLANA_SHA256: 7fe66a4fde1c0a905b022c4db3f68c399bcf6294abc9d81bdaf61930b3af90e1
+  ANCHOR_VERSION: 0.31.1
+  # SHA-256 of anchor-0.31.1-x86_64-unknown-linux-gnu from the coral-xyz/anchor v0.31.1 release.
+  ANCHOR_SHA256: 5e5f8fc0f75f2c3dc5cceb082a7f735d09be2207540291ffad370eb5b2dc959b
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust ${{ env.RUST_VERSION }}
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal -c rustfmt,clippy
+          rustup default "$RUST_VERSION"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            !target/idl
+            !target/deploy
+          key: lint-${{ runner.os }}-rust-${{ env.RUST_VERSION }}-${{ hashFiles('Cargo.lock') }}
+
+      - name: cargo fmt --check
+        run: cargo fmt --check
+
+      - name: cargo clippy -- -D warnings
+        run: cargo clippy -- -D warnings
+
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      # fetch-depth 2: on a PR, HEAD is GitHub's test merge commit and HEAD^1 is the base commit.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Install Rust ${{ env.RUST_VERSION }}
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+
+      - name: Cache Solana ${{ env.SOLANA_VERSION }}
+        id: cache-solana
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/solana/${{ env.SOLANA_VERSION }}
+          key: solana-${{ runner.os }}-${{ env.SOLANA_VERSION }}-${{ env.SOLANA_SHA256 }}
+
+      - name: Install Solana ${{ env.SOLANA_VERSION }}
+        if: steps.cache-solana.outputs.cache-hit != 'true'
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/solana.tar.bz2" \
+            "https://github.com/anza-xyz/agave/releases/download/v${SOLANA_VERSION}/solana-release-x86_64-unknown-linux-gnu.tar.bz2"
+          echo "${SOLANA_SHA256}  $RUNNER_TEMP/solana.tar.bz2" | sha256sum --check
+          mkdir -p ~/.local/share/solana/"$SOLANA_VERSION"
+          tar -xjf "$RUNNER_TEMP/solana.tar.bz2" -C ~/.local/share/solana/"$SOLANA_VERSION"
+
+      - name: Cache Anchor ${{ env.ANCHOR_VERSION }}
+        id: cache-anchor
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/anchor/${{ env.ANCHOR_VERSION }}
+          key: anchor-${{ runner.os }}-${{ env.ANCHOR_VERSION }}-${{ env.ANCHOR_SHA256 }}
+
+      - name: Install Anchor ${{ env.ANCHOR_VERSION }}
+        if: steps.cache-anchor.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/share/anchor/"$ANCHOR_VERSION"
+          curl -sSfL -o ~/.local/share/anchor/"$ANCHOR_VERSION"/anchor \
+            "https://github.com/coral-xyz/anchor/releases/download/v${ANCHOR_VERSION}/anchor-${ANCHOR_VERSION}-x86_64-unknown-linux-gnu"
+          echo "${ANCHOR_SHA256}  $HOME/.local/share/anchor/${ANCHOR_VERSION}/anchor" | sha256sum --check
+          chmod +x ~/.local/share/anchor/"$ANCHOR_VERSION"/anchor
+
+      # Also runs on a cache hit, so a cached binary is verified on every run.
+      - name: Verify Anchor binary
+        run: echo "${ANCHOR_SHA256}  $HOME/.local/share/anchor/${ANCHOR_VERSION}/anchor" | sha256sum --check
+
+      - name: Add Solana and Anchor to PATH
+        run: |
+          echo "$HOME/.local/share/solana/$SOLANA_VERSION/solana-release/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/share/anchor/$ANCHOR_VERSION" >> "$GITHUB_PATH"
+
+      - name: Show tool versions
+        run: |
+          rustc --version
+          solana --version
+          anchor --version
+
+      # target/idl is committed and target/deploy holds generated program keypairs: keep both out of the cache.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cache/solana
+            target
+            !target/idl
+            !target/deploy
+          key: build-${{ runner.os }}-rust-${{ env.RUST_VERSION }}-solana-${{ env.SOLANA_VERSION }}-${{ hashFiles('Cargo.lock') }}
+
+      # Anchor 0.31 runs `anchor keys sync` on its own when target/deploy does not exist, which rewrites
+      # every declare_id! and Anchor.toml with fresh random IDs. Creating the empty folder prevents that.
+      # The Mollusk tests load target/deploy/*.so, so build before testing.
+      - name: anchor build (default)
+        run: |
+          mkdir -p target/deploy
+          anchor build
+
+      - name: Build changed no tracked source files
+        run: git diff --exit-code -- . ':(exclude)target/idl'
+
+      - name: cargo test (default)
+        run: cargo test
+
+      - name: anchor build (devnet)
+        run: |
+          anchor build -p transfer_hook -- --features devnet
+          anchor build -p vaults -- --features devnet
+
+      - name: cargo test (devnet)
+        run: cargo test -p vaults -p transfer-hook --features devnet
+
+      - name: anchor build (default, again)
+        run: anchor build
+
+      # Fails if the committed IDL differs from the default build (e.g. a devnet IDL committed by mistake),
+      # or if the build produced an IDL file that is not committed. Also fails if any other tracked file changed.
+      - name: Committed IDL matches the default build
+        run: |
+          git diff --exit-code
+          untracked="$(git status --porcelain -- target/idl)"
+          if [ -n "$untracked" ]; then
+            echo "Untracked or changed IDL files:"
+            echo "$untracked"
+            exit 1
+          fi
+
+      - name: Write .so and IDL hashes to the job summary
+        run: |
+          set -o pipefail
+          {
+            echo "### Default build SHA-256"
+            echo
+            echo "| File | SHA-256 |"
+            echo "| --- | --- |"
+            sha256sum target/deploy/*.so target/idl/*.json | awk '{ print "| `" $2 "` | `" $1 "` |" }'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Only for PRs labeled no-program-change: build the base commit in the same folder
+      # (paths can end up in the binary) and require identical default .so files.
+      - name: No-program-change check (base build)
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'no-program-change')
+        run: |
+          sha256sum target/deploy/*.so > "$RUNNER_TEMP/head.sha256"
+          git checkout --detach HEAD^1
+          echo "Base commit: $(git rev-parse HEAD)"
+          # Remove the PR's .so files so a program the base doesn't build can't appear in both lists.
+          rm -f target/deploy/*.so
+          anchor build
+          sha256sum target/deploy/*.so > "$RUNNER_TEMP/base.sha256"
+          echo "PR (merge commit):"; cat "$RUNNER_TEMP/head.sha256"
+          echo "Base:"; cat "$RUNNER_TEMP/base.sha256"
+          if ! diff -u "$RUNNER_TEMP/base.sha256" "$RUNNER_TEMP/head.sha256"; then
+            echo "::error::The PR is labeled no-program-change but the default .so hashes differ from the base."
+            exit 1
+          fi
+          echo "Default .so hashes are identical to the base."
