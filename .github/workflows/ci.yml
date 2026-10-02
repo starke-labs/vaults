@@ -104,6 +104,10 @@ jobs:
           echo "${ANCHOR_SHA256}  $HOME/.local/share/anchor/${ANCHOR_VERSION}/anchor" | sha256sum --check
           chmod +x ~/.local/share/anchor/"$ANCHOR_VERSION"/anchor
 
+      # Also runs on a cache hit, so a cached binary is verified on every run.
+      - name: Verify Anchor binary
+        run: echo "${ANCHOR_SHA256}  $HOME/.local/share/anchor/${ANCHOR_VERSION}/anchor" | sha256sum --check
+
       - name: Add Solana and Anchor to PATH
         run: |
           echo "$HOME/.local/share/solana/$SOLANA_VERSION/solana-release/bin" >> "$GITHUB_PATH"
@@ -159,6 +163,7 @@ jobs:
 
       - name: Write .so and IDL hashes to the job summary
         run: |
+          set -o pipefail
           {
             echo "### Default build SHA-256"
             echo
@@ -175,6 +180,8 @@ jobs:
           sha256sum target/deploy/*.so > "$RUNNER_TEMP/head.sha256"
           git checkout --detach HEAD^1
           echo "Base commit: $(git rev-parse HEAD)"
+          # Remove the PR's .so files so a program the base doesn't build can't appear in both lists.
+          rm -f target/deploy/*.so
           anchor build
           sha256sum target/deploy/*.so > "$RUNNER_TEMP/base.sha256"
           echo "PR (merge commit):"; cat "$RUNNER_TEMP/head.sha256"
