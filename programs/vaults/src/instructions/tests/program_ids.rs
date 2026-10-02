@@ -8,6 +8,7 @@ use crate::constants::STARKE_AUTHORITY;
 #[cfg(not(feature = "devnet"))]
 #[test]
 fn default_build_uses_staging_addresses() {
+    assert_eq!(1, 2, "deliberate failure to prove CI turns red");
     assert_eq!(
         crate::ID,
         pubkey!("56gFPCzaTGNJQcZrpfewDDgGYD8SR7G2RCrxy5z26jch")
