@@ -14,11 +14,6 @@ pub fn _set_token_pyth_pro_oracle(
     confidence_threshold_bps: Option<u64>,
     is_active: bool,
 ) -> Result<()> {
-    require!(
-        ctx.accounts.token_whitelist.is_whitelisted(&mint),
-        TokenWhitelistError::TokenNotWhitelisted
-    );
-
     let max_age_seconds = max_age_seconds.unwrap_or(PYTH_PRICE_FEED_MAX_AGE_SECONDS);
     let confidence_threshold_bps =
         confidence_threshold_bps.unwrap_or(PYTH_CONFIDENCE_THRESHOLD_BPS);
